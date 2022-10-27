@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewValley;
 using StardewValley.Monsters;
@@ -32,12 +32,12 @@ namespace StardewRoguelike.Bosses
 
             controller = null;
 
-            bool spottedPlayer = (bool)typeof(Skeleton).GetField("spottedPlayer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(this);
-            NetBool throwing = (NetBool)typeof(Skeleton).GetField("throwing", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(this);
+            bool spottedPlayer = (bool)typeof(Skeleton).GetField("spottedPlayer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(this)!;
+            NetBool throwing = (NetBool)typeof(Skeleton).GetField("throwing", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(this)!;
 
             if (!spottedPlayer && Utility.doesPointHaveLineOfSightInMine(currentLocation, getTileLocation(), Player.getTileLocation(), lineOfSightDistance))
             {
-                typeof(Skeleton).GetField("spottedPlayer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(this, true);
+                typeof(Skeleton).GetField("spottedPlayer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(this, true);
                 Halt();
                 facePlayer(Player);
             }

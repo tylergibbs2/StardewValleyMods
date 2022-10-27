@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
@@ -23,8 +23,8 @@ namespace StardewRoguelike.Patches
 			b.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp, null, null);
 			foreach (NPC i in __instance.characters)
 			{
-				if (i is Monster)
-					(i as Monster).drawAboveAllLayers(b);
+				if (i is Monster monster)
+					monster.drawAboveAllLayers(b);
 			}
 			b.End();
 			b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, null);

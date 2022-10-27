@@ -140,7 +140,7 @@ namespace StardewRoguelike
             if (Game1.player.currentLocation is not MineShaft)
                 return;
 
-            MineShaft mine = Game1.player.currentLocation as MineShaft;
+            MineShaft mine = (MineShaft)Game1.player.currentLocation;
 
             SObject bomb = new(286, 1);
             int bombsToSpawn = 3;
@@ -176,12 +176,12 @@ namespace StardewRoguelike
                 monster.Speed *= 2;
         }
 
-        public static void UpdateTicked(object sender, UpdateTickedEventArgs e)
+        public static void UpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
 
-            bool isMonsterArea = Game1.player.currentLocation is MineShaft mine && (bool)mine.GetType().GetProperty("isMonsterArea", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(mine);
+            bool isMonsterArea = Game1.player.currentLocation is MineShaft mine && (bool)mine.GetType().GetProperty("isMonsterArea", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mine);
             if (isMonsterArea && HasCurse(CurseType.BombsAroundPlayer) && Game1.shouldTimePass())
             {
                 if (TicksToSpawnBombs > 0)

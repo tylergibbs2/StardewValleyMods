@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
@@ -18,7 +18,13 @@ namespace StardewRoguelike.ChallengeFloors
     {
         private readonly int MaxBoxTimer = 15 * 60;
 
-        public override List<string> MapPaths => new() { "custom-defend", "custom-defend2", "custom-egg" };
+        public override List<string> MapPaths
+        {
+            get
+            {
+                return new() { "custom-defend", "custom-defend2", "custom-egg" };
+            }
+        }
 
         public override List<string> GetMusicTracks(MineShaft mine)
         {
@@ -26,7 +32,7 @@ namespace StardewRoguelike.ChallengeFloors
             if (loadedMap == "custom-defend")
                 return new() { "VolcanoMines" };
             else
-                return null;
+                return new() { "" };
         }
 
         public override Vector2? GetSpawnLocation(MineShaft mine)
@@ -52,7 +58,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         private readonly NetRectangle kothBox = new(Rectangle.Empty);
 
-        private Texture2D kothBoxProgressTexture;
+        private Texture2D kothBoxProgressTexture = null!;
 
         private readonly Texture2D kothBoxTexture;
 
@@ -70,9 +76,9 @@ namespace StardewRoguelike.ChallengeFloors
             kothBoxTexture.SetData(new[] { Color.White });
         }
 
-        protected override void initNetFields()
+        protected override void InitNetFields()
         {
-            base.initNetFields();
+            base.InitNetFields();
 
             NetFields.AddFields(state, boxTimer, kothBox);
         }
@@ -112,7 +118,7 @@ namespace StardewRoguelike.ChallengeFloors
             possibleBoxes.RemoveAt(0);
         }
 
-        public void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
+        public void OnRenderedWorld(object? sender, RenderedWorldEventArgs e)
         {
             if (kothBox.Value == Rectangle.Empty || stateTimer % 90 > 45 || kothBox.Value.Contains(Game1.player.Position))
                 return;
@@ -150,7 +156,7 @@ namespace StardewRoguelike.ChallengeFloors
             kothBoxProgressTexture.SetData(data);
         }
 
-        public void RenderProgressBar(object sender, RenderedHudEventArgs e)
+        public void RenderProgressBar(object? sender, RenderedHudEventArgs e)
         {
             if (state.Value == "over")
                 ModEntry.Events.Display.RenderedHud -= RenderProgressBar;
@@ -177,7 +183,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             if (loadedMap == "custom-defend")
             {
-                mine.createLadderAt(GetSpawnLocation(mine).Value);
+                mine.createLadderAt(new(44, 38));
                 mine.SpawnLocalChest(new(44, 35));
             }
             else if (loadedMap == "custom-defend2")
@@ -209,7 +215,7 @@ namespace StardewRoguelike.ChallengeFloors
                 else if (monsterChance < 0.4)
                 {
                     monster = new GreenSlime(spawnTile * 64f, 0);
-                    (monster as GreenSlime).makeTigerSlime();
+                    ((GreenSlime)monster).makeTigerSlime();
                 }
                 else if (monsterChance < 0.6)
                     monster = new Bat(spawnTile * 64f, -556);
@@ -238,7 +244,7 @@ namespace StardewRoguelike.ChallengeFloors
                 return monster;
             }
 
-            return null;
+            throw new Exception("this path shouldn't be reached");
 
         }
 

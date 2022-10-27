@@ -1,4 +1,4 @@
-﻿using StardewValley;
+using StardewValley;
 using System;
 using System.Collections.Generic;
 
@@ -16,7 +16,7 @@ namespace StardewRoguelike.Patches
 				price = obj.salePrice();
 			}
 			int stack = int.MaxValue;
-			if (obj is SObject && (obj as SObject).IsRecipe)
+			if (obj is SObject sobj && sobj.IsRecipe)
 			{
 				stack = 1;
 			}

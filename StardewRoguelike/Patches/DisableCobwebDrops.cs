@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.TerrainFeatures;
@@ -17,12 +17,12 @@ namespace StardewRoguelike.Patches
 
             if ((t != null && t is MeleeWeapon weapon && weapon.type.Value != 2) || explosion > 0)
             {
-                if (t != null && (t as MeleeWeapon).type.Value != 1)
+                if (t != null && ((MeleeWeapon)t).type.Value != 1)
                     DelayedAction.playSoundAfterDelay("daggerswipe", 50);
                 else
                     location.playSound("swordswipe");
 
-                MethodInfo shake = __instance.GetType().GetMethod("shake", BindingFlags.NonPublic | BindingFlags.Instance);
+                MethodInfo shake = __instance.GetType().GetMethod("shake", BindingFlags.NonPublic | BindingFlags.Instance)!;
                 shake.Invoke(__instance, new object[] { (float)Math.PI * 3f / 32f, (float)Math.PI / 40f, Game1.random.NextDouble() < 0.5 });
 
                 int numberOfWeedsToDestroy = ((explosion <= 0) ? 1 : Math.Max(1, explosion + 2 - Game1.recentMultiplayerRandom.Next(2)));
@@ -65,7 +65,7 @@ namespace StardewRoguelike.Patches
                         break;
                 }
 
-                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
                 multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(28, tileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-16, 16)), c, 8, Game1.random.NextDouble() < 0.5, Game1.random.Next(60, 100)));
             }
 

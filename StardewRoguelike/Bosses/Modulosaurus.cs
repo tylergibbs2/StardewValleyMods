@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewRoguelike.Extensions;
 using StardewRoguelike.Netcode;
@@ -401,9 +401,10 @@ namespace StardewRoguelike.Bosses
 
         public void ShootShotgunFireballs()
         {
-            if (Player is not null)
-                faceGeneralDirection(Player.Position, 0, false);
+            if (Player is null)
+                return;
 
+            faceGeneralDirection(Player.Position, 0, false);
             currentLocation.playSound("furnace");
 
             Vector2 shot_origin = new(GetBoundingBox().Center.X - 32f, GetBoundingBox().Center.Y - 32f);

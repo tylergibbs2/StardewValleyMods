@@ -1,4 +1,4 @@
-﻿using StardewValley.Minigames;
+using StardewValley.Minigames;
 using StardewValley;
 using System;
 
@@ -14,7 +14,7 @@ namespace StardewRoguelike
         {
             if (minigame is MineCart cartGame)
             {
-                int score = (int)cartGame.GetType().GetField("score", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(cartGame);
+                int score = (int)cartGame.GetType().GetField("score", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(cartGame)!;
                 JunimoKartScore += score;
             }
 

@@ -1,4 +1,4 @@
-﻿using StardewValley.Menus;
+using StardewValley.Menus;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -20,8 +20,8 @@ namespace StardewRoguelike.Patches
                 return false;
             }
 
-            Type chestType = __instance is TimedChest ? __instance.GetType().BaseType : __instance.GetType();
-            int currentLidFrame = (int)chestType.GetField("currentLidFrame", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(__instance);
+            Type chestType = __instance is TimedChest ? __instance.GetType().BaseType! : __instance.GetType();
+            int currentLidFrame = (int)chestType.GetField("currentLidFrame", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
 
             if (currentLidFrame == __instance.startingLidFrame.Value && __instance.frameCounter.Value <= -1)
             {
@@ -47,8 +47,8 @@ namespace StardewRoguelike.Patches
                     Game1.player.addItemByMenuIfNecessary(items[0]);
 
                 IClickableMenu activeClickableMenu = Game1.activeClickableMenu;
-                ItemGrabMenu grab_menu = activeClickableMenu as ItemGrabMenu;
-                if (grab_menu != null)
+                ItemGrabMenu grab_menu = (ItemGrabMenu)activeClickableMenu;
+                if (grab_menu is not null)
                 {
                     ItemGrabMenu itemGrabMenu = grab_menu;
                     itemGrabMenu.behaviorBeforeCleanup = (Action<IClickableMenu>)Delegate.Combine(itemGrabMenu.behaviorBeforeCleanup, (Action<IClickableMenu>)delegate
@@ -60,7 +60,7 @@ namespace StardewRoguelike.Patches
 
             if (__instance.items.Count == 0 && __instance.coins.Value == 0)
             {
-                who.currentLocation.removeObject(__instance.tileLocation, showDestroyedObject: false);
+                who.currentLocation.removeObject(__instance.TileLocation, showDestroyedObject: false);
                 who.currentLocation.playSound("woodWhack");
             }
 
@@ -90,7 +90,7 @@ namespace StardewRoguelike.Patches
                         Game1.player.addItemByMenuIfNecessary(items[0]);
 
                     IClickableMenu activeClickableMenu = Game1.activeClickableMenu;
-                    ItemGrabMenu grab_menu = activeClickableMenu as ItemGrabMenu;
+                    ItemGrabMenu grab_menu = (ItemGrabMenu)activeClickableMenu;
                     if (grab_menu != null)
                     {
                         ItemGrabMenu itemGrabMenu = grab_menu;
@@ -120,7 +120,7 @@ namespace StardewRoguelike.Patches
                 Game1.player.addItemByMenuIfNecessary(items[0]);
 
             IClickableMenu activeClickableMenu = Game1.activeClickableMenu;
-            ItemGrabMenu grab_menu = activeClickableMenu as ItemGrabMenu;
+            ItemGrabMenu grab_menu = (ItemGrabMenu)activeClickableMenu;
             if (grab_menu != null)
             {
                 ItemGrabMenu itemGrabMenu = grab_menu;

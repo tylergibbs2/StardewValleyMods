@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewRoguelike.Extensions;
 using StardewValley;
 using StardewValley.Locations;
@@ -21,9 +21,9 @@ namespace StardewRoguelike.Patches
             if (!__instance.IsNormalFloor())
                 return false;
 
-            Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
+            Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
 
-            __instance.GetType().GetField("ghostAdded", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(__instance, false);
+            __instance.GetType().GetField("ghostAdded", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, false);
             int stonesLeftOnThisLevel = 0;
 
             __instance.objects.Clear();
@@ -81,7 +81,7 @@ namespace StardewRoguelike.Patches
                         continue;
 
                     // 5 minutes into the run
-                    long openBy = ((DateTimeOffset)ModEntry.Stats.StartTime).ToUnixTimeSeconds() + 300;
+                    long openBy = ((DateTimeOffset)ModEntry.ActiveStats.StartTime!).ToUnixTimeSeconds() + 300;
                     __instance.SpawnLocalChest(tile, openBy);
 
                     spawnedTimedChest = true;
@@ -132,7 +132,7 @@ namespace StardewRoguelike.Patches
                 for (int l = 0; l < __instance.map.GetLayer("Back").LayerHeight; l++)
                 {
                     __instance.checkForMapAlterations(j, l);
-                    MethodInfo canAdd = __instance.GetType().GetMethod("canAdd");
+                    MethodInfo canAdd = __instance.GetType().GetMethod("canAdd")!;
                     if (__instance.isTileClearForMineObjects(j, l))
                     {
                         if (mineRandom.NextDouble() <= stoneChance)
@@ -141,7 +141,7 @@ namespace StardewRoguelike.Patches
                             if (__instance.Objects.ContainsKey(objectPos4))
                                 continue;
 
-                            SObject stone = null;
+                            SObject? stone = null;
                             if (gemStoneChance != 0.0 && mineRandom.NextDouble() < gemStoneChance + gemStoneChance + __instance.mineLevel / 24000.0)
                             {
                                 stone = new(objectPos4, __instance.getRandomGemRichStoneForThisLevel(__instance.mineLevel), "Stone", canBeSetDown: true, canBeGrabbed: false, isHoedirt: false, isSpawnedObject: false)
@@ -161,12 +161,12 @@ namespace StardewRoguelike.Patches
                         else if (mineRandom.NextDouble() <= monsterChance && __instance.getDistanceFromStart(j, l) > 5f && monstersSpawned < maxMonsters)
                         {
                             Monster monsterToAdd = __instance.BuffMonsterIfNecessary(__instance.getMonsterForThisLevel(__instance.mineLevel, j, l));
-                            if (monsterToAdd is GreenSlime && __instance.GetAdditionalDifficulty() > 0 && mineRandom.NextDouble() < Math.Min(__instance.GetAdditionalDifficulty() * 0.1f, 0.5f))
+                            if (monsterToAdd is GreenSlime slime && __instance.GetAdditionalDifficulty() > 0 && mineRandom.NextDouble() < Math.Min(__instance.GetAdditionalDifficulty() * 0.1f, 0.5f))
                             {
                                 if (mineRandom.NextDouble() < 0.001)
-                                    (monsterToAdd as GreenSlime).stackedSlimes.Value = 4;
+                                    slime.stackedSlimes.Value = 4;
                                 else
-                                    (monsterToAdd as GreenSlime).stackedSlimes.Value = 2;
+                                    slime.stackedSlimes.Value = 2;
                             }
                             if (monsterToAdd is Leaper)
                             {
@@ -258,7 +258,7 @@ namespace StardewRoguelike.Patches
 
                     // BREAKABLES SPAWNING (barrels, crates, etc)
 
-                    else if (__instance.isContainerPlatform(j, l) && __instance.isTileLocationTotallyClearAndPlaceable(j, l) && mineRandom.NextDouble() < 0.4 && (firstTime || (bool)canAdd.Invoke(__instance, new object[] { 0, barrelsAdded })))
+                    else if (__instance.isContainerPlatform(j, l) && __instance.isTileLocationTotallyClearAndPlaceable(j, l) && mineRandom.NextDouble() < 0.4 && (firstTime || (bool)canAdd.Invoke(__instance, new object[] { 0, barrelsAdded })!))
                     {
                         Vector2 objectPos = new(j, l);
                         __instance.objects.Add(objectPos, new BreakableContainer(objectPos, 118, __instance));
@@ -281,12 +281,12 @@ namespace StardewRoguelike.Patches
             // SPAWN LADDER IF NO ENEMIES WERE SPAWNED
             if (__instance.mustKillAllMonstersToAdvance() && __instance.EnemyCount <= 1)
             {
-                Vector2 tileBeneathLadder = (Vector2)__instance.GetType().GetField("tileBeneathLadder", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
+                Vector2 tileBeneathLadder = (Vector2)__instance.GetType().GetField("tileBeneathLadder", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
                 __instance.characters.Add(new Bat(tileBeneathLadder * 64f + new Vector2(256f, 256f)));
             }
 
             __instance.tryToAddOreClumps();
-            __instance.GetType().GetProperty("stonesLeftOnThisLevel", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(__instance, stonesLeftOnThisLevel);
+            __instance.GetType().GetProperty("stonesLeftOnThisLevel", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, stonesLeftOnThisLevel);
 
             return false;
         }

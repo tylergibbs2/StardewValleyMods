@@ -186,7 +186,7 @@ namespace StardewRoguelike.Bosses
                     }
 
                     totalFireTime -= time.ElapsedGameTime.Milliseconds;
-                    if (nextFireTime > 0)
+                    if (nextFireTime > 0 && Player is not null)
                     {
                         nextFireTime -= time.ElapsedGameTime.Milliseconds;
                         if (nextFireTime <= 0)
@@ -215,7 +215,7 @@ namespace StardewRoguelike.Bosses
 
                                 BasicProjectile projectile = new(DamageToFarmer, 10, 0, 1, 0.196349546f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
                                 projectile.ignoreTravelGracePeriod.Value = true;
-                                projectile.ignoreLocationCollision.Value = true;
+                                projectile.IgnoreLocationCollision = true;
                                 projectile.ignoreMeleeAttacks.Value = true;
                                 projectile.maxTravelDistance.Value = 800;
                                 if (Roguelike.HardMode)
@@ -237,7 +237,7 @@ namespace StardewRoguelike.Bosses
                                 BasicProjectile projectile = new(DamageToFarmer, 10, 0, 1, 0.196349546f, trajectory.X, trajectory.Y, shot_origin, "", "fireball", false, false, currentLocation, this, false, null);
                                 projectile.ignoreMeleeAttacks.Value = true;
                                 projectile.ignoreTravelGracePeriod.Value = true;
-                                projectile.ignoreLocationCollision.Value = true;
+                                projectile.IgnoreLocationCollision = true;
                                 currentLocation.projectiles.Add(projectile);
 
                                 nextFireTime = 100;
@@ -268,7 +268,7 @@ namespace StardewRoguelike.Bosses
             }
             else if (currentState == State.Charging)
             {
-                if (DamageToFarmer == (int)(BossManager.GetBaseDamageToFarmer((currentLocation as MineShaft), GetType()) * Difficulty))
+                if (DamageToFarmer == (int)(BossManager.GetBaseDamageToFarmer((MineShaft)currentLocation, GetType()) * Difficulty))
                     DamageToFarmer = (int)Math.Round(DamageToFarmer * 1.5f);
 
                 Vector2 chargeVector = Player.GetBoundingBox().Center.ToVector2() - GetBoundingBox().Center.ToVector2();

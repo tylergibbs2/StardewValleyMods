@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -37,7 +37,7 @@ namespace StardewValley.Menus
 
         private int timerBeforeStart;
 
-        private SparklingText resultText;
+        private SparklingText? resultText;
 
         private SpinResult result;
 
@@ -51,9 +51,9 @@ namespace StardewValley.Menus
 
         private int spinsLeft = 3;
 
-        private ClickableComponent spinButton;
+        private ClickableComponent spinButton = null!;
 
-        private ClickableComponent spinsLeftBox;
+        private ClickableComponent spinsLeftBox = null!;
 
         public static readonly Rectangle textureBoxRect = new(0, 256, 60, 60);
 

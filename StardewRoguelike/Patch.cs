@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,23 +14,23 @@ namespace StardewRoguelike
 
         protected class PatchDescriptor
         {
-            public Type targetType;
-            public string targetMethodName;
-            public Type[] targetMethodArguments;
+            public Type targetType = null!;
+            public string? targetMethodName;
+            public Type[]? targetMethodArguments;
 
             /// <param name="targetType">Use typeof()</param>
             /// <param name="targetMethodName">Null if constructor is desired</param>
             /// <param name="targetMethodArguments">Null if no method abiguity</param>
-            public PatchDescriptor(Type targetType, string targetMethodName, Type[] targetMethodArguments = null)
+            public PatchDescriptor(Type targetType, string targetMethodName, Type[]? targetMethodArguments = null)
             {
                 this.targetType = targetType;
                 this.targetMethodName = targetMethodName;
                 this.targetMethodArguments = targetMethodArguments;
             }
 
-            public PatchDescriptor(List<string> possibleTypes, string targetMethodName, Type[] targetMethodArguments = null)
+            public PatchDescriptor(List<string> possibleTypes, string targetMethodName, Type[]? targetMethodArguments = null)
             {
-                foreach (var type in possibleTypes)
+                foreach (string type in possibleTypes)
                 {
                     if (AccessTools.TypeByName(type) is Type foundType)
                     {
@@ -52,11 +52,11 @@ namespace StardewRoguelike
             MethodBase targetMethod;
 
             if (string.IsNullOrEmpty(patchDescriptor.targetMethodName))
-                targetMethod = patchDescriptor.targetType.GetConstructor(patchDescriptor.targetMethodArguments ?? Array.Empty<Type>());
+                targetMethod = patchDescriptor.targetType.GetConstructor(patchDescriptor.targetMethodArguments ?? Array.Empty<Type>())!;
             else if (patchDescriptor.targetMethodArguments is not null)
-                targetMethod = patchDescriptor.targetType.GetMethod(patchDescriptor.targetMethodName, patchDescriptor.targetMethodArguments);
+                targetMethod = patchDescriptor.targetType.GetMethod(patchDescriptor.targetMethodName, patchDescriptor.targetMethodArguments)!;
             else
-                targetMethod = patchDescriptor.targetType.GetMethod(patchDescriptor.targetMethodName, ((BindingFlags)62));
+                targetMethod = patchDescriptor.targetType.GetMethod(patchDescriptor.targetMethodName, (BindingFlags)62)!;
 
             try
             {
@@ -64,9 +64,9 @@ namespace StardewRoguelike
                 MethodInfo postfix = AccessTools.Method(this.GetType(), "Postfix");
                 MethodInfo transpiler = AccessTools.Method(this.GetType(), "Transpiler") ?? AccessTools.Method(this.GetType(), "Transpile");
 
-                HarmonyMethod hmPrefix = null;
-                HarmonyMethod hmPostfix = null;
-                HarmonyMethod hmTranspile = null;
+                HarmonyMethod hmPrefix = null!;
+                HarmonyMethod hmPostfix = null!;
+                HarmonyMethod hmTranspile = null!;
 
                 if (prefix is not null) hmPrefix = new HarmonyMethod(prefix);
                 if (postfix is not null) hmPostfix = new HarmonyMethod(postfix);
@@ -91,7 +91,7 @@ namespace StardewRoguelike
             foreach (Type type in (from type in Assembly.GetExecutingAssembly().GetTypes()
                                    where type.IsClass && type.BaseType == typeof(Patch)
                                    select type))
-                ((Patch)Activator.CreateInstance(type)).ApplyPatch(harmonyInstance);
+                ((Patch)Activator.CreateInstance(type)!).ApplyPatch(harmonyInstance);
 
             harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
         }

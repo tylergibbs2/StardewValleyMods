@@ -22,9 +22,9 @@ namespace StardewRoguelike.ChallengeFloors
 
         public DwarfChests() : base() { }
 
-        protected override void initNetFields()
+        protected override void InitNetFields()
         {
-            base.initNetFields();
+            base.InitNetFields();
 
             NetFields.AddFields(alreadyUsed);
         }

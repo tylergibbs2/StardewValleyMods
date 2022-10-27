@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using StardewRoguelike.Enchantments;
 using StardewValley;
 using StardewValley.Tools;
@@ -12,9 +12,9 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(ref BaseEnchantment __result, Item base_item, Item item)
         {
-            if (base_item == null || (base_item is MeleeWeapon && !(base_item as MeleeWeapon).isScythe()))
+            if (base_item == null || (base_item is MeleeWeapon && !((MeleeWeapon)base_item).isScythe()))
             {
-                if (base_item != null && base_item is MeleeWeapon && (base_item as MeleeWeapon).isGalaxyWeapon() && Utility.IsNormalObjectAtParentSheetIndex(item, 896))
+                if (base_item != null && base_item is MeleeWeapon && ((MeleeWeapon)base_item).isGalaxyWeapon() && Utility.IsNormalObjectAtParentSheetIndex(item, 896))
                     __result = new GalaxySoulEnchantment();
                 else if (Utility.IsNormalObjectAtParentSheetIndex(item, 60))
                     __result = new EmeraldEnchantment();

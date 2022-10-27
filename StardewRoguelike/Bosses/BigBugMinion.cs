@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
@@ -115,12 +115,12 @@ namespace StardewRoguelike.Bosses
         {
             if (Utility.isOnScreen(base.Position, 128))
             {
-                b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, this.hard ? Color.Lime : Color.White, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, base.scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.991f : ((float)(base.getStandingY() + 8) / 10000f)));
+                b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, this.hard ? Color.Lime : Color.White, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.991f : ((float)(base.getStandingY() + 8) / 10000f)));
                 b.Draw(Game1.shadowTexture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (float)(base.getStandingY() - 1) / 10000f);
                 if (isGlowing)
-                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, base.glowingColor * base.glowingTransparency, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, base.scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.getStandingY() / 10000f + 0.001f)));
+                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, base.glowingColor * base.glowingTransparency, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.getStandingY() / 10000f + 0.001f)));
                 else if (CurrentColor is not null)
-                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, CurrentColor.Value * 0.75f, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, base.scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.getStandingY() / 10000f + 0.001f)));
+                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, CurrentColor.Value * 0.75f, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.getStandingY() / 10000f + 0.001f)));
             }
         }
 

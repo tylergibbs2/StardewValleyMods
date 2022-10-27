@@ -1,11 +1,10 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using System;
-using static StardewRoguelike.Patches.MineShaftSpaPatch;
 
 namespace StardewRoguelike.Patches
 {

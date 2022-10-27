@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewRoguelike.Bosses;
 using StardewRoguelike.Extensions;
@@ -13,9 +13,15 @@ namespace StardewRoguelike.ChallengeFloors
     {
         public override List<string> MapPaths => new() { "custom-lavalurk" };
 
-        public override List<string> GetMusicTracks(MineShaft mine) => new() { "VolcanoMines1", "VolcanoMines2" };
+        public override List<string> GetMusicTracks(MineShaft mine)
+        {
+            return new() { "VolcanoMines1", "VolcanoMines2" };
+        }
 
-        public override Vector2? GetSpawnLocation(MineShaft mine) => new(20, 41);
+        public override Vector2? GetSpawnLocation(MineShaft mine)
+        {
+            return new(20, 41);
+        }
 
         private bool bossSpawned = false;
 

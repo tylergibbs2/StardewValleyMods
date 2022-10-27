@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Monsters;
@@ -123,7 +123,7 @@ namespace StardewRoguelike.Bosses
                     {
                         focusedOnFarmers = true
                     };
-                    Roguelike.AdjustMonster(currentLocation as MineShaft, ref splitSlime);
+                    Roguelike.AdjustMonster((MineShaft)currentLocation, ref splitSlime);
                     who.currentLocation.characters.Add(splitSlime);
                     Scale = Math.Max(0.8f, Scale - 0.15f);
                 }

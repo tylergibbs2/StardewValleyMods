@@ -31,9 +31,9 @@ namespace StardewRoguelike
             new(3, 9)
         };
 
-        public static ShopMenu CurrentShop { get; set; } = null;
+        public static ShopMenu CurrentShop { get; set; } = null!;
 
-        public static ShopMenu CurrentSeedShop { get; set; } = null;
+        public static ShopMenu CurrentSeedShop { get; set; } = null!;
 
         internal static CurseType? CurseToAdd { get; set; } = null;
 
@@ -153,14 +153,14 @@ namespace StardewRoguelike
             int level = Roguelike.GetLevelFromMineshaft(mine);
 
             int previousMerchantLevel = level > 6 ? level - 6 : 1;
-            MineShaft previousMerchant = ChallengeFloor.GetMineFromLevel(previousMerchantLevel);
+            MineShaft? previousMerchant = ChallengeFloor.GetMineFromLevel(previousMerchantLevel);
             if (previousMerchant is null)
                 return;
 
             foreach (Vector2 tile in GardenPotTiles)
             {
-                IndoorPot currentPot = mine.Objects[tile] as IndoorPot;
-                IndoorPot previousPot = previousMerchant.Objects[tile] as IndoorPot;
+                IndoorPot currentPot = (IndoorPot)mine.Objects[tile];
+                IndoorPot previousPot = (IndoorPot)previousMerchant.Objects[tile];
                 Crop previousCrop = previousPot.hoeDirt.Value.crop;
                 if (previousCrop is null)
                     continue;
@@ -173,7 +173,7 @@ namespace StardewRoguelike
             }
         }
 
-        public static void PlayerWarped(object sender, WarpedEventArgs e)
+        public static void PlayerWarped(object? sender, WarpedEventArgs e)
         {
             if (e.NewLocation is MineShaft mine && IsMerchantFloor(mine))
             {
@@ -373,7 +373,7 @@ namespace StardewRoguelike
                         Game1.drawObjectDialogue(I18n.Merchant_NotEnoughGold());
                 }
 
-                if (paid)
+                if (paid && CurseToAdd is not null)
                 {
                     Curse.AddCurse(CurseToAdd.Value);
                     Game1.playSound("debuffSpell");
@@ -394,8 +394,8 @@ namespace StardewRoguelike
                     Game1.player.maxItems.Value += 12;
                     for (int i = 0; i < Game1.player.MaxItems; i++)
                     {
-                        if (Game1.player.items.Count <= i)
-                            Game1.player.items.Add(null);
+                        if (Game1.player.Items.Count <= i)
+                            Game1.player.Items.Add(null);
                     }
 
                     Game1.player.holdUpItemThenMessage(new SpecialItem(99, Game1.content.LoadString("Strings\\StringsFromCSFiles:GameLocation.cs.8708")));
@@ -471,7 +471,7 @@ namespace StardewRoguelike
             return stock;
         }
 
-        public static Dictionary<ISalable, int[]> GetMerchantStock(float priceAdjustment = 1f, Random random = null)
+        public static Dictionary<ISalable, int[]> GetMerchantStock(float priceAdjustment = 1f, Random? random = null)
         {
             random ??= Game1.random;
 

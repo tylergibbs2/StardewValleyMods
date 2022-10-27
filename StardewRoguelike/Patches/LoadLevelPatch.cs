@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -99,12 +99,12 @@ namespace StardewRoguelike.Patches
             if (loadedDarkArea)
                 __instance.set_MineShaftIsDarkArea(loadedDarkArea);
 
-            __instance.GetType().GetProperty("isMonsterArea", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, isMonsterArea);
-            __instance.GetType().GetProperty("isSlimeArea", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, isSlimeArea);
-            __instance.GetType().GetProperty("isQuarryArea", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, isQuarryArea);
-            __instance.GetType().GetProperty("isDinoArea", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, isDinoArea);
+            __instance.GetType().GetProperty("isMonsterArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, isMonsterArea);
+            __instance.GetType().GetProperty("isSlimeArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, isSlimeArea);
+            __instance.GetType().GetProperty("isQuarryArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, isQuarryArea);
+            __instance.GetType().GetProperty("isDinoArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, isDinoArea);
 
-            __instance.GetType().GetField("loadedDarkArea", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, loadedDarkArea);
+            __instance.GetType().GetField("loadedDarkArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, loadedDarkArea);
 
             return false;
         }

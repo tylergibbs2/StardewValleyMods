@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.TerrainFeatures;
 using System;
@@ -10,7 +10,7 @@ namespace StardewRoguelike.TerrainFeatures
     {
         private string textureName = "TerrainFeatures\\CleansingCauldron";
 
-        private Lazy<Texture2D> texture;
+        private Lazy<Texture2D> texture = null!;
 
         private bool used = false;
 
@@ -52,9 +52,15 @@ namespace StardewRoguelike.TerrainFeatures
             return true;
         }
 
-        public override bool isPassable(Character c = null) => false;
+        public override bool isPassable(Character? c = null)
+        {
+            return false;
+        }
 
-        public override bool isActionable() => false;
+        public override bool isActionable()
+        {
+            return false;
+        }
 
         public override void draw(SpriteBatch spriteBatch, Vector2 tileLocation)
         {

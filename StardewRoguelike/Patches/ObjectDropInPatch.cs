@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using StardewValley;
 using StardewValley.Objects;
 using StardewValley.Tools;
@@ -64,7 +64,7 @@ namespace StardewRoguelike.Patches
             322   // Wood Fence
         };
 
-        public static bool Prefix(ref SObject __result, Item item)
+        public static bool Prefix(ref SObject? __result, Item item)
         {
             if (InvalidItemIndices.Contains(item.ParentSheetIndex) || item is Pickaxe)
             {

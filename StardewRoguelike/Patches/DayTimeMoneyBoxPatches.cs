@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
@@ -13,7 +13,7 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(DayTimeMoneyBox __instance, SpriteBatch b)
         {
-            MethodInfo updatePosition = __instance.GetType().GetMethod("updatePosition", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo updatePosition = __instance.GetType().GetMethod("updatePosition", BindingFlags.NonPublic | BindingFlags.Instance)!;
             updatePosition.Invoke(__instance, null);
 
             __instance.zoomInButton.draw(b, Color.White * ((Game1.options.desiredBaseZoomLevel >= 2f) ? 0.5f : 1f), 1f);
@@ -21,7 +21,7 @@ namespace StardewRoguelike.Patches
 
             __instance.drawMoneyBox(b, overrideY: 10);
 
-            StringBuilder _hoverText = (StringBuilder)__instance.GetType().GetField("_hoverText", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(__instance);
+            StringBuilder _hoverText = (StringBuilder)__instance.GetType().GetField("_hoverText", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
             if (_hoverText.Length > 0 && __instance.isWithinBounds(Game1.getOldMouseX(), Game1.getOldMouseY()))
                 IClickableMenu.drawHoverText(b, _hoverText, Game1.dialogueFont);
 
@@ -47,7 +47,7 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(DayTimeMoneyBox __instance, SpriteBatch b, int overrideX = -1, int overrideY = -1)
         {
-            MethodInfo updatePosition = __instance.GetType().GetMethod("updatePosition", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo updatePosition = __instance.GetType().GetMethod("updatePosition", BindingFlags.NonPublic | BindingFlags.Instance)!;
             updatePosition.Invoke(__instance, null);
 
             b.Draw(Game1.mouseCursors, ((overrideY != -1) ? new Vector2((overrideX == -1) ? __instance.position.X : (overrideX), overrideY - 172) : __instance.position) + new Vector2(28 + ((__instance.moneyShakeTimer > 0) ? Game1.random.Next(-3, 4) : 0), 172 + ((__instance.moneyShakeTimer > 0) ? Game1.random.Next(-3, 4) : 0)), new Rectangle(340, 432, 65, 17), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.9f);

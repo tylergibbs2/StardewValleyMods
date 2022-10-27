@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewValley;
@@ -13,8 +13,8 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(ref bool __result, Projectile __instance, GameLocation location)
         {
-			NetPosition position = (NetPosition)__instance.GetType().GetField("position", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
-			NetBool damagesMonsters = (NetBool)__instance.GetType().GetField("damagesMonsters", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
+			NetPosition position = (NetPosition)__instance.GetType().GetField("position", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+			NetBool damagesMonsters = (NetBool)__instance.GetType().GetField("damagesMonsters", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
 
 			Vector2 tilePosition = new(position.Value.X / 64f, position.Value.Y / 64f);
 			if (location.isTileOnMap(position.Value / 64f) && location.doesTileHaveProperty((int)tilePosition.X, (int)tilePosition.Y, "ProjectilePassable", "Buildings") is not null)

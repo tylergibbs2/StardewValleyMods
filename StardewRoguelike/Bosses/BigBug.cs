@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewRoguelike.Extensions;
@@ -330,7 +330,7 @@ namespace StardewRoguelike.Bosses
 
         public void SpawnEgg(Vector2 tileLocation)
         {
-            MineShaft mine = currentLocation as MineShaft;
+            MineShaft mine = (MineShaft)currentLocation;
             mine.SetTile((int)tileLocation.X, (int)tileLocation.Y, "Front", "bugLandTiles", 92, 1000, new int[] { 92, 86, 92, 102 });
             mine.SetTile((int)tileLocation.X + 1, (int)tileLocation.Y, "Front", "bugLandTiles", 93, 1000, new int[] { 93, 87, 93, 103 });
             mine.SetTile((int)tileLocation.X, (int)tileLocation.Y + 1, "Front", "bugLandTiles", 100, 1000, new int[] { 100, 94, 100, 110 });
@@ -341,7 +341,7 @@ namespace StardewRoguelike.Bosses
 
         public void DespawnEgg(Vector2 tileLocation)
         {
-            MineShaft mine = currentLocation as MineShaft;
+            MineShaft mine = (MineShaft)currentLocation;
             xTile.Dimensions.Location tile = new((int)tileLocation.X, (int)tileLocation.Y);
             mine.removeTile(tile, "Front");
             mine.removeTile(new(tile.X + 1, tile.Y), "Front");

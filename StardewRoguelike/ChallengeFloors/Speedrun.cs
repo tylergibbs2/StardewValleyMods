@@ -1,4 +1,4 @@
-﻿using StardewValley.Locations;
+using StardewValley.Locations;
 using StardewValley;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
@@ -145,9 +145,12 @@ namespace StardewRoguelike.ChallengeFloors
 
         }
 
-        public override bool ShouldSpawnLadder(MineShaft mine) => false;
+        public override bool ShouldSpawnLadder(MineShaft mine)
+        {
+            return false;
+        }
 
-        public void RenderTimer(object sender, RenderedHudEventArgs e)
+        public void RenderTimer(object? sender, RenderedHudEventArgs e)
         {
             string timeText = $"{SecondsTaken}.{Math.Min((int)(msCounter / 100), 9)}s";
             Vector2 textSize = Game1.smallFont.MeasureString(timeText);

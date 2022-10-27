@@ -1,12 +1,12 @@
-﻿using StardewValley;
+using StardewValley;
 
 namespace StardewRoguelike.Patches
 {
 	internal class GoldOreSellPrice : Patch
 	{
-		protected override PatchDescriptor GetPatchDescriptor() => new(typeof(Object), "sellToStorePrice");
+		protected override PatchDescriptor GetPatchDescriptor() => new(typeof(SObject), "sellToStorePrice");
 
-		public static bool Prefix(Object __instance, ref int __result)
+		public static bool Prefix(SObject __instance, ref int __result)
 		{
 			if (__instance.ParentSheetIndex == 384)
             {

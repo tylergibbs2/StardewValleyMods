@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Monsters;
@@ -30,7 +30,8 @@ namespace StardewRoguelike.Patches
             {
                 Rumble.rumble(0.75f, 150f);
                 __instance.currentLocation.playSound("parry");
-                damager.parried(damage, __instance);
+                if (damager is not null)
+                    damager.parried(damage, __instance);
             }
             else
             {
@@ -42,7 +43,7 @@ namespace StardewRoguelike.Patches
                 int effectiveResilience = __instance.resilience;
                 if (__instance.CurrentTool is MeleeWeapon)
                 {
-                    effectiveResilience += (__instance.CurrentTool as MeleeWeapon).addedDefense.Value;
+                    effectiveResilience += ((MeleeWeapon)__instance.CurrentTool).addedDefense.Value;
                 }
                 if (effectiveResilience >= damage * 0.5f)
                 {

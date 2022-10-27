@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewRoguelike.Extensions;
 using StardewRoguelike.Projectiles;
@@ -366,12 +366,12 @@ namespace StardewRoguelike.Bosses
                     Parent = currentLocation
                 }
             };
-            MethodInfo rumbleAndFade = currentLocation.GetType().BaseType.GetMethod("rumbleAndFade", BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo rumbleAndFade = currentLocation.GetType().BaseType!.GetMethod("rumbleAndFade", BindingFlags.Instance | BindingFlags.NonPublic)!;
             rumbleAndFade.Invoke(currentLocation, new object[] { 300 + radius * 100 });
 
             currentLocation.debuffPlayers(areaOfEffect, 19);
 
-            Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
             int startingI = (int)(tileLocation.X - radius) * 64;
             int startingJ = (int)(tileLocation.Y - radius) * 64;
@@ -418,10 +418,10 @@ namespace StardewRoguelike.Bosses
                             currentLocation,
                             this,
                             false,
-                            null
+                            null!
                         );
                         currentLocation.projectiles.Add(proj);
-                        proj.ignoreLocationCollision.Value = true;
+                        proj.IgnoreLocationCollision = true;
                         activeBones.Add(proj);
                     }
                 }
@@ -448,7 +448,7 @@ namespace StardewRoguelike.Bosses
             float boneSpeed = spawnedMages ? 10f : 8f;
             Vector2 v = Utility.getVelocityTowardPlayer(new Point((int)Position.X, (int)Position.Y), boneSpeed, Player);
             BasicProjectile projectile = new((int)Math.Round(DamageToFarmer * Difficulty), 4, 0, 0, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), "skeletonHit", "skeletonStep", explode: false, damagesMonsters: false, currentLocation, this);
-            projectile.ignoreLocationCollision.Value = true;
+            projectile.IgnoreLocationCollision = true;
             projectile.ignoreMeleeAttacks.Value = true;
             currentLocation.projectiles.Add(projectile);
         }
@@ -458,7 +458,7 @@ namespace StardewRoguelike.Bosses
             float boneSpeed = spawnedMages ? 10f : 8f;
             Vector2 v = Utility.getVelocityTowardPlayer(new Point((int)Position.X, (int)Position.Y), boneSpeed, Player);
             BasicProjectile projectile = new((int)Math.Round(DamageToFarmer * Difficulty), 9, 0, 4, 0f, v.X, v.Y, new Vector2(Position.X, Position.Y), "flameSpellHit", "flameSpell", explode: false, damagesMonsters: false, currentLocation, this);
-            projectile.ignoreLocationCollision.Value = true;
+            projectile.IgnoreLocationCollision = true;
             projectile.ignoreMeleeAttacks.Value = true;
             currentLocation.projectiles.Add(projectile);
         }

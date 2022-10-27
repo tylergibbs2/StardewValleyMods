@@ -1,4 +1,4 @@
-﻿using StardewRoguelike.UI;
+using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Locations;
 using System;
@@ -13,7 +13,7 @@ namespace StardewRoguelike.Patches
 
         public static bool Prefix(MineShaft __instance)
         {
-            string targetTrack;
+            string? targetTrack;
             if (Merchant.IsMerchantFloor(__instance))
             {
                 if (Merchant.GetMusicTracks().Contains(Game1.getMusicTrackName()))
@@ -45,7 +45,7 @@ namespace StardewRoguelike.Patches
                     targetTrack = Game1.getMusicTrackName();
             }
 
-            if (!Game1.currentSong.IsPlaying)
+            if (!Game1.currentSong.IsPlaying || string.IsNullOrEmpty(targetTrack))
                 Game1.changeMusicTrack("none");
 
             if (targetTrack != Game1.getMusicTrackName() || Game1.getMusicTrackName().EndsWith("_Ambient"))

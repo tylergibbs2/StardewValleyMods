@@ -116,7 +116,7 @@ namespace StardewRoguelike
             if (bossType == typeof(TutorialSlime) && level > Roguelike.ScalingOrder[^1])
                 bossType = typeof(LoopedSlime);
 
-            Monster boss = (Monster)Activator.CreateInstance(bossType, new object[] { difficulty });
+            Monster boss = (Monster)Activator.CreateInstance(bossType, new object[] { difficulty })!;
             boss.MaxHealth = (int)(BossManager.GetBaseHealth(mine, bossType) * difficulty);
             boss.Health = boss.MaxHealth;
             boss.DamageToFarmer = (int)(BossManager.GetBaseDamageToFarmer(mine, bossType) * difficulty);
@@ -134,7 +134,7 @@ namespace StardewRoguelike
         {
             float difficulty = GetLevelDifficulty(mine);
 
-            Monster boss = (Monster)Activator.CreateInstance(whichBoss, new object[] { difficulty });
+            Monster boss = (Monster)Activator.CreateInstance(whichBoss, new object[] { difficulty })!;
             boss.MaxHealth = (int)(BossManager.GetBaseHealth(mine, whichBoss) * difficulty);
             boss.Health = boss.MaxHealth;
             boss.DamageToFarmer = (int)(BossManager.GetBaseDamageToFarmer(mine, whichBoss) * difficulty);

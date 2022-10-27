@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -9,7 +9,7 @@ namespace StardewRoguelike.Patches
 {
     internal class MineShaftSpaPatch
     {
-        private static Texture2D swimShadow;
+        private static Texture2D swimShadow = null!;
 
         private static int swimShadowTimer;
 
@@ -28,14 +28,14 @@ namespace StardewRoguelike.Patches
 
                 swimShadow = Game1.temporaryContent.Load<Texture2D>("LooseSprites\\swimShadow");
 
-                oldValue = (bool)__instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
-                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(__instance, false);
+                oldValue = (bool)__instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, false);
                 return true;
             }
 
             public static void Postfix(MineShaft __instance)
             {
-                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(__instance, oldValue);
+                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, oldValue);
 
                 __instance.removeTile(new(0, 0), "Buildings");
 
@@ -119,7 +119,7 @@ namespace StardewRoguelike.Patches
                 if (fullActionString != "PoolEntrance")
                     return true;
 
-                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
                 if (!Game1.player.swimming.Value)
                 {

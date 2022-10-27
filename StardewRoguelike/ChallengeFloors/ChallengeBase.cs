@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI.Events;
@@ -14,18 +14,24 @@ namespace StardewRoguelike.ChallengeFloors
     {
         protected ChallengeBase()
         {
-            initNetFields();
+            InitNetFields();
         }
 
         public NetFields NetFields { get; } = new();
 
-        protected virtual void initNetFields() { }
+        protected virtual void InitNetFields() { }
 
-        public virtual List<string> MapPaths { get; } = null;
+        public virtual List<string> MapPaths { get; } = null!;
 
-        public virtual List<string> GetMusicTracks(MineShaft mine) => null;
+        public virtual List<string> GetMusicTracks(MineShaft mine)
+        {
+            return null!;
+        }
 
-        public virtual Vector2? GetSpawnLocation(MineShaft mine) => null;
+        public virtual Vector2? GetSpawnLocation(MineShaft mine)
+        {
+            return null;
+        }
 
         // Runs only for the main player
         public virtual void Initialize(MineShaft mine) { }
@@ -45,21 +51,36 @@ namespace StardewRoguelike.ChallengeFloors
             ModEntry.Events.GameLoop.ReturnedToTitle -= DisposeHandler;
         }
 
-        public virtual bool AnswerDialogueAction(MineShaft mine, string questionAndAnswer, string[] questionParams) => false;
+        public virtual bool AnswerDialogueAction(MineShaft mine, string questionAndAnswer, string[] questionParams)
+        {
+            return false;
+        }
 
         public virtual void DrawBeforeLocation(MineShaft mine, SpriteBatch b) { }
 
         public virtual void DrawAfterLocation(MineShaft mine, SpriteBatch b) { }
 
-        public virtual bool CheckForCollision(MineShaft mine, Microsoft.Xna.Framework.Rectangle position, Farmer who) => false;
+        public virtual bool CheckForCollision(MineShaft mine, Microsoft.Xna.Framework.Rectangle position, Farmer who)
+        {
+            return false;
+        }
 
-        public virtual bool CheckAction(MineShaft mine, Location tileLocation, xTile.Dimensions.Rectangle viewport, Farmer who) => false;
+        public virtual bool CheckAction(MineShaft mine, Location tileLocation, xTile.Dimensions.Rectangle viewport, Farmer who)
+        {
+            return false;
+        }
 
-        public virtual bool PerformAction(MineShaft mine, string action, Farmer who, Location tileLocation) => false;
+        public virtual bool PerformAction(MineShaft mine, string action, Farmer who, Location tileLocation)
+        {
+            return false;
+        }
 
-        public virtual bool ShouldSpawnLadder(MineShaft mine) => true;
+        public virtual bool ShouldSpawnLadder(MineShaft mine)
+        {
+            return true;
+        }
 
-        private void DisposeHandler(object sender, ReturnedToTitleEventArgs e)
+        private void DisposeHandler(object? sender, ReturnedToTitleEventArgs e)
         {
             Dispose();
             ModEntry.Events.GameLoop.ReturnedToTitle -= DisposeHandler;

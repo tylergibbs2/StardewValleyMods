@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley.Locations;
 using System.Collections.Generic;
 
@@ -23,7 +23,10 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override List<string> MapPaths => new() { "custom-chest" };
 
-        public override bool ShouldSpawnLadder(MineShaft mine) => false;
+        public override bool ShouldSpawnLadder(MineShaft mine)
+        {
+            return false;
+        }
 
         public override void Initialize(MineShaft mine)
         {

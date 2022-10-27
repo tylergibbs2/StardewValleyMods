@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
@@ -16,7 +16,7 @@ namespace StardewRoguelike.UI
 
         public Farmer Farmer;
 
-        private Item hoverItem;
+        private Item? hoverItem;
 
         private float transparency = 1f;
 
@@ -106,9 +106,9 @@ namespace StardewRoguelike.UI
             {
                 this.buttons[i].scale = Math.Max(1f, this.buttons[i].scale - 0.025f);
                 Vector2 toDraw2 = new(Game1.uiViewport.Width / 2 - 384 + i * 64, this.yPositionOnScreen - 96 + 8);
-                if (Farmer.items.Count > i && Farmer.items.ElementAt(i) is not null)
+                if (Farmer.Items.Count > i && Farmer.Items.ElementAt(i) is not null)
                 {
-                    Farmer.items[i].drawInMenu(b, toDraw2, (Farmer.CurrentToolIndex == i) ? 0.9f : (this.buttons.ElementAt(i).scale * 0.8f), this.transparency, 0.88f);
+                    Farmer.Items[i].drawInMenu(b, toDraw2, (Farmer.CurrentToolIndex == i) ? 0.9f : (this.buttons.ElementAt(i).scale * 0.8f), this.transparency, 0.88f);
                 }
             }
             if (this.hoverItem is not null)

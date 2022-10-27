@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using StardewValley;
 using StardewValley.Menus;
 using System.IO;
@@ -14,7 +14,7 @@ namespace StardewRoguelike.Patches
             if (__instance is CoopMenu)
                 return true;
 
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), $@"assets/Saves/{Roguelike.SaveFile}/SaveGameInfo");
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $@"assets/Saves/{Roguelike.SaveFile}/SaveGameInfo");
             SaveGame.Load(path);
             Game1.exitActiveMenu();
 

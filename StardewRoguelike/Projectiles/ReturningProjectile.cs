@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewRoguelike.Bosses;
 using StardewValley;
@@ -17,7 +17,7 @@ namespace StardewRoguelike.Projectiles
             InitNetFields();
         }
 
-        public ReturningProjectile(float returningVelocityMultiplier, int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float velocityX, float velocityY, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation location = null, Character firer = null, bool spriteFromObjectSheet = false, onCollisionBehavior collisionBehavior = null)
+        public ReturningProjectile(float returningVelocityMultiplier, int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float velocityX, float velocityY, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation? location = null, Character? firer = null, bool spriteFromObjectSheet = false, onCollisionBehavior? collisionBehavior = null)
             : base(damageToFarmer, parentSheetIndex, bouncesTillDestruct, tailLength, rotationVelocity, velocityX, velocityY, startingPosition, collisionSound, firingSound, explode, damagesMonsters, location, firer, spriteFromObjectSheet, collisionBehavior)
         {
             InitNetFields();

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -33,16 +33,19 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override List<string> MapPaths => new() { "custom-slingshot" };
 
-        protected override void initNetFields()
+        protected override void InitNetFields()
         {
-            base.initNetFields();
+            base.InitNetFields();
 
             NetFields.AddFields(floorSecondsLeft, wavesKilled);
         }
 
-        public override bool ShouldSpawnLadder(MineShaft mine) => false;
+        public override bool ShouldSpawnLadder(MineShaft mine)
+        {
+            return false;
+        }
 
-        public void RenderHud(object sender, RenderedHudEventArgs e)
+        public void RenderHud(object? sender, RenderedHudEventArgs e)
         {
             string timeText = I18n.ChallengeFloor_Shared_TimeLeft(seconds: floorSecondsLeft.Value);
             Vector2 textSize = Game1.smallFont.MeasureString(timeText);

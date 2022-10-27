@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewValley;
 using StardewValley.Monsters;
@@ -422,8 +422,10 @@ namespace StardewRoguelike.Bosses
 
         private void FireArrowCone()
         {
-            if (Player is not null)
-                faceGeneralDirection(Player.Position, 0, false);
+            if (Player is null)
+                return;
+
+            faceGeneralDirection(Player.Position, 0, false);
 
             Vector2 shot_origin = new(GetBoundingBox().X, GetBoundingBox().Y);
             float fire_angle = 0f;
@@ -517,16 +519,16 @@ namespace StardewRoguelike.Bosses
             }
 
             foreach (Vector2 warpTile in tilesToWarp)
-                currentLocation.warps.Add(new((int)warpTile.X, (int)warpTile.Y, currentLocation.name.Value, (int)warpDestination.X, (int)warpDestination.Y, flipFarmer: false));
+                currentLocation.warps.Add(new((int)warpTile.X, (int)warpTile.Y, currentLocation.Name, (int)warpDestination.X, (int)warpDestination.Y, flipFarmer: false));
 
-            (currentLocation as MineShaft).get_MineShaftCustomDestination().Value = warpDestination;
+            ((MineShaft)currentLocation).get_MineShaftCustomDestination().Value = warpDestination;
 
             mapChangesEnabled = true;
         }
 
         public void DisableMapChanges()
         {
-            (currentLocation as MineShaft).createLadderAt(warpDestination);
+            ((MineShaft)currentLocation).createLadderAt(warpDestination);
             mapChangesEnabled = false;
         }
 

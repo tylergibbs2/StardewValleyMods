@@ -1,4 +1,4 @@
-﻿using StardewRoguelike.ChallengeFloors;
+using StardewRoguelike.ChallengeFloors;
 using StardewRoguelike.UI;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -36,7 +36,7 @@ namespace StardewRoguelike.Patches
                 Merchant.CurrentShop.forSale = Merchant.CurrentShop.itemPriceAndStock.Keys.ToList();
 
                 Merchant.CurrentShop.currentItemIndex = 0;
-                MethodInfo scroll = Merchant.CurrentShop.GetType().GetMethod("setScrollBarToCurrentIndex", BindingFlags.Instance | BindingFlags.NonPublic);
+                MethodInfo? scroll = Merchant.CurrentShop.GetType().GetMethod("setScrollBarToCurrentIndex", BindingFlags.Instance | BindingFlags.NonPublic);
                 scroll?.Invoke(Merchant.CurrentShop, null);
 
                 Merchant.CurrentShop.buyBackItems.Clear();

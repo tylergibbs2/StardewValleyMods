@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Menus;
@@ -14,7 +14,7 @@ namespace StardewRoguelike.Patches
         {
             if (__instance is Curse)
             {
-                Curse curse = __instance as Curse;
+                Curse curse = (Curse)__instance;
                 __result = new() { new("", Rectangle.Empty, null, curse.Description, Game1.buffsIcons, Game1.getSourceRectForStandardTileSheet(Game1.buffsIcons, Curse.IconId, 16, 16), 4f) };
                 return false;
             }

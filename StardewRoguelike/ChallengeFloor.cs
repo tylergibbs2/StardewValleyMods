@@ -41,7 +41,7 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="level">The level.</param>
         /// <returns>The found MineShaft, if it exists. Otherwise null.</returns>
-        public static MineShaft GetMineFromLevel(int level)
+        public static MineShaft? GetMineFromLevel(int level)
         {
             foreach (MineShaft mine in MineShaft.activeMines)
             {
@@ -64,7 +64,7 @@ namespace StardewRoguelike
 
             while (!Merchant.IsMerchantFloor(level + count))
             {
-                MineShaft mine = GetMineFromLevel(level + count);
+                MineShaft? mine = GetMineFromLevel(level + count);
                 if (mine is not null && IsChallengeFloor(mine))
                     return true;
 
@@ -156,10 +156,10 @@ namespace StardewRoguelike
         /// <returns>The spawn tile location.</returns>
         public static Vector2 GetSpawnLocation(MineShaft mine)
         {
-            Vector2 tileBeneathLadder = (Vector2)mine.GetType().GetProperty("tileBeneathLadder", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(mine);
+            Vector2? tileBeneathLadder = (Vector2?)mine.GetType().GetProperty("tileBeneathLadder", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mine);
 
             ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
-            return challenge.GetSpawnLocation(mine) ?? tileBeneathLadder;
+            return challenge.GetSpawnLocation(mine) ?? tileBeneathLadder ?? new(0, 0);
         }
 
         /// <summary>
@@ -222,20 +222,20 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="WarpedEventArgs"/> instance containing the event data.</param>
-        public static void PlayerWarped(object sender, WarpedEventArgs e)
+        public static void PlayerWarped(object? sender, WarpedEventArgs e)
         {
             if (!e.IsLocalPlayer)
                 return;
 
-            if (e.OldLocation is MineShaft && IsChallengeFloor(e.OldLocation as MineShaft))
+            if (e.OldLocation is MineShaft && IsChallengeFloor((MineShaft)e.OldLocation))
             {
-                ChallengeBase challenge = (e.OldLocation as MineShaft).get_MineShaftChallengeFloor();
-                challenge.PlayerLeft(e.OldLocation as MineShaft);
+                ChallengeBase challenge = ((MineShaft)e.OldLocation).get_MineShaftChallengeFloor();
+                challenge.PlayerLeft((MineShaft)e.OldLocation);
             }
-            if (e.NewLocation is MineShaft && IsChallengeFloor(e.NewLocation as MineShaft))
+            if (e.NewLocation is MineShaft && IsChallengeFloor((MineShaft)e.NewLocation))
             {
-                ChallengeBase challenge = (e.NewLocation as MineShaft).get_MineShaftChallengeFloor();
-                challenge.PlayerEntered(e.NewLocation as MineShaft);
+                ChallengeBase challenge = ((MineShaft)e.NewLocation).get_MineShaftChallengeFloor();
+                challenge.PlayerEntered((MineShaft)e.NewLocation);
             }
         }
 

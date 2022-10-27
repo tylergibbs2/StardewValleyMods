@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using StardewValley;
 using StardewValley.Locations;
 
@@ -11,9 +11,9 @@ namespace StardewRoguelike.Patches
         {
             if (Roguelike.AnswerDialogueAction(__instance, questionAndAnswer, questionParams))
                 __result = true;
-            else if (ChallengeFloor.AnswerDialogueAction(__instance as MineShaft, questionAndAnswer, questionParams))
+            else if (ChallengeFloor.AnswerDialogueAction((MineShaft)__instance, questionAndAnswer, questionParams))
                 __result = true;
-            else if (Merchant.AnswerDialogueAction(__instance as MineShaft, questionAndAnswer, questionParams))
+            else if (Merchant.AnswerDialogueAction((MineShaft)__instance, questionAndAnswer, questionParams))
                 __result = true;
         }
     }

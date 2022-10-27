@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using StardewValley.Locations;
 using StardewValley;
 using StardewValley.Monsters;
@@ -14,13 +14,13 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(Grub __instance, GameTime time)
         {
-            NetBool pupating = (NetBool)__instance.GetType().GetField("pupating", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(__instance);
-            int metamorphCounter = (int)__instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(__instance);
+            NetBool pupating = (NetBool)__instance.GetType().GetField("pupating", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
+            int metamorphCounter = (int)__instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
 
             if (pupating.Value)
             {
                 __instance.Scale = 1f + (float)Math.Sin(time.TotalGameTime.Milliseconds * ((float)Math.PI / 8f)) / 12f;
-                __instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, metamorphCounter - time.ElapsedGameTime.Milliseconds);
+                __instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, metamorphCounter - time.ElapsedGameTime.Milliseconds);
                 if (metamorphCounter <= 0)
                 {
                     __instance.Health = -500;
@@ -28,11 +28,11 @@ namespace StardewRoguelike.Patches
                     Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 8, __instance.getStandingX(), __instance.getStandingY(), 15, (int)__instance.getTileLocation().Y);
                     if (__instance.currentLocation is MineShaft)
                     {
-                        Monster toSpawn = (__instance.currentLocation as MineShaft).BuffMonsterIfNecessary(new Fly(__instance.Position, __instance.hard.Value)
+                        Monster toSpawn = ((MineShaft)__instance.currentLocation).BuffMonsterIfNecessary(new Fly(__instance.Position, __instance.hard.Value)
                         {
                             currentLocation = __instance.currentLocation
                         });
-                        Roguelike.AdjustMonster(__instance.currentLocation as MineShaft, ref toSpawn);
+                        Roguelike.AdjustMonster((MineShaft)__instance.currentLocation, ref toSpawn);
                         __instance.currentLocation.characters.Add(toSpawn);
                     }
                     else
@@ -41,7 +41,7 @@ namespace StardewRoguelike.Patches
                         {
                             currentLocation = __instance.currentLocation
                         };
-                        Roguelike.AdjustMonster(__instance.currentLocation as MineShaft, ref toSpawn);
+                        Roguelike.AdjustMonster((MineShaft)__instance.currentLocation, ref toSpawn);
                         __instance.currentLocation.characters.Add(toSpawn);
                     }
                 }

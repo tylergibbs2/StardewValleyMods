@@ -83,7 +83,7 @@ namespace StardewRoguelike
 
         private static bool DidHardModeDowngrade = false;
 
-        public static IMinigame ActiveMinigame = null;
+        private static IMinigame? ActiveMinigame = null;
 
         internal readonly static int[] RandomDebuffIds = new int[]
         {
@@ -117,7 +117,7 @@ namespace StardewRoguelike
             Curse.AdjustMonster(ref monster);
         }
 
-        public static void UpdateTicked(object sender, UpdateTickedEventArgs e)
+        public static void UpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
@@ -156,15 +156,15 @@ namespace StardewRoguelike
 
             if (Game1.player.currentLocation is MineShaft)
             {
-                MineShaft mine = Game1.player.currentLocation as MineShaft;
+                MineShaft mine = (MineShaft)Game1.player.currentLocation;
                 var localChests = mine.get_MineShaftNetChests();
                 foreach (NetChest chest in localChests)
                     chest.Spawn(mine);
             }
 
             int buffId = 88999;
-            Buff buff = Game1.buffsDisplay.otherBuffs.FirstOrDefault(p => p.which == buffId);
-            if (buff == null)
+            Buff? buff = Game1.buffsDisplay.otherBuffs.FirstOrDefault(p => p.which == buffId);
+            if (buff is null)
             {
                 Game1.buffsDisplay.addOtherBuff(
                     buff = new Buff(0, 0, 0, 0, 0, 0, 0, 0, 0, speed: 1, 0, 0, minutesDuration: 1, source: "Roguelike", displaySource: I18n.Roguelike_Adrenaline()) { which = buffId }
@@ -181,9 +181,9 @@ namespace StardewRoguelike
             if (Game1.killScreen)
                 HandleDeath();
 
-            if (ModEntry.Stats.StartTime is null && MineShaft.activeMines.Count > 0)
+            if (ModEntry.ActiveStats.StartTime is null && MineShaft.activeMines.Count > 0)
             {
-                MineShaft firstMine = null;
+                MineShaft? firstMine = null;
                 foreach (MineShaft mine in MineShaft.activeMines)
                 {
                     if (GetLevelFromMineshaft(mine) == 1)
@@ -197,11 +197,11 @@ namespace StardewRoguelike
                 {
                     long firstEntryTime = firstMine.get_MineShaftEntryTime().Value;
                     DateTime unix = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-                    ModEntry.Stats.StartTime = unix.AddSeconds(firstEntryTime);
+                    ModEntry.ActiveStats.StartTime = unix.AddSeconds(firstEntryTime);
                 }
             }
 
-            if (ModEntry.Stats.DinoKillEndTime is null && e.IsMultipleOf(15))
+            if (ModEntry.ActiveStats.DinoKillEndTime is null && e.IsMultipleOf(15))
             {
                 bool allPlayersPassed = true;
                 foreach (Farmer farmer in Game1.getOnlineFarmers())
@@ -215,13 +215,13 @@ namespace StardewRoguelike
 
                 if (allPlayersPassed)
                 {
-                    ModEntry.Stats.DinoKillEndTime = DateTime.UtcNow;
+                    ModEntry.ActiveStats.DinoKillEndTime = DateTime.UtcNow;
                     StatsMenu.Show();
                 }
             }
         }
 
-        public static void ButtonPressed(object sender, ButtonPressedEventArgs e)
+        public static void ButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
             if (!Context.IsWorldReady || !ModEntry.Config.AutomaticallyFaceMouse || Game1.player.CurrentTool is not MeleeWeapon weapon)
                 return;
@@ -251,7 +251,7 @@ namespace StardewRoguelike
             }
         }
 
-        public static void PlayerWarped(object sender, WarpedEventArgs e)
+        public static void PlayerWarped(object? sender, WarpedEventArgs e)
         {
             if (e.Player != Game1.player)
                 return;
@@ -271,7 +271,7 @@ namespace StardewRoguelike
             }
         }
 
-        public static void SaveLoaded(object sender, SaveLoadedEventArgs e)
+        public static void SaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
             Game1.options.screenFlash = false;
             Game1.options.zoomButtons = true;
@@ -303,7 +303,7 @@ namespace StardewRoguelike
             if (Context.IsMainPlayer)
             {
                 HardMode = false;
-                ModEntry.Stats.HardMode = false;
+                ModEntry.ActiveStats.HardMode = false;
 
                 qi.setTileLocation(new(17, 6));
                 qi.faceDirection(2);
@@ -335,7 +335,7 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">always null in SMAPI</param>
         /// <param name="e">The event's arguments</param>
-        public static void ReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        public static void ReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
         {
             if (CurrentLevel != 0)
                 CurrentLevel--;
@@ -347,7 +347,7 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">always null in SMAPI</param>
         /// <param name="e">The event's arguments</param>
-        public static void TimeChanged(object sender, TimeChangedEventArgs e)
+        public static void TimeChanged(object? sender, TimeChangedEventArgs e)
         {
             if (e.NewTime >= 2300)
                 Game1.timeOfDay = 600;
@@ -361,7 +361,7 @@ namespace StardewRoguelike
         {
             if (CurrentLevel == 0)
             {
-                ModEntry.Stats.Reset();
+                ModEntry.ActiveStats.Reset();
 
                 FloorRng = new(FloorRngSeed);
                 SeenMineMaps.Clear();
@@ -372,7 +372,7 @@ namespace StardewRoguelike
             Game1.player.get_FarmerWasDamagedOnThisLevel().Value = false;
 
             CurrentLevel++;
-            ModEntry.Stats.FloorsDescended = GetHighestMineShaftLevel();
+            ModEntry.ActiveStats.FloorsDescended = GetHighestMineShaftLevel();
             Merchant.CurrentShop = null;
             Perks.CurrentMenu = null;
             ForgeFloor.CurrentForge = null;
@@ -401,8 +401,9 @@ namespace StardewRoguelike
 
             if (!Context.IsMultiplayer)
             {
-                LocalizedContentManager mapContent = (LocalizedContentManager)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(MineShaft.activeMines[0]);
-                mapContent.Dispose();
+                LocalizedContentManager? mapContent = (LocalizedContentManager?)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(MineShaft.activeMines[0]);
+                if (mapContent is not null)
+                    mapContent.Dispose();
                 MineShaft.activeMines.RemoveAt(0);
                 return;
             }
@@ -433,8 +434,9 @@ namespace StardewRoguelike
 
             while (amountToRemove > 0 && MineShaft.activeMines.Count >= instancesToKeep)
             {
-                LocalizedContentManager mapContent = (LocalizedContentManager)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(MineShaft.activeMines[0]);
-                mapContent.Dispose();
+                LocalizedContentManager? mapContent = (LocalizedContentManager?)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(MineShaft.activeMines[0]);
+                if (mapContent is not null)
+                    mapContent.Dispose();
                 MineShaft.activeMines.RemoveAt(0);
             }
         }
@@ -639,13 +641,13 @@ namespace StardewRoguelike
             if (Game1.player.get_FarmerIsSpectating().Value)
                 SpectatorMode.ExitSpectatorMode();
 
-            Game1.showGlobalMessage(I18n.Roguelike_YouSurvived(floors: ModEntry.Stats.FloorsDescended));
+            Game1.showGlobalMessage(I18n.Roguelike_YouSurvived(floors: ModEntry.ActiveStats.FloorsDescended));
 
             WarpLocalPlayerToStart();
             Game1.player.temporarilyInvincible = false;
             CurrentLevel = 0;
             Game1.screenGlow = false;
-            ModEntry.Stats.EndTime = DateTime.UtcNow;
+            ModEntry.ActiveStats.EndTime = DateTime.UtcNow;
 
             ResetLocalGameState();
             ResetLocalPlayer();
@@ -753,7 +755,7 @@ namespace StardewRoguelike
         /// This handler refreshes the dialogue for Mister Qi.
         /// </summary>
         /// <param name="e">The event's arguments</param>
-        public static void MenuChanged(object sender, MenuChangedEventArgs e)
+        public static void MenuChanged(object? sender, MenuChangedEventArgs e)
         {
             if (e.OldMenu is not DialogueBox dialogue || (dialogue.characterDialogue is not null && dialogue.characterDialogue.speaker is null))
                 return;
@@ -826,8 +828,8 @@ namespace StardewRoguelike
                 Game1.drawObjectDialogue(I18n.Lobby_DidEnterHardMode());
             }
 
-            ModEntry.Stats.Reset();
-            ModEntry.Stats.HardMode = HardMode;
+            ModEntry.ActiveStats.Reset();
+            ModEntry.ActiveStats.HardMode = HardMode;
 
             return true;
         }
@@ -881,7 +883,7 @@ namespace StardewRoguelike
         /// <param name="mine">Where the fishing happened</param>
         /// <param name="who">Who did the fishing</param>
         /// <returns>An item to give the player</returns>
-        public static SObject GetFish(MineShaft mine, Farmer who)
+        public static SObject? GetFish(MineShaft mine, Farmer who)
         {
             double roll = Game1.random.NextDouble();
             double qualityRoll = Game1.random.NextDouble();

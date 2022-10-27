@@ -113,7 +113,7 @@ namespace StardewRoguelike.UI
         {
             base.receiveLeftClick(x, y, playSound);
 
-            if (uploadButton is not null && uploadButton.containsPoint(x, y) && ModEntry.Stats.EndTime is not null)
+            if (uploadButton is not null && uploadButton.containsPoint(x, y) && ModEntry.ActiveStats.EndTime is not null)
             {
                 Game1.playSound("bigSelect");
                 if (ModEntry.GetInvalidMods().Count > 0 || ModEntry.DisableUpload)
@@ -126,7 +126,7 @@ namespace StardewRoguelike.UI
                     Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_NotHost(), 3));
                     return;
                 }
-                else if (ModEntry.Stats.EndTime is null)
+                else if (ModEntry.ActiveStats.EndTime is null)
                 {
                     Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_MidRun(), 3));
                     return;
@@ -136,13 +136,13 @@ namespace StardewRoguelike.UI
                     Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_AlreadyUploaded(), 3));
                     return;
                 }
-                else if (ModEntry.Stats.StartTime is null)
+                else if (ModEntry.ActiveStats.StartTime is null)
                 {
                     Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_NotStarted(), 3));
                     return;
                 }
 
-                bool result = ModEntry.Stats.Upload();
+                bool result = ModEntry.ActiveStats.Upload();
                 if (result)
                 {
                     AlreadyUploaded = true;
@@ -196,7 +196,7 @@ namespace StardewRoguelike.UI
         public void DrawStats(SpriteBatch spriteBatch)
         {
             Vector2 textSize = Vector2.Zero;
-            foreach (string line in ModEntry.Stats.GetLines())
+            foreach (string line in ModEntry.ActiveStats.GetLines())
             {
                 textSize = Game1.smallFont.MeasureString(line);
 
@@ -284,7 +284,7 @@ namespace StardewRoguelike.UI
             DrawTitle(spriteBatch);
             DrawStats(spriteBatch);
 
-            if (ModEntry.Stats.EndTime is not null)
+            if (ModEntry.ActiveStats.EndTime is not null)
                 DrawUploadButton(spriteBatch);
 
             height = currentDrawHeight;

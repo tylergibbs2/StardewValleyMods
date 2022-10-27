@@ -1,4 +1,4 @@
-﻿using StardewValley.Locations;
+using StardewValley.Locations;
 using System;
 using System.Reflection;
 using StardewRoguelike.VirtualProperties;
@@ -11,6 +11,7 @@ namespace StardewRoguelike.Patches
     {
         protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "GetMine");
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("SMAPI.CommonErrors", "AvoidNetField:Avoid Netcode types when possible", Justification = "The property is read-only.")]
         public static bool Prefix(ref MineShaft __result, string name)
         {
             // requestedFloor/requestedLevel
@@ -31,7 +32,7 @@ namespace StardewRoguelike.Patches
             }
 
             MineShaft newMine = new(0);
-            newMine.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(newMine, Roguelike.FloorRng);
+            newMine.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(newMine, Roguelike.FloorRng);
             newMine.get_MineShaftLevel().Value = requestedLevel;
             newMine.get_MineShaftEntryTime().Value = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
 
@@ -68,7 +69,7 @@ namespace StardewRoguelike.Patches
 
             MineShaft.activeMines.Add(newMine);
 
-            newMine.GetType().GetMethod("generateContents", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(newMine, null);
+            newMine.GetType().GetMethod("generateContents", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(newMine, null);
 
 			__result = newMine;
 

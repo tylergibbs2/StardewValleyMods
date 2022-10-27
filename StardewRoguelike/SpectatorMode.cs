@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -27,10 +27,10 @@ namespace StardewRoguelike
 
     class SpectatorMode
     {
-        public static Farmer Following { get; private set; }
-        public static SpectateToolbar FollowingToolbar { get; private set; }
+        public static Farmer? Following { get; private set; }
+        public static SpectateToolbar? FollowingToolbar { get; private set; }
 
-        private static List<Item> StoredItems = new();
+        private readonly static List<Item> StoredItems = new();
 
         public static void EnterSpectatorMode()
         {
@@ -93,7 +93,7 @@ namespace StardewRoguelike
             StoredItems.Clear();
         }
 
-        public static void RespawnPlayers(object sender, WarpedEventArgs e)
+        public static void RespawnPlayers(object? sender, WarpedEventArgs e)
         {
             if (e.OldLocation.GetType() != typeof(MineShaft))
                 return;
@@ -228,7 +228,7 @@ namespace StardewRoguelike
         static int currentIndex = 0;
         static int timer = 0;
 
-        public static void Update(object sender, UpdateTickedEventArgs e)
+        public static void Update(object? sender, UpdateTickedEventArgs e)
         {
             if (!Context.IsWorldReady || !Game1.player.get_FarmerIsSpectating().Value)
                 return;

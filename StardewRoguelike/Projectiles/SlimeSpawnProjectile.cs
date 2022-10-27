@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Monsters;
@@ -45,13 +45,13 @@ namespace StardewRoguelike.Projectiles
                     if (!location.isTileLocationTotallyClearAndPlaceable(randomTile))
                         continue;
 
-                    MineShaft mine = location as MineShaft;
+                    MineShaft mine = (MineShaft)location;
                     Monster slime = mine.BuffMonsterIfNecessary(new GreenSlime(randomTile * 64f, 80));
                     slime.isHardModeMonster.Value = true;
                     slime.moveTowardPlayerThreshold.Value = 25;
                     if (!slime.Sprite.textureName.Value.EndsWith("_dangerous"))
                         slime.Sprite.LoadTexture(slime.Sprite.textureName.Value + "_dangerous");
-                    Roguelike.AdjustMonster(location as MineShaft, ref slime);
+                    Roguelike.AdjustMonster((MineShaft)location, ref slime);
                     location.characters.Add(slime);
 
                     slimesToSpawn--;

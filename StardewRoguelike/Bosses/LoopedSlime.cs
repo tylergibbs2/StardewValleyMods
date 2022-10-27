@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
@@ -117,13 +117,13 @@ namespace StardewRoguelike.Bosses
                 }
                 else if (roll <= 0.45)
                 {
-                    MineShaft mine = currentLocation as MineShaft;
+                    MineShaft mine = (MineShaft)currentLocation;
                     Monster slime = mine.BuffMonsterIfNecessary(new GreenSlime(getTileLocation() * 64f, 80));
                     slime.isHardModeMonster.Value = true;
                     slime.moveTowardPlayerThreshold.Value = 25;
                     if (!slime.Sprite.textureName.Value.EndsWith("_dangerous"))
                         slime.Sprite.LoadTexture(slime.Sprite.textureName.Value + "_dangerous");
-                    Roguelike.AdjustMonster(currentLocation as MineShaft, ref slime);
+                    Roguelike.AdjustMonster((MineShaft)currentLocation, ref slime);
                     mine.characters.Add(slime);
                 }
 
@@ -180,13 +180,13 @@ namespace StardewRoguelike.Bosses
                 Health -= actualDamage;
                 setTrajectory(xTrajectory, yTrajectory);
                 currentLocation.playSound("slimeHit");
-                GetType().BaseType.GetField("readyToJump", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(this, -1);
+                GetType().BaseType!.GetField("readyToJump", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(this, -1);
                 IsWalkingTowardPlayer = true;
                 if (Health <= 0)
                 {
                     currentLocation.playSound("slimedead");
 
-                    Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+                    Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
                     multiplayer.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position, color.Value * 0.66f, 10)
                     {
@@ -236,9 +236,9 @@ namespace StardewRoguelike.Bosses
                 if (stackedSlimes.Value > 0)
                     stack_adjustment = new Vector2((float)Math.Sin((double)randomStackOffset + Game1.currentGameTime.TotalGameTime.TotalSeconds * Math.PI * 2.0 + (double)(i * 30)) * 8f * Scale, -30 * i * Scale);
 
-                int wagTimer = (int)GetType().BaseType.GetField("wagTimer", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this);
-                int readyToJump = (int)GetType().BaseType.GetField("readyToJump", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this);
-                NetVector2 facePosition = (NetVector2)GetType().BaseType.GetField("facePosition", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this);
+                int wagTimer = (int)GetType().BaseType!.GetField("wagTimer", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
+                int readyToJump = (int)GetType().BaseType!.GetField("readyToJump", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
+                NetVector2 facePosition = (NetVector2)GetType().BaseType!.GetField("facePosition", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
 
                 b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset) + stack_adjustment, Sprite.SourceRect, prismatic ? Utility.GetPrismaticColor(348 + specialNumber.Value, 5f) : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * ((float)ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((float)(getStandingY() + i * 2) / 10000f)));
                 if (top_slime)

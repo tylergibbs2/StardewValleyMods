@@ -1,4 +1,4 @@
-﻿using StardewModdingAPI;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using System;
@@ -19,9 +19,9 @@ namespace StardewRoguelike
     {
         public int status { get; set; }
 
-        public string result { get; set; } = null;
+        public string? result { get; set; } = null;
 
-        public string error { get; set; } = null;
+        public string? error { get; set; } = null;
     }
 
     /// <summary>
@@ -58,9 +58,9 @@ namespace StardewRoguelike
 
         public int DamageTaken { get; set; } = 0;
 
-        public string Patch { get; set; } = null;
+        public string? Patch { get; set; } = null;
 
-        public string Seed { get; set; } = null;
+        public string? Seed { get; set; } = null;
 
         private int oldMoney = -1;
 
@@ -175,7 +175,7 @@ namespace StardewRoguelike
 
             string responseText = reader.ReadToEnd();
             ModEntry.ModMonitor.Log($"Upload response text: {responseText}", StardewModdingAPI.LogLevel.Trace);
-            StatsAPIResponse runIdResponse = null;
+            StatsAPIResponse? runIdResponse = null;
             try
             {
                 runIdResponse = JsonSerializer.Deserialize<StatsAPIResponse>(responseText);
@@ -196,7 +196,7 @@ namespace StardewRoguelike
                 ModEntry.ModMonitor.Log($"Server error when receiving response: {runIdResponse.error}", StardewModdingAPI.LogLevel.Error);
                 return false;
             }
-            else
+            else if (runIdResponse.result is not null)
             {
                 string runId = runIdResponse.result;
                 ModEntry.ModMonitor.Log($"Run successfully uploaded, ID is '{runId}'", StardewModdingAPI.LogLevel.Debug);
@@ -208,6 +208,11 @@ namespace StardewRoguelike
                 Process.Start(ps);
                 return true;
             }
+            else
+            {
+                ModEntry.ModMonitor.Log("An unknown error occured when uploading the run.", StardewModdingAPI.LogLevel.Error);
+                return false;
+            }
         }
 
         /// <summary>
@@ -216,7 +221,7 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="UpdateTickedEventArgs"/> instance containing the event data.</param>
-        public void WatchChanges(object sender, UpdateTickedEventArgs e)
+        public void WatchChanges(object? sender, UpdateTickedEventArgs e)
         {
             if (Roguelike.CurrentLevel == 0)
                 return;

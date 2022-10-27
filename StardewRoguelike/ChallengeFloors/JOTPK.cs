@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -7,9 +7,7 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.Monsters;
-using StardewValley.Objects;
 using System.Collections.Generic;
-using xTile.Tiles;
 
 namespace StardewRoguelike.ChallengeFloors
 {
@@ -42,18 +40,21 @@ namespace StardewRoguelike.ChallengeFloors
             return new() { "Cowboy_OVERWORLD" };
         }
 
-        public override Vector2? GetSpawnLocation(MineShaft mine) => new(20, 9);
+        public override Vector2? GetSpawnLocation(MineShaft mine)
+        {
+            return new(20, 9);
+        }
 
         public JOTPK() : base() { }
 
-        protected override void initNetFields()
+        protected override void InitNetFields()
         {
-            base.initNetFields();
+            base.InitNetFields();
 
             NetFields.AddFields(floorSecondsLeft);
         }
 
-        public void RenderHud(object sender, RenderedHudEventArgs e)
+        public void RenderHud(object? sender, RenderedHudEventArgs e)
         {
             string timeText = $"Time Left: {floorSecondsLeft.Value}";
             Vector2 textSize = Game1.smallFont.MeasureString(timeText);

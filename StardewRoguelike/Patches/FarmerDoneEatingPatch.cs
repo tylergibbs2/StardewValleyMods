@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Netcode;
 using StardewValley;
 using System;
@@ -19,8 +19,11 @@ namespace StardewRoguelike.Patches
             if (__instance != Game1.player)
                 return true;
 
-            SObject consumed = __instance.itemToEat as SObject;
-            if (consumed != null && consumed.HasContextTag("ginger_item") && __instance.hasBuff(25))
+            SObject consumed = (SObject)__instance.itemToEat;
+            if (consumed is null)
+                return false;
+
+            if (consumed.HasContextTag("ginger_item") && __instance.hasBuff(25))
             {
                 Game1.buffsDisplay.removeOtherBuff(25);
             }
@@ -77,7 +80,7 @@ namespace StardewRoguelike.Patches
             if (consumed != null && consumed.Edibility < 0 && __instance.IsLocalPlayer)
             {
                 __instance.CanMove = false;
-                NetEvent0 sickAnimationEvent = (NetEvent0)__instance.GetType().GetField("sickAnimationEvent", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(__instance);
+                NetEvent0 sickAnimationEvent = (NetEvent0)__instance.GetType().GetField("sickAnimationEvent", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(__instance)!;
                 sickAnimationEvent.Fire();
             }
 

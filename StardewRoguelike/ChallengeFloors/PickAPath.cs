@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewRoguelike.Extensions;
@@ -40,13 +40,13 @@ namespace StardewRoguelike.ChallengeFloors
 
         private readonly NetBool ShouldSpawnRooms = new();
 
-        private MineShaft Location;
+        private MineShaft Location = null!;
 
-        private DwarfGate gateLeft;
+        private DwarfGate gateLeft = null!;
 
-        private DwarfGate gateRight;
+        private DwarfGate gateRight = null!;
 
-        private GambaMenu gambaMenu = null;
+        private GambaMenu? gambaMenu = null;
 
         private bool initialized = false;
 
@@ -60,13 +60,13 @@ namespace StardewRoguelike.ChallengeFloors
 
         public CurseType? CurseToAdd { get; private set; }
 
-        public ShopMenu CurrentShop { get; private set; }
+        public ShopMenu CurrentShop { get; private set; } = null!;
 
         public PickAPath() : base() { }
 
-        protected override void initNetFields()
+        protected override void InitNetFields()
         {
-            base.initNetFields();
+            base.InitNetFields();
             NetFields.AddFields(InitializedRoomType, InaccessibleRoomType, IsLeftSide, ShouldSpawnRooms);
         }
 
@@ -139,7 +139,10 @@ namespace StardewRoguelike.ChallengeFloors
             }
         }
 
-        public override bool ShouldSpawnLadder(MineShaft mine) => canSpawnLadder;
+        public override bool ShouldSpawnLadder(MineShaft mine)
+        {
+            return canSpawnLadder;
+        }
 
         public override void Update(MineShaft mine, GameTime time)
         {
@@ -247,7 +250,7 @@ namespace StardewRoguelike.ChallengeFloors
                         Game1.drawObjectDialogue("You do not have enough money.");
                 }
 
-                if (paid)
+                if (paid && CurseToAdd is not null)
                 {
                     Curse.AddCurse(CurseToAdd.Value);
                     Game1.playSound("debuffSpell");

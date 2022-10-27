@@ -16,9 +16,9 @@ namespace StardewRoguelike.Bosses
 {
     public class BossDeathMessage
     {
-        public string BossName { get; set; }
+        public string BossName { get; set; } = "";
 
-        public int KillSeconds { get; set; }
+        public int KillSeconds { get; set; } = 0;
 
         public BossDeathMessage() { }
 
@@ -31,9 +31,9 @@ namespace StardewRoguelike.Bosses
 
     public static class BossManager
     {
-        private static Texture2D healthBarTexture;
+        private static Texture2D? healthBarTexture = null;
 
-        private static int previousHealth;
+        private static int PreviousHealth;
 
         public static readonly List<List<Type>> mainBossTypes = new()
         {
@@ -166,14 +166,17 @@ namespace StardewRoguelike.Bosses
 
         public static void Death(GameLocation location, Farmer killer, string displayName, Vector2? chestLocation = null)
         {
-            TimeSpan span = (TimeSpan)(DateTime.UtcNow - ModEntry.Stats.StartTime);
-            int killSeconds = (int)span.TotalSeconds;
-            ModEntry.MultiplayerHelper.SendMessage(new BossDeathMessage(displayName, killSeconds), "BossDeath");
-            Game1.onScreenMenus.Add(
-                new BossKillAnnounceMenu(displayName, killSeconds)
-            );
+            if (ModEntry.ActiveStats.StartTime is not null)
+            {
+                TimeSpan span = (TimeSpan)(DateTime.UtcNow - ModEntry.ActiveStats.StartTime);
+                int killSeconds = (int)span.TotalSeconds;
+                ModEntry.MultiplayerHelper.SendMessage(new BossDeathMessage(displayName, killSeconds), "BossDeath");
+                Game1.onScreenMenus.Add(
+                    new BossKillAnnounceMenu(displayName, killSeconds)
+                );
+            }
 
-            ModEntry.Stats.BossesDefeated++;
+            ModEntry.ActiveStats.BossesDefeated++;
 
             StopRenderHealthBar();
 
@@ -194,7 +197,7 @@ namespace StardewRoguelike.Bosses
 
             if (chestLocation.HasValue)
             {
-                MineShaft mine = location as MineShaft;
+                MineShaft mine = (MineShaft)location;
                 int level = Roguelike.GetLevelFromMineshaft(mine);
                 int additionalGold = BossFloor.GetBossIndexForFloor(level) * 5;
 
@@ -209,7 +212,7 @@ namespace StardewRoguelike.Bosses
             }
         }
 
-        public static void PlayerWarped(object sender, WarpedEventArgs e)
+        public static void PlayerWarped(object? sender, WarpedEventArgs e)
         {
             bool foundBoss = false;
             foreach (NPC character in Game1.player.currentLocation.characters)
@@ -245,22 +248,25 @@ namespace StardewRoguelike.Bosses
             ModEntry.Events.Display.WindowResized -= WindowResized;
         }
 
-        public static void WindowResized(object sender, WindowResizedEventArgs e)
+        public static void WindowResized(object? sender, WindowResizedEventArgs e)
         {
             foreach (NPC character in Game1.player.currentLocation.characters)
             {
                 if (character is IBossMonster boss)
                 {
-                    MakeBossHealthBar((boss as Monster).Health, (boss as Monster).MaxHealth);
+                    MakeBossHealthBar(((Monster)boss).Health, ((Monster)boss).MaxHealth);
                     break;
                 }
             }
 
         }
 
-        public static void RenderHealthBar(object sender, RenderedHudEventArgs e)
+        public static void RenderHealthBar(object? sender, RenderedHudEventArgs e)
         {
-            Monster boss = null;
+            if (healthBarTexture is null)
+                return;
+
+            Monster? boss = null;
             foreach (NPC character in Game1.player.currentLocation.characters)
             {
                 if (character is IBossMonster)
@@ -275,9 +281,9 @@ namespace StardewRoguelike.Bosses
                 return;
             }
 
-            if (boss.Health != previousHealth)
+            if (boss.Health != PreviousHealth)
             {
-                previousHealth = boss.Health;
+                PreviousHealth = boss.Health;
                 MakeBossHealthBar(boss.Health, boss.MaxHealth);
             }
 
@@ -324,11 +330,11 @@ namespace StardewRoguelike.Bosses
                 -1f
             );
 
-            Vector2 nameTextSize = Game1.dialogueFont.MeasureString((boss as IBossMonster).DisplayName);
+            Vector2 nameTextSize = Game1.dialogueFont.MeasureString(((IBossMonster)boss).DisplayName);
 
             Utility.drawTextWithColoredShadow(
                 e.SpriteBatch,
-                (boss as IBossMonster).DisplayName,
+                ((IBossMonster)boss).DisplayName,
                 Game1.dialogueFont,
                 new Vector2(
                     Game1.uiViewport.Width / 2 - nameTextSize.X / 2,

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Monsters;
@@ -13,7 +13,7 @@ namespace StardewRoguelike.Patches
 
         public static bool Prefix(GameLocation __instance, Monster monster, int x, int y, Farmer who)
         {
-            if (BossFloor.IsBossFloor(__instance as MineShaft) || ChallengeFloor.IsChallengeFloor(__instance as MineShaft))
+            if (BossFloor.IsBossFloor((MineShaft)__instance) || ChallengeFloor.IsChallengeFloor((MineShaft)__instance))
                 return false;
 
             List<int> objects = new();

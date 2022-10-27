@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley.Menus;
 using System.Collections.Generic;
 using System.Reflection;
@@ -48,9 +48,9 @@ namespace StardewRoguelike.Patches
 
         public static bool Prefix(TitleMenu __instance)
         {
-            int buttonsToShow = (int)__instance.GetType().GetField("buttonsToShow", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
+            int buttonsToShow = (int)__instance.GetType().GetField("buttonsToShow", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
             if (buttonsToShow == 3)
-                __instance.GetType().GetField("buttonsToShow", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(__instance, 4);
+                __instance.GetType().GetField("buttonsToShow", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, 4);
 
             return true;
         }
@@ -63,7 +63,7 @@ namespace StardewRoguelike.Patches
         public static void Postfix(CoopMenu __instance)
         {
 
-            List<MenuSlot> slots = (List<MenuSlot>)__instance.GetType().GetField("hostSlots", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
+            List<MenuSlot> slots = (List<MenuSlot>)__instance.GetType().GetField("hostSlots", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
             slots.RemoveAll(s => s.GetType().Name == "HostNewFarmSlot");
         }
     }

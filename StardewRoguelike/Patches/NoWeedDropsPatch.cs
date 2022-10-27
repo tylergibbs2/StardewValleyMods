@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Objects;
 using System;
@@ -10,17 +10,19 @@ namespace StardewRoguelike.Patches
     {
         protected override PatchDescriptor GetPatchDescriptor() => new(typeof(SObject), "cutWeed");
 
-        public static bool Prefix(SObject __instance, Farmer who, GameLocation location = null)
+        public static bool Prefix(SObject __instance, Farmer who, GameLocation? location = null)
         {
             if (location is null && who is not null)
                 location = who.currentLocation;
+            if (location is null)
+                return true;
 
 			Color c = Color.Green;
 			string sound = "cut";
 			int animation = 50;
 			__instance.Fragility = 2;
 
-			Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+			Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
 			switch (__instance.ParentSheetIndex)
 			{

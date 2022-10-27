@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewRoguelike.UI;
 using StardewValley;
 using System;
@@ -71,7 +71,7 @@ namespace StardewRoguelike
             PerkType.TurtleShell, PerkType.Leech
         };
 
-        public static PerkMenu CurrentMenu = null;
+        public static PerkMenu CurrentMenu = null!;
 
         private static readonly int TotalPerkCount = CommonPerks.Count + UncommonPerks.Count + RarePerks.Count;
 
@@ -205,13 +205,13 @@ namespace StardewRoguelike
             if (HasAllPerks())
                 return (null, null);
             else if (ActivePerks.Count + 1 == TotalPerkCount)
-                return (GetRandomUniquePerk().Value, null);
+                return (GetRandomUniquePerk()!.Value, null);
 
-            PerkType perk1 = GetRandomUniquePerk().Value;
+            PerkType perk1 = GetRandomUniquePerk()!.Value;
             PerkType perk2;
             do
             {
-                perk2 = GetRandomUniquePerk().Value;
+                perk2 = GetRandomUniquePerk()!.Value;
             } while (perk2 == perk1);
 
             return (perk1, perk2);

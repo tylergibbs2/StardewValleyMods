@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using StardewValley.Minigames;
 
 namespace StardewRoguelike.Patches
@@ -8,7 +8,7 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(MineCart __instance)
         {
-            int score = (int)__instance.GetType().GetField("score", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(__instance);
+            int score = (int)__instance.GetType().GetField("score", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(__instance)!;
             Minigames.JunimoKartScore += score;
 
             return true;

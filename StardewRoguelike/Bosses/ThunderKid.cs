@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
@@ -165,15 +165,15 @@ namespace StardewRoguelike.Bosses
                     Parent = currentLocation
                 }
             };
-            MethodInfo rumbleAndFade = currentLocation.GetType().BaseType.GetMethod("rumbleAndFade", BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo rumbleAndFade = currentLocation.GetType().BaseType!.GetMethod("rumbleAndFade", BindingFlags.Instance | BindingFlags.NonPublic)!;
             rumbleAndFade.Invoke(currentLocation, new object[] { 300 + radius * 100 });
 
             currentLocation.debuffPlayers(areaOfEffect, 12);
 
-            MethodInfo damagePlayers = currentLocation.GetType().BaseType.GetMethod("damagePlayers", BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo damagePlayers = currentLocation.GetType().BaseType!.GetMethod("damagePlayers", BindingFlags.Instance | BindingFlags.NonPublic)!;
             damagePlayers.Invoke(currentLocation, new object[] { areaOfEffect, DamageToFarmer });
 
-            Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
             int startingI = (int)(tileLocation.X - radius) * 64;
             int startingJ = (int)(tileLocation.Y - radius) * 64;
@@ -247,7 +247,7 @@ namespace StardewRoguelike.Bosses
                 return;
             }
 
-            typeof(ThunderKid).BaseType.GetField("lastFireball", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(this, 1000f);
+            typeof(ThunderKid).BaseType!.GetField("lastFireball", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(this, 1000f);
             base.behaviorAtGameTick(time);
             if (Health <= 0)
                 return;

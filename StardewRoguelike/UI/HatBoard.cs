@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
@@ -73,9 +73,9 @@ namespace StardewRoguelike.UI
         private readonly ClickableComponent acceptMiddleQuestButton;
         private readonly ClickableComponent acceptRightQuestButton;
 
-        private RenderTarget2D leftPaperTexture = null;
-        private RenderTarget2D middlePaperTexture = null;
-        private RenderTarget2D rightPaperTexture = null;
+        private RenderTarget2D? leftPaperTexture = null;
+        private RenderTarget2D? middlePaperTexture = null;
+        private RenderTarget2D? rightPaperTexture = null;
 
 
         private Vector2 acceptTextSize = Game1.dialogueFont.MeasureString(Game1.content.LoadString("Strings\\UI:AcceptQuest"));
@@ -201,6 +201,8 @@ namespace StardewRoguelike.UI
                 return;
 
             var rTargetOld = rTargetsOld[0].RenderTarget as RenderTarget2D;
+            if (rTargetOld is null)
+                return; // no old render target?
 
             if (texture is not null)
             {
@@ -241,9 +243,12 @@ namespace StardewRoguelike.UI
             HatQuest quest2 = new(19);
             HatQuest quest3 = new(86);
 
-            DrawQuestDetails(b, ref leftPaperTexture, quest, xPositionOnScreen + 150, 0);
-            DrawQuestDetails(b, ref middlePaperTexture, quest2, xPositionOnScreen + 582, 0);
-            DrawQuestDetails(b, ref rightPaperTexture, quest3, xPositionOnScreen + 1015, 0);
+            if (leftPaperTexture is not null)
+                DrawQuestDetails(b, ref leftPaperTexture, quest, xPositionOnScreen + 150, 0);
+            if (middlePaperTexture is not null)
+                DrawQuestDetails(b, ref middlePaperTexture, quest2, xPositionOnScreen + 582, 0);
+            if (rightPaperTexture is not null)
+                DrawQuestDetails(b, ref rightPaperTexture, quest3, xPositionOnScreen + 1015, 0);
 
             if (acceptLeftQuestButton.visible)
             {

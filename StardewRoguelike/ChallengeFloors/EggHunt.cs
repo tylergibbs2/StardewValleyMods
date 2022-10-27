@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
@@ -47,9 +47,9 @@ namespace StardewRoguelike.ChallengeFloors
 
         public EggHunt() : base() { }
 
-        protected override void initNetFields()
+        protected override void InitNetFields()
         {
-            base.initNetFields();
+            base.InitNetFields();
 
             NetFields.AddFields(eggsFound, eggsOnMap, floorSecondsLeft);
         }
@@ -81,7 +81,7 @@ namespace StardewRoguelike.ChallengeFloors
         public override bool CheckAction(MineShaft mine, Location tileLocation, xTile.Dimensions.Rectangle viewport, Farmer who)
         {
             Vector2 tileVector = new(tileLocation.X, tileLocation.Y);
-            Egg toRemove = null;
+            Egg? toRemove = null;
             foreach (Egg egg in eggsOnMap)
             {
                 if (egg.TileLocation == tileVector)
@@ -118,7 +118,7 @@ namespace StardewRoguelike.ChallengeFloors
                 egg.Draw(b);
         }
 
-        public void RenderHud(object sender, RenderedHudEventArgs e)
+        public void RenderHud(object? sender, RenderedHudEventArgs e)
         {
             string timeText = I18n.ChallengeFloor_Shared_TimeLeft(seconds: floorSecondsLeft.Value);
             Vector2 textSize = Game1.smallFont.MeasureString(timeText);
@@ -310,19 +310,19 @@ namespace StardewRoguelike.ChallengeFloors
 
     public class Egg : INetObject<NetFields>
     {
-        private readonly NetVector2 _tileLocation = new(Vector2.Zero);
+        private readonly NetVector2 tileLocation = new(Vector2.Zero);
 
-        private readonly NetInt _variant = new(0);
+        private readonly NetInt variant = new(0);
 
         public Vector2 TileLocation
         {
             get
             {
-                return _tileLocation.Value;
+                return tileLocation.Value;
             }
             set
             {
-                _tileLocation.Value = value;
+                tileLocation.Value = value;
             }
         }
 
@@ -330,11 +330,11 @@ namespace StardewRoguelike.ChallengeFloors
         {
             get
             {
-                return _variant.Value;
+                return variant.Value;
             }
             set
             {
-                _variant.Value = value;
+                variant.Value = value;
             }
         }
 
@@ -366,7 +366,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         private void InitializeNetFields()
         {
-            this.NetFields.AddFields(_tileLocation, _variant);
+            this.NetFields.AddFields(tileLocation, variant);
         }
 
         private void Initialize()

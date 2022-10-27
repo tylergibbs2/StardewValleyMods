@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -35,7 +35,7 @@ namespace StardewRoguelike.UI
 
         private MouseState oldMouseState;
 
-        public ClickableTextureComponent starIcon;
+        public ClickableTextureComponent starIcon = null!;
 
         public ClickableTextureComponent okButton;
 

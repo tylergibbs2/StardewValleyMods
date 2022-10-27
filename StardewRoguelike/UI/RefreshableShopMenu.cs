@@ -1,4 +1,4 @@
-﻿using StardewValley;
+using StardewValley;
 using StardewValley.Menus;
 using System.Collections.Generic;
 using System;
@@ -17,7 +17,7 @@ namespace StardewRoguelike.UI
 
         private ClickableTextureComponent refreshButton;
 
-        public RefreshableShopMenu(Dictionary<ISalable, int[]> itemPriceAndStock, bool hasRefreshed, int currency = 0, string who = null, Func<ISalable, Farmer, int, bool> on_purchase = null, Func<ISalable, bool> on_sell = null, string context = null) : base(itemPriceAndStock, currency, who, on_purchase, on_sell, context)
+        public RefreshableShopMenu(Dictionary<ISalable, int[]> itemPriceAndStock, bool hasRefreshed, int currency = 0, string? who = null, Func<ISalable, Farmer, int, bool>? on_purchase = null, Func<ISalable, bool>? on_sell = null, string? context = null) : base(itemPriceAndStock, currency, who, on_purchase, on_sell, context)
         {
             refreshButton = new(new(xPositionOnScreen + 174, yPositionOnScreen + height - 150, 64, 64), Game1.mouseCursors, refreshSourceRect, 4f)
             {

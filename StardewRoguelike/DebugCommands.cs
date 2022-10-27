@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using StardewModdingAPI;
 using StardewRoguelike.UI;
@@ -74,7 +74,7 @@ namespace StardewRoguelike
                     break;
                 case "perks":
                     for (int i = 0; i < Enum.GetValues<Perks.PerkType>().Length; i++)
-                        Perks.AddPerk(Perks.GetRandomUniquePerk().Value);
+                        Perks.AddPerk(Perks.GetRandomUniquePerk()!.Value);
                     break;
                 case "clearperks":
                     Perks.RemoveAllPerks();
@@ -158,14 +158,14 @@ namespace StardewRoguelike
                     else
                     {
                         Roguelike.HardMode = bool.Parse(args[1]);
-                        ModEntry.Stats.HardMode = bool.Parse(args[1]);
+                        ModEntry.ActiveStats.HardMode = bool.Parse(args[1]);
                     }
                     break;
                 case "printstats":
-                    ModEntry.ModMonitor.Log(JsonSerializer.Serialize(ModEntry.Stats), LogLevel.Info);
+                    ModEntry.ModMonitor.Log(JsonSerializer.Serialize(ModEntry.ActiveStats), LogLevel.Info);
                     break;
                 case "uploadstats":
-                    ModEntry.Stats.Upload();
+                    ModEntry.ActiveStats.Upload();
                     break;
                 case "forceboss":
                     if (args.Length == 1)
@@ -260,7 +260,7 @@ namespace StardewRoguelike
                     ModEntry.ModMonitor.Log($"drink: {Game1.buffsDisplay.drink}", LogLevel.Info);
                     break;
                 case "boulder":
-                    MineShaft mine = Game1.player.currentLocation as MineShaft;
+                    MineShaft mine = (MineShaft)Game1.player.currentLocation;
                     int whichClump = (Game1.random.NextDouble() < 0.5) ? 752 : 754;
                     if (mine.getMineArea() == 40)
                     {
@@ -327,13 +327,13 @@ namespace StardewRoguelike
             ModEntry.ModMonitor.Log(help.ToString(), LogLevel.Info);
         }
 
-        public static void ButtonPressed(object sender, ButtonPressedEventArgs e)
+        public static void ButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
             if (e.Button == SButton.RightAlt)
                 ForceLadder(new string[] { "", $"{Game1.currentCursorTile.X}", $"{Game1.currentCursorTile.Y}" });
             else if (e.Button == SButton.RightControl)
             {
-                MineShaft mine = Game1.player.currentLocation as MineShaft;
+                MineShaft mine = (MineShaft)Game1.player.currentLocation;
                 mine.SpawnLocalChest(new(Game1.currentCursorTile.X, Game1.currentCursorTile.Y));
             }
         }
@@ -351,12 +351,12 @@ namespace StardewRoguelike
                 return;
             }
 
-            MineShaft mine = Game1.player.currentLocation as MineShaft;
+            MineShaft mine = (MineShaft)Game1.player.currentLocation;
 
             int x = int.Parse(args[1]);
             int y = int.Parse(args[2]);
 
-            NetVector2Dictionary<bool, NetBool> createLadderEvent = (NetVector2Dictionary<bool, NetBool>)mine.GetType().GetField("createLadderAtEvent", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(mine);
+            NetVector2Dictionary<bool, NetBool> createLadderEvent = (NetVector2Dictionary<bool, NetBool>)mine.GetType().GetField("createLadderAtEvent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(mine)!;
             createLadderEvent[new Vector2(x, y)] = true;
         }
 

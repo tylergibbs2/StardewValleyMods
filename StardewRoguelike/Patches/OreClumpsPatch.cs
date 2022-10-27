@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using System;
@@ -11,12 +11,11 @@ namespace StardewRoguelike.Patches
 		protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "tryToAddOreClumps");
 		public static bool Prefix(MineShaft __instance)
         {
-			Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance);
+			Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
 
 			if (!(mineRandom.NextDouble() < 0.55))
-			{
 				return false;
-			}
+
 			Vector2 endPoint = __instance.getRandomTile();
 			for (int tries = 0; tries < 1 || mineRandom.NextDouble() < 0.25; tries++)
 			{

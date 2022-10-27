@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
@@ -12,7 +12,7 @@ namespace StardewRoguelike.TerrainFeatures
     {
         private string textureName = "TerrainFeatures\\SpeedPad";
 
-        private Lazy<Texture2D> texture;
+        private Lazy<Texture2D> texture = null!;
 
         private Rectangle SourceRect = new(0, 0, 32, 16);
 
@@ -60,7 +60,7 @@ namespace StardewRoguelike.TerrainFeatures
             string soundEffect = IsSlowPad.Value ? "debuffHit" : "cowboy_powerup";
             int duration = IsSlowPad.Value ? 750 : 1500;
 
-            Buff buff = Game1.buffsDisplay.otherBuffs.FirstOrDefault(p => p.which == buffId);
+            Buff? buff = Game1.buffsDisplay.otherBuffs.FirstOrDefault(p => p.which == buffId);
             if (buff is null)
             {
                 Game1.buffsDisplay.addOtherBuff(
@@ -71,7 +71,10 @@ namespace StardewRoguelike.TerrainFeatures
             buff.millisecondsDuration = duration;
         }
 
-        public override bool isPassable(Character c = null) => true;
+        public override bool isPassable(Character? c = null)
+        {
+            return true;
+        }
 
         public override bool tickUpdate(GameTime time, Vector2 tileLocation, GameLocation location)
         {

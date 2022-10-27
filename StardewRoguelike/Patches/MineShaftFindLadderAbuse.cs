@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
@@ -37,7 +37,7 @@ namespace StardewRoguelike.Patches
 
             if (x != -1 && y != -1)
             {
-                __instance.GetType().GetProperty("tileBeneathLadder", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, new Vector2(x, y));
+                __instance.GetType().GetProperty("tileBeneathLadder", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, new Vector2(x, y));
                 __instance.sharedLights[x + y * 999] = new LightSource(4, new Vector2(x, y - 2) * 64f + new Vector2(32f, 0f), 0.25f, new Color(0, 20, 50), x + y * 999, LightSource.LightContext.None, 0L);
                 __instance.sharedLights[x + y * 998] = new LightSource(4, new Vector2(x, y - 1) * 64f + new Vector2(32f, 0f), 0.5f, new Color(0, 20, 50), x + y * 998, LightSource.LightContext.None, 0L);
                 __instance.sharedLights[x + y * 997] = new LightSource(4, new Vector2(x, y) * 64f + new Vector2(32f, 0f), 0.75f, new Color(0, 20, 50), x + y * 997, LightSource.LightContext.None, 0L);

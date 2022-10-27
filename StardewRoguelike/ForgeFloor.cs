@@ -1,4 +1,4 @@
-﻿using StardewRoguelike.UI;
+using StardewRoguelike.UI;
 using StardewRoguelike.VirtualProperties;
 using StardewValley.Locations;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace StardewRoguelike
 
         public static readonly double ForgeFloorChance = 0.15;
 
-        public static LimitedForgeMenu CurrentForge = null;
+        public static LimitedForgeMenu? CurrentForge = null;
 
         public static bool ShouldDoForgeFloor(int level)
         {

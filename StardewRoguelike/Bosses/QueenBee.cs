@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.Extensions;
@@ -233,7 +233,7 @@ namespace StardewRoguelike.Bosses
                 Vector2 randomTile = new(getTileX() + Game1.random.Next(-4, 5), getTileY() + Game1.random.Next(-4, 5));
 
                 Monster bee = new QueenBeeMinion(randomTile, Difficulty);
-                Roguelike.AdjustMonster(currentLocation as MineShaft, ref bee);
+                Roguelike.AdjustMonster((MineShaft)currentLocation, ref bee);
                 currentLocation.characters.Add(bee);
             }
         }
@@ -379,7 +379,7 @@ namespace StardewRoguelike.Bosses
     {
         public StingerProjectile() : base() { }
 
-        public StingerProjectile(int damageToFarmer, float xVelocity, float yVelocity, Vector2 startingPosition, string collisionSound, string firingSound, GameLocation location = null, Character firer = null)
+        public StingerProjectile(int damageToFarmer, float xVelocity, float yVelocity, Vector2 startingPosition, string collisionSound, string firingSound, GameLocation? location = null, Character? firer = null)
             : base(damageToFarmer, 5, 0, 0, 0f, xVelocity, yVelocity, startingPosition, collisionSound, firingSound, false, false, location, firer)
         {
             ignoreLocationCollision.Value = true;

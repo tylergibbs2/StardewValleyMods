@@ -22,19 +22,19 @@ namespace StardewRoguelike
     {
         public static readonly string WebsiteBaseUrl = "https://roguelike.tyler.solutions";
 
-        public static IModEvents Events;
+        public static IModEvents Events { get; private set; } = null!;
 
-        public static IDataHelper DataHelper;
+        public static IDataHelper DataHelper { get; private set; } = null!;
 
-        public static IMultiplayerHelper MultiplayerHelper;
+        public static IMultiplayerHelper MultiplayerHelper { get; private set; } = null!;
 
-        public static IGameContentHelper GameContentHelper;
+        public static IGameContentHelper GameContentHelper { get; private set; } = null!;
 
-        public static IReflectionHelper ReflectionHelper;
+        public static IReflectionHelper ReflectionHelper { get; private set; } = null!;
 
-        public static IModRegistry ModRegistry;
+        public static IModRegistry ModRegistry { get; private set; } = null!;
 
-        public static IMonitor ModMonitor;
+        public static IMonitor ModMonitor { get; private set; } = null!;
 
         /// <summary>
         /// Used for uploading the run statistics online.
@@ -44,28 +44,28 @@ namespace StardewRoguelike
         /// <summary>
         /// Tracks the statistics of the game.
         /// </summary>
-        public static readonly Stats Stats = new();
+        public static readonly Stats ActiveStats = new();
 
-        public static bool Invincible = false;
+        public static bool Invincible { get; set; } = false;
 
-        public static bool ShouldShowModDisclaimer = false;
+        public static bool ShouldShowModDisclaimer { get; set; } = false;
 
-        public static ModConfig Config;
+        public static ModConfig Config { get; private set; } = null!;
 
         /// <summary>
         /// Whether or not being able to upload a run online is disabled.
         /// </summary>
-        public static bool DisableUpload = false;
+        public static bool DisableUpload { get; set; } = false;
 
-        public static string CurrentVersion = null;
-        public static string NewUpdateVersion = null;
+        public static string? CurrentVersion { get; private set; } = null;
+        public static string? NewUpdateVersion { get; private set; } = null;
 
         /// <summary>
         /// All assets that have been modified.
         /// The dictionary key is the name of the asset as the game requests it,
         /// the value is the filepath of the asset to replace it with.
         /// </summary>
-        private readonly Dictionary<string, string> modifiedAssets = new()
+        private readonly Dictionary<string, string> ModifiedAssets = new()
         {
             { "Maps/Mine", "assets/Maps/custom-lobby.tmx" },
             { "Maps/Festivals", "assets/Maps/Festivals.png" },
@@ -78,12 +78,12 @@ namespace StardewRoguelike
             { "TerrainFeatures/SpeedPad", "assets/TileSheets/speedrun_pads.png" }
         };
 
-        private readonly Dictionary<string, string> modifiedStrings = new()
+        private readonly Dictionary<string, string> ModifiedStrings = new()
         {
             { "OptionsPage.cs.11281", "Access Perks" }
         };
 
-        private readonly Dictionary<int, string> modifiedObjectInformation = new()
+        private readonly Dictionary<int, string> ModifiedObjectInformation = new()
         {
             { 896, "Galaxy Soul/2000/-300/Crafting -2/Galaxy Soul/Forge 3 of these into a Galaxy weapon to unleash its final form." },
             { 472, "Parsnip Seeds/10/-300/Seeds -74/Parsnip Seeds/Takes 6 floors to mature." },
@@ -155,7 +155,7 @@ namespace StardewRoguelike
             helper.Events.GameLoop.SaveLoaded += Roguelike.SaveLoaded;
             helper.Events.GameLoop.ReturnedToTitle += Roguelike.ReturnedToTitle;
             helper.Events.GameLoop.TimeChanged += Roguelike.TimeChanged;
-            helper.Events.GameLoop.UpdateTicked += Stats.WatchChanges;
+            helper.Events.GameLoop.UpdateTicked += ActiveStats.WatchChanges;
             helper.Events.GameLoop.UpdateTicked += Roguelike.UpdateTicked;
             helper.Events.GameLoop.UpdateTicked += SpectatorMode.Update;
             helper.Events.GameLoop.UpdateTicked += Curse.UpdateTicked;
@@ -185,12 +185,15 @@ namespace StardewRoguelike
             }
         }
 
-        public void CheckForUpdate(object sender, GameLaunchedEventArgs e)
+        public void CheckForUpdate(object? sender, GameLaunchedEventArgs e)
         {
-            object metadata = Helper.ModRegistry.Get(Helper.ModRegistry.ModID);
-            ModEntryModel updateResult = (ModEntryModel)metadata.GetType().GetProperty("UpdateCheckData", BindingFlags.Instance | BindingFlags.Public).GetValue(metadata);
+            object? metadata = Helper.ModRegistry.Get(Helper.ModRegistry.ModID);
+            if (metadata is null)
+                return;
 
-            CurrentVersion = (metadata as IModInfo).Manifest.Version.ToString();
+            ModEntryModel? updateResult = (ModEntryModel?)metadata.GetType().GetProperty("UpdateCheckData", BindingFlags.Instance | BindingFlags.Public)!.GetValue(metadata);
+
+            CurrentVersion = ((IModInfo)metadata).Manifest.Version.ToString();
 
             if (updateResult is null || updateResult.SuggestedUpdate is null)
                 return;
@@ -198,7 +201,7 @@ namespace StardewRoguelike
             NewUpdateVersion = updateResult.SuggestedUpdate.Version.ToString();
         }
 
-        public void RenderHud(object sender, RenderedHudEventArgs e)
+        public void RenderHud(object? sender, RenderedHudEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
@@ -293,7 +296,7 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="MenuChangedEventArgs"/> instance containing the event data.</param>
-        public void MenuChanged(object sender, MenuChangedEventArgs e)
+        public void MenuChanged(object? sender, MenuChangedEventArgs e)
         {
             if (e.OldMenu is GameMenu && e.NewMenu is null)
             {
@@ -334,9 +337,9 @@ namespace StardewRoguelike
             }
         }
 
-        private void SetupGMCM(object sender, GameLaunchedEventArgs e)
+        private void SetupGMCM(object? sender, GameLaunchedEventArgs e)
         {
-            IGenericModConfigMenuApi configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+            IGenericModConfigMenuApi? configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
             if (configMenu is null)
                 return;
 
@@ -381,14 +384,14 @@ namespace StardewRoguelike
 
         /// <summary>
         /// Event handler for when a game asset is requested to be loaded.
-        /// This handles loading all custom assets as defined in <see cref="modifiedAssets"/>.
+        /// This handles loading all custom assets as defined in <see cref="ModifiedAssets"/>.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="AssetRequestedEventArgs"/> instance containing the event data.</param>
         /// <exception cref="System.NotImplementedException">If a file attempting to be loaded has no implemented way to be loaded.</exception>
-        public void AssetRequested(object sender, AssetRequestedEventArgs e)
+        public void AssetRequested(object? sender, AssetRequestedEventArgs e)
         {
-            if (modifiedAssets.TryGetValue(e.Name.BaseName, out string fromPath))
+            if (ModifiedAssets.TryGetValue(e.Name.BaseName, out string? fromPath))
             {
                 string extension = Path.GetExtension(fromPath);
                 switch (extension)
@@ -408,7 +411,7 @@ namespace StardewRoguelike
             if (e.Name.BaseName.StartsWith("Maps/"))
             {
                 string map = e.Name.BaseName.Split("/").Last();
-                string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), $@"assets/Maps/{map}.tmx");
+                string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $@"assets/Maps/{map}.tmx");
                 if (File.Exists(path))
                 {
                     e.LoadFromModFile<xTile.Map>($"assets/Maps/{map}.tmx", AssetLoadPriority.High);
@@ -421,7 +424,7 @@ namespace StardewRoguelike
                 e.Edit(editor =>
                 {
                     IDictionary<string, string> data = editor.AsDictionary<string, string>().Data;
-                    foreach (var (key, value) in modifiedStrings)
+                    foreach (var (key, value) in ModifiedStrings)
                         data[key] = value;
                 });
             }
@@ -430,7 +433,7 @@ namespace StardewRoguelike
                 e.Edit(editor =>
                 {
                     IDictionary<int, string> data = editor.AsDictionary<int, string>().Data;
-                    foreach (var (key, value) in modifiedObjectInformation)
+                    foreach (var (key, value) in ModifiedObjectInformation)
                         data[key] = value;
                 });
             }
@@ -442,7 +445,7 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="PeerConnectedEventArgs"/> instance containing the event data.</param>
-        public void PeerConnected(object sender, PeerConnectedEventArgs e)
+        public void PeerConnected(object? sender, PeerConnectedEventArgs e)
         {
             if (!Context.IsMainPlayer || !e.Peer.HasSmapi)
                 return;
@@ -463,7 +466,7 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="ModMessageReceivedEventArgs"/> instance containing the event data.</param>
-        public void ModMessageReceived(object sender, ModMessageReceivedEventArgs e)
+        public void ModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
         {
             // Ignore all messages that aren't from this mod.
             if (e.FromModID != ModManifest.UniqueID)
@@ -472,7 +475,7 @@ namespace StardewRoguelike
             if (e.Type == "RespawnMessage") // Perform a respawn on this client
             {
                 RespawnMessage message = e.ReadAs<RespawnMessage>();
-                Stats.EndTime = null;
+                ActiveStats.EndTime = null;
 
                 SpectatorMode.ExitSpectatorMode(message.RespawnLevel);
                 Invincible = false;
