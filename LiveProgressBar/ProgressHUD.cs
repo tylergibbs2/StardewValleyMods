@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
@@ -61,7 +61,7 @@ namespace LiveProgressBar
 
         private List<string> GetExtraStrings()
         {
-            List<string> strings = new List<string>();
+            List<string> strings = new();
 
             float ItemsShippedPrct = Math.Min(0f + Utility.GetFarmCompletion((Farmer farmer) => Utility.getFarmerItemsShippedPercent(farmer)).Value, 1f);
             int ObelisksBuilt = Math.Min(Utility.numObelisksOnFarm(), 4);
@@ -72,32 +72,27 @@ namespace LiveProgressBar
             float CookedRecipesPrct = Math.Min(Utility.GetFarmCompletion((Farmer farmer) => Utility.getCookedRecipesPercent(farmer)).Value, 1f);
             float CraftedRecipesPrct = Math.Min(Utility.GetFarmCompletion((Farmer farmer) => Utility.getCraftedRecipesPercent(farmer)).Value, 1f);
             float FishCaughtPrct = Math.Min(Utility.GetFarmCompletion((Farmer farmer) => Utility.getFishCaughtPercent(farmer)).Value, 1f);
-            int walnutsFound = Math.Min((int)Game1.netWorldState.Value.GoldenWalnutsFound, 130);
+            int walnutsFound = Math.Min(Game1.netWorldState.Value.GoldenWalnutsFound.Value, 130);
+            string GoldClock = Game1.getFarm().isBuildingConstructed("Gold Clock") ? "Yes" : "No";
 
-            string GoldClock;
-            if (Game1.getFarm().isBuildingConstructed("Gold Clock"))
-                GoldClock = "Yes";
-            else
-                GoldClock = "No";
-
-            strings.Add(string.Format("Items Shipped: {0:P0}", ItemsShippedPrct));
-            strings.Add(string.Format("Obelisks Built: {0}/4", ObelisksBuilt));
-            strings.Add(string.Format("Gold Clock Built: {0}", GoldClock));
-            strings.Add(string.Format("Slayer Quests: {0:P0}", SlayerQuestsPrct));
-            strings.Add(string.Format("Max Friendships: {0:P0}", MaxFriendshipPrct));
-            strings.Add(string.Format("Farmer Level: {0}/25", Level));
-            strings.Add(string.Format("Stardrops Found: {0}/7", StardropsFound));
-            strings.Add(string.Format("Cooked Recipes: {0:P0}", CookedRecipesPrct));
-            strings.Add(string.Format("Crafted Recipes: {0:P0}", CraftedRecipesPrct));
-            strings.Add(string.Format("Fish Caught: {0:P0}", FishCaughtPrct));
-            strings.Add(string.Format("Golden Walnuts: {0}/130", walnutsFound));
+            strings.Add($"Items Shipped: {ItemsShippedPrct:P0}");
+            strings.Add($"Obelisks Built: {ObelisksBuilt}/4");
+            strings.Add($"Gold Clock Built: {GoldClock}");
+            strings.Add($"Slayer Quests: {SlayerQuestsPrct:P0}");
+            strings.Add($"Max Friendships: {MaxFriendshipPrct:P0}");
+            strings.Add($"Farmer Level: {Level}/25");
+            strings.Add($"Stardrops Found: {StardropsFound}/7");
+            strings.Add($"Cooked Recipes: {CookedRecipesPrct:P0}");
+            strings.Add($"Crafted Recipes: {CraftedRecipesPrct:P0}");
+            strings.Add($"Fish Caught: {FishCaughtPrct:P0}");
+            strings.Add($"Golden Walnuts: {walnutsFound}/130");
 
             return strings;
         }
 
         public override void draw(SpriteBatch b)
         {
-            if (!this.isVisible)
+            if (!isVisible)
                 return;
 
             // removes the leading space
@@ -105,24 +100,19 @@ namespace LiveProgressBar
             newCulture.NumberFormat.PercentPositivePattern = 1;  // Avoid putting a space between a number and its percentage
             System.Threading.Thread.CurrentThread.CurrentCulture = newCulture;
 
-            String percentString;
-            if (this.progress >= 1f)
-                percentString = "100%";
-            else
-                percentString = string.Format("{0:P2}", this.progress);
+            string percentString = progress > 1f ? "100%" : $"{progress:P2}";
+            Vector2 textPos = new(xPositionOnScreen + (width / 3) - 25, yPositionOnScreen + (height / 2) + 10);
 
-            Vector2 textPos = new Vector2(this.xPositionOnScreen + (this.width / 3) - 25, this.yPositionOnScreen + (this.height / 2) + 10);
-
-            Game1.drawDialogueBox(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height, false, true);
+            Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, false, true);
             Utility.drawTextWithShadow(b, percentString, Game1.dialogueFont, textPos, Game1.textColor);
 
-            if (this.showExtra)
+            if (showExtra)
             {
-                int startingX = this.xPositionOnScreen - this.extraWidth;
-                int startingY = (Game1.uiViewport.Height / 2) - this.height;
-                Game1.drawDialogueBox(startingX, startingY, this.extraWidth, this.extraHeight, false, true);
+                int startingX = xPositionOnScreen - extraWidth;
+                int startingY = (Game1.uiViewport.Height / 2) - height;
+                Game1.drawDialogueBox(startingX, startingY, extraWidth, extraHeight, false, true);
                 textPos = new Vector2(startingX + 40, startingY + 100);
-                foreach (string stat in this.GetExtraStrings())
+                foreach (string stat in GetExtraStrings())
                 {
                     Utility.drawTextWithShadow(b, stat, Game1.dialogueFont, textPos, Game1.textColor);
                     textPos.Y += 42;
