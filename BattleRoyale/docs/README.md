@@ -20,3 +20,7 @@ Battle Royalley: Year 2 is an update to the original Battle Royalley mod for Sta
 3. Select "Host"
 4. Select the only farm
 5. When ready, type `/start` to begin the game.
+
+## See also
+
+* [Release notes](release-notes.md)

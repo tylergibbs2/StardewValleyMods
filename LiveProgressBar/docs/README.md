@@ -6,13 +6,13 @@ With the release of Stardew Valley 1.5, the concept of overall progress was intr
 overall progress in the game as it happens, along with providing some more advanced details.
 
 
-### Requirements
+## Requirements
 
 - Stardew Valley
 - SMAPI (3.8+)
 
 
-### Installation
+## Installation
 
 1. Click [this link](https://github.com/tylergibbs2/LiveProgressBar/releases/latest) to get the latest release.
 2. Open the zipped file.
@@ -23,3 +23,7 @@ overall progress in the game as it happens, along with providing some more advan
 This mod was created for [TheHaboo on Twitch](https://www.twitch.tv/thehaboo) for his Stardew Valley speedruns.
 
 This mod is also on [Nexus](https://www.nexusmods.com/stardewvalley/mods/7330).
+
+## See also
+
+* [Release notes](release-notes.md)

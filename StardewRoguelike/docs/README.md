@@ -15,3 +15,7 @@ Download the mod, view media, and get help on the [Nexus page](https://www.nexus
 - Online leaderboard system
 - Difficulty scaling and hard mode
 - Multiplayer support
+
+## See also
+
+* [Release notes](release-notes.md)

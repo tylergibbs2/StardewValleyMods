@@ -8,3 +8,7 @@ This mod adds hitboxes below characters and on weapon swings.
 2. Download the [latest release](https://github.com/tylergibbs2/StardewHitboxes/releases/latest) of StardewHitboxes
 3. Extract the zip file from the downloaded release
 4. Place the folder from the zip file in your Stardew Valley `Mods` folder
+
+## See also
+
+* [Release notes](release-notes.md)
