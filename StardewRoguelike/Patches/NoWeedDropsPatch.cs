@@ -94,7 +94,7 @@ namespace StardewRoguelike.Patches
 
 			if (!sound.Equals("breakingGlass"))
 			{
-				if (Game1.random.NextDouble() < 1E-05)
+				if (Game1.random.NextDouble() < 0.01)
 					location.debris.Add(new Debris(new Hat(40), __instance.TileLocation * 64f + new Vector2(32f, 32f)));
 			}
 
