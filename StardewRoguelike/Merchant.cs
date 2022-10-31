@@ -462,11 +462,11 @@ namespace StardewRoguelike
         {
             Dictionary<ISalable, int[]> stock = new();
 
-            Utility.AddStock(stock, new SObject(472, 5), 100, 5);  // Parsnip Seeds
+            Utility.AddStock(stock, new SObject(472, 5), 50, 5);   // Parsnip Seeds
             Utility.AddStock(stock, new SObject(479, 5), 100, 5);  // Melon Seeds
-            Utility.AddStock(stock, new SObject(490, 5), 100, 5);  // Pumpkin Seeds
-            Utility.AddStock(stock, new SObject(486, 5), 100, 5);  // Starfruit Seeds
-            Utility.AddStock(stock, new SObject(347, 5), 100, 5);  // Rare Seeds
+            Utility.AddStock(stock, new SObject(490, 5), 150, 5);  // Pumpkin Seeds
+            Utility.AddStock(stock, new SObject(486, 5), 200, 5);  // Starfruit Seeds
+            Utility.AddStock(stock, new SObject(347, 5), 250, 5);  // Rare Seeds
 
             return stock;
         }
