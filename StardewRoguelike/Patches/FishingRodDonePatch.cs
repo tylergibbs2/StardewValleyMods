@@ -18,7 +18,7 @@ namespace StardewRoguelike.Patches
 
             __instance.increment_FishingRodUses();
 
-            int maxUses = Perks.HasPerk(Perks.PerkType.Fisherman) ? 5 : 3;
+            int maxUses = Perks.HasPerk(Perks.PerkType.Fisherman) ? 10 : 5;
             if (__instance.get_FishingRodUses() >= maxUses)
             {
                 Game1.player.removeItemFromInventory(__instance);

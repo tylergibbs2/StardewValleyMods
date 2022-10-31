@@ -1,4 +1,4 @@
-{
+﻿{
   "Roguelike.Adrenaline": "Adrenaline",
   "Roguelike.YouSurvived": "You survived {{floors}} floors!",
   "Roguelike.WillBeRevived": "You will be revived at the next merchant.",
@@ -148,7 +148,7 @@
   "PerkTypeDesc.Scavenger": "Chance for monsters to drop food",
   "PerkTypeDesc.Sturdy": "Debuffs last half as long",
   "PerkTypeDesc.Indecisive": "You can refresh each merchant once",
-  "PerkTypeDesc.Fisherman": "Your fishing rods have +2 uses",
+  "PerkTypeDesc.Fisherman": "Your fishing rods have +5 uses",
   "PerkTypeDesc.Deconstructor": "You can deconstruct your items on merchant floors",
   "PerkTypeDesc.Gamer": "Good scores in arcade machines award gold",
   "PerkTypeDesc.Tiller": "Crops are worth 10% more",

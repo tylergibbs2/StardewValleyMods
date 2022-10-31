@@ -14,10 +14,6 @@
     <Reference Include="TMXTile" HintPath="$(GamePath)\smapi-internal\TMXTile.dll" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Weapons\" />
-  </ItemGroup>
-
   <Import Project="..\_build\common.targets" />
 
 </Project>
