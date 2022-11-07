@@ -3,6 +3,7 @@ This repository contains my SMAPI mods for Stardew Valley. See the individual mo
 ## Mods
 
 * **Battle Royalley - Year 2** ([nexus](https://www.nexusmods.com/stardewvalley/mods/9891)/[source](https://github.com/tylergibbs2/StardewValleyMods/tree/master/BattleRoyale)) - Battle Royalley: Year 2 is an update to the original Battle Royalley mod for Stardew Valley.
+* **Cold Pets** ([nexus](https://www.nexusmods.com/stardewvalley/mods/14379)/[source](https://github.com/tylergibbs2/StardewValleyMods/tree/master/ColdPets)) - Pets stay inside during winter.
 * **Default Farmer** ([nexus](https://www.nexusmods.com/stardewvalley/mods/12421)/[source](https://github.com/tylergibbs2/StardewValleyMods/tree/master/DefaultFarmer)) - Adds a Load and Save button to the character creation menus.
 * **Live Progress Bar** ([nexus](https://www.nexusmods.com/stardewvalley/mods/7330)/[source](https://github.com/tylergibbs2/StardewValleyMods/tree/master/LiveProgressBar)) - Shows live progress on Stardew Valley with a menu for advanced details.
 * **Junimo Boy** ([source](https://github.com/tylergibbs2/StardewValleyMods/tree/master/JunimoBoy)) - Adds a mobile game console to play your favorite arcade games.
