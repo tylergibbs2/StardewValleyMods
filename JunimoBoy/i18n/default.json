@@ -1,6 +1,6 @@
-{
-  "JunimoBoy.ItemName": "Junimo Boy",
-  "JunimoBoy.ItemDesc": "A portable game console.",
+﻿{
+    "Item.JunimoBoy.Name": "Junimo Boy",
+    "Item.JunimoBoy.Description": "A portable game console.",
 
-  "JunimoBoy.Startup": "The console boots up... which game do you want to play?"
+    "Item.JunimoBoy.Startup": "The console boots up... which game do you want to play?"
 }

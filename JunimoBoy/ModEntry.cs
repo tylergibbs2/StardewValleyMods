@@ -1,35 +1,40 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Minigames;
 using System;
+using System.IO;
 
 namespace JunimoBoy
 {
     internal class ModEntry : Mod
     {
-        public static Texture2D ItemTextures { get; private set; }
+        private static IApi JsonAssetsApi { get; set; } = null!;
 
         public override void Entry(IModHelper helper)
         {
             I18n.Init(helper.Translation);
 
-            ItemTextures = helper.ModContent.Load<Texture2D>("assets/TileSheets/items.png");
-
             helper.Events.Input.ButtonPressed += OnButtonPressed;
-            helper.Events.GameLoop.GameLaunched += (s, e) => InitSpaceCore(helper.ModRegistry);
+            helper.Events.GameLoop.GameLaunched += (s, e) => InitJsonAssets(helper);
 
             helper.ConsoleCommands.Add("jb_giveitem", "Gives you a Junimo Boy", GiveJunimoBoy);
         }
 
-        private void InitSpaceCore(IModRegistry modRegistry)
+        private static void InitJsonAssets(IModHelper helper)
         {
-            SpaceCore.IApi api = modRegistry.GetApi<SpaceCore.IApi>("spacechase0.SpaceCore");
+            IApi? api = helper.ModRegistry.GetApi<IApi>("spacechase0.JsonAssets");
             if (api is null)
-                throw new Exception("missing spacecore dep somehow");
+                throw new Exception("missing json assets dep somehow");
 
-            api.RegisterSerializerType(typeof(JunimoBoy));
+            api.LoadAssets(Path.Combine(helper.DirectoryPath, "assets"), helper.Translation);
+            JsonAssetsApi = api;
+        }
+
+        private static int GetItemId()
+        {
+            return JsonAssetsApi.GetObjectId("Junimo Boy");
         }
 
         private void OnQuestionAnswer(Farmer who, string answer)
@@ -45,9 +50,9 @@ namespace JunimoBoy
             }
         }
 
-        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
+        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
-            if (!Context.IsWorldReady || !e.Button.IsActionButton() || Game1.player.CurrentItem is not JunimoBoy junimoBoy)
+            if (!Context.IsWorldReady || !e.Button.IsActionButton() || Game1.player.CurrentItem?.ParentSheetIndex != GetItemId())
                 return;
 
             GameLocation location = Game1.player.currentLocation;
@@ -59,7 +64,7 @@ namespace JunimoBoy
                 new Response("Cancel", "Turn off")
             };
 
-            location.createQuestionDialogue(I18n.JunimoBoy_Startup(), responses, OnQuestionAnswer);
+            location.createQuestionDialogue(I18n.Item_JunimoBoy_Startup(), responses, OnQuestionAnswer);
         }
 
         private void GiveJunimoBoy(string command, string[] args)
@@ -67,7 +72,7 @@ namespace JunimoBoy
             if (!Context.IsWorldReady)
                 return;
 
-            Game1.player.addItemByMenuIfNecessary(new JunimoBoy());
+            Game1.player.addItemByMenuIfNecessary(new SObject(GetItemId(), 1));
         }
     }
 }
