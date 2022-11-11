@@ -278,6 +278,9 @@ namespace StardewRoguelike
                 case "exportmap":
                     ExportMap();
                     break;
+                case "hatboard":
+                    Game1.activeClickableMenu = new HatBoard();
+                    break;
                 default:
                     ModEntry.ModMonitor.Log("Invalid command.", LogLevel.Error);
                     break;
@@ -323,6 +326,7 @@ namespace StardewRoguelike
             help.AppendLine("food : displays active food and drink buffs");
             help.AppendLine("boulder : spawns a resource clump (boulder/log) at cursor tile");
             help.AppendLine("exportmap : exports the current location to a tmx file");
+            help.AppendLine("hatboard : opens the hat board menu");
 
             ModEntry.ModMonitor.Log(help.ToString(), LogLevel.Info);
         }
