@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewRoguelike.HatQuests;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Monsters;
@@ -41,14 +42,12 @@ namespace StardewRoguelike.Patches
                 damager?.onDealContactDamage(__instance);
                 damage += Game1.random.Next(Math.Min(-1, -damage / 8), Math.Max(1, damage / 8));
                 int effectiveResilience = __instance.resilience;
-                if (__instance.CurrentTool is MeleeWeapon)
-                {
-                    effectiveResilience += ((MeleeWeapon)__instance.CurrentTool).addedDefense.Value;
-                }
+                if (__instance.CurrentTool is MeleeWeapon weapon1)
+                    effectiveResilience += weapon1.addedDefense.Value;
+
                 if (effectiveResilience >= damage * 0.5f)
-                {
                     effectiveResilience -= (int)(effectiveResilience * Game1.random.Next(3) / 10f);
-                }
+
                 if (damager != null && (__instance.isWearingRing(839) || Perks.HasPerk(Perks.PerkType.Reflect)))
                 {
                     Rectangle monsterBox = damager.GetBoundingBox();
@@ -66,7 +65,7 @@ namespace StardewRoguelike.Patches
                     damager.takeDamage(damageToMonster, (int)trajectory.X, (int)trajectory.Y, isBomb: false, 1.0, __instance);
                     damager.currentLocation.debris.Add(new Debris(damageToMonster, new Vector2(monsterBox.Center.X + 16, monsterBox.Center.Y), new Color(255, 130, 0), 1f, damager));
                 }
-                if (__instance.isWearingRing(524) && !Game1.buffsDisplay.hasBuff(21) && Game1.random.NextDouble() < (0.9 - (double)(__instance.health / 100f)) / (double)(3 - __instance.LuckLevel / 10) + ((__instance.health <= 15) ? 0.2 : 0.0))
+                if (__instance.isWearingRing(524) && !Game1.buffsDisplay.hasBuff(21) && Game1.random.NextDouble() < (0.9 - (double)(__instance.health / 100f)) / (3 - __instance.LuckLevel / 10) + ((__instance.health <= 15) ? 0.2 : 0.0))
                 {
                     __instance.currentLocation.playSound("yoba");
                     Game1.buffsDisplay.addOtherBuff(new Buff(21));
@@ -86,13 +85,20 @@ namespace StardewRoguelike.Patches
                     ShellCooldownSeconds = 10;
                 }
 
+                if (HatQuest.HasBuffFor(HatQuestType.SQUIRE_HELMET))
+                    damage = (int)Math.Round(damage * 0.75f);
+
                 if (Curse.HasCurse(CurseType.DamageOverTime))
                 {
                     damage = (int)Math.Round(damage * 1.5f);
                     Curse.DOTDamageToTick += damage;
                 }
                 else
+                {
                     __instance.health = Math.Max(0, __instance.health - damage);
+                    if (Game1.player.get_FarmerActiveHatQuest() is not null)
+                        Game1.player.get_FarmerActiveHatQuest()!.DamageTaken += damage;
+                }
 
                 if (Curse.HasCurse(CurseType.BrittleCrown) && Game1.random.NextDouble() < 0.9)
                 {

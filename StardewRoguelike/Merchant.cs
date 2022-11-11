@@ -35,6 +35,8 @@ namespace StardewRoguelike
 
         public static ShopMenu CurrentSeedShop { get; set; } = null!;
 
+        public static HatBoard CurrentHatBoard { get; set; } = null!;
+
         internal static CurseType? CurseToAdd { get; set; } = null;
 
         public static string GetMapPath(MineShaft mine)
@@ -188,6 +190,7 @@ namespace StardewRoguelike
                 menu.setUpStoreForContext();
                 CurrentShop = menu;
                 CurrentSeedShop = new(GetSeedStock(), context: "SeedShop");
+                CurrentHatBoard = new();
 
                 foreach (Vector2 potTile in GardenPotTiles)
                 {
@@ -443,7 +446,7 @@ namespace StardewRoguelike
             }
             else if (action == "HatBoard")
             {
-                Game1.activeClickableMenu = new HatBoard();
+                Game1.activeClickableMenu = CurrentHatBoard;
                 Game1.playSound("bigSelect");
 
                 return true;

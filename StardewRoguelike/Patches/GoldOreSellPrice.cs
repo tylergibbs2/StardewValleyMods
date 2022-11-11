@@ -1,3 +1,4 @@
+using StardewRoguelike.HatQuests;
 using StardewValley;
 
 namespace StardewRoguelike.Patches
@@ -10,7 +11,8 @@ namespace StardewRoguelike.Patches
 		{
 			if (__instance.ParentSheetIndex == 384)
             {
-				__result = 15 * Game1.getOnlineFarmers().Count;
+                int basePrice = HatQuest.HasBuffFor(HatQuestType.TOPHAT) ? 20 : 15;
+                __result = basePrice * Game1.getOnlineFarmers().Count;
 				return false;
             }
 

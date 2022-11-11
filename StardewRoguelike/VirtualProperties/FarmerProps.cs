@@ -1,4 +1,5 @@
-﻿using Netcode;
+using Netcode;
+using StardewRoguelike.HatQuests;
 using StardewValley;
 using System.Runtime.CompilerServices;
 
@@ -14,6 +15,25 @@ namespace StardewRoguelike.VirtualProperties
         {
             var holder = values.GetOrCreateValue(farmer);
             return holder.Value;
+        }
+    }
+
+    public static class FarmerActiveHatQuest
+    {
+        internal class Holder { public HatQuest? Value = null; }
+
+        internal static ConditionalWeakTable<Farmer, Holder> values = new();
+
+        public static HatQuest? get_FarmerActiveHatQuest(this Farmer farmer)
+        {
+            var holder = values.GetOrCreateValue(farmer);
+            return holder.Value;
+        }
+
+        public static void set_FarmerActiveHatQuest(this Farmer farmer, HatQuest? value)
+        {
+            var holder = values.GetOrCreateValue(farmer);
+            holder.Value = value;
         }
     }
 

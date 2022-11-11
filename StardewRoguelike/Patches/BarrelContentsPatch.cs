@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
+using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Objects;
@@ -10,7 +11,7 @@ namespace StardewRoguelike.Patches
     {
         protected override PatchDescriptor GetPatchDescriptor() => new(typeof(BreakableContainer), "releaseContents");
 
-        public static bool Prefix(BreakableContainer __instance, GameLocation location)
+        public static bool Prefix(BreakableContainer __instance, GameLocation location, Farmer who)
         {
 			int x = (int)__instance.TileLocation.X;
 			int y = (int)__instance.TileLocation.Y;
@@ -28,6 +29,9 @@ namespace StardewRoguelike.Patches
                 else if (itemId > 0 && quantity > 0)
                     Game1.createMultipleObjectDebris(itemId, x, y, quantity, location);
             }
+
+            if (who == Game1.player && who.get_FarmerActiveHatQuest() is not null)
+                who.get_FarmerActiveHatQuest()!.BarrelsDestroyed++;
 
 			return false;
         }

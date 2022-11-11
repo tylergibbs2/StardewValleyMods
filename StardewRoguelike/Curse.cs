@@ -211,6 +211,9 @@ namespace StardewRoguelike
                 Game1.player.health -= toRemove;
                 DOTDamageToTick = Math.Max(DOTDamageToTick - toRemove, 0);
 
+                if (Game1.player.get_FarmerActiveHatQuest() is not null)
+                    Game1.player.get_FarmerActiveHatQuest()!.DamageTaken += toRemove;
+
                 if (Game1.player.health <= 0 && Game1.player.GetEffectsOfRingMultiplier(863) > 0 && !Game1.player.hasUsedDailyRevive.Value)
                 {
                     Game1.player.startGlowing(new Color(255, 255, 0), border: false, 0.25f);
@@ -251,6 +254,9 @@ namespace StardewRoguelike
                 int toAdd = Math.Max(3, HOTHealToTick / 3);
                 Game1.player.health = Math.Min(Game1.player.health + toAdd, Game1.player.maxHealth);
                 HOTHealToTick = Math.Max(0, HOTHealToTick - toAdd);
+
+                if (Game1.player.get_FarmerActiveHatQuest() is not null)
+                    Game1.player.get_FarmerActiveHatQuest()!.HealthHealed += toAdd;
             }
         }
 

@@ -21,6 +21,7 @@ using StardewRoguelike.Patches;
 using StardewRoguelike.Extensions;
 using Microsoft.Xna.Framework;
 using StardewValley.Minigames;
+using StardewRoguelike.HatQuests;
 
 namespace StardewRoguelike
 {
@@ -130,16 +131,25 @@ namespace StardewRoguelike
                 ActiveMinigame = null;
             }
 
+            bool hasFiberHat = HatQuest.HasHat(40);
+            int trueMax = TrueMaxHP + (hasFiberHat ? 25 : 0);
             if (Curse.HasCurse(CurseType.GlassCannon))
-                Game1.player.maxHealth = TrueMaxHP / 2;
+                Game1.player.maxHealth = trueMax / 2;
             else
-                Game1.player.maxHealth = TrueMaxHP;
+                Game1.player.maxHealth = trueMax;
 
             if (Game1.player.health > Game1.player.maxHealth)
                 Game1.player.health = Game1.player.maxHealth;
 
             if (e.IsOneSecond && FarmerTakeDamagePatch.ShellCooldownSeconds > 0 && Game1.shouldTimePass())
                 FarmerTakeDamagePatch.ShellCooldownSeconds--;
+
+            HatQuest? quest = Game1.player.get_FarmerActiveHatQuest();
+            if (quest is not null && quest.IsComplete())
+            {
+                quest.GiveHat();
+                Game1.player.set_FarmerActiveHatQuest(null);
+            }
 
             if (HardMode && !DidHardModeDowngrade && Game1.player.hasItemInInventory(194, 1))
             {
@@ -890,7 +900,7 @@ namespace StardewRoguelike
 
             int itemId;
             int quality;
-            if (roll <= 0.4)
+            if (roll <= 0.4 && !HatQuest.HasBuffFor(HatQuestType.FISHING_HAT))
             {
                 // trash
                 itemId = Game1.random.Next(167, 174);
@@ -909,6 +919,9 @@ namespace StardewRoguelike
                     quality = 1;
                 else
                     quality = 0;
+
+                if (Game1.player.get_FarmerActiveHatQuest() is not null)
+                    Game1.player.get_FarmerActiveHatQuest()!.FishCaught++;
             }
             else if (roll <= 0.9)
             {
@@ -955,6 +968,9 @@ namespace StardewRoguelike
             double roll = Game1.random.NextDouble();
 
             if (Perks.HasPerk(Perks.PerkType.BarrelEnthusiast))
+                roll = Math.Min(Game1.random.NextDouble(), roll);
+
+            if (HatQuest.HasBuffFor(HatQuestType.GARBAGE_HAT))
                 roll = Math.Min(Game1.random.NextDouble(), roll);
 
             if (roll <= 0.0001)
