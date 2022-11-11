@@ -18,18 +18,9 @@ namespace StardewRoguelike.UI
 
         private bool AcceptedQuest { get; set; } = false;
 
-        private const float leftPaperRotation = -0.0225f;
-        private const float middlePaperRotation = 0.0225f;
-        private const float rightPaperRotation = -0.027f;
-
         private readonly ClickableComponent acceptLeftQuestButton;
         private readonly ClickableComponent acceptMiddleQuestButton;
         private readonly ClickableComponent acceptRightQuestButton;
-
-        private RenderTarget2D? leftPaperTexture = null;
-        private RenderTarget2D? middlePaperTexture = null;
-        private RenderTarget2D? rightPaperTexture = null;
-
 
         private Vector2 acceptTextSize = Game1.dialogueFont.MeasureString(Game1.content.LoadString("Strings\\UI:AcceptQuest"));
 
@@ -79,13 +70,6 @@ namespace StardewRoguelike.UI
             acceptLeftQuestButton.bounds = new(xPositionOnScreen + 120, yPositionOnScreen + height - 128, (int)acceptTextSize.X + 24, (int)acceptTextSize.Y + 24);
             acceptMiddleQuestButton.bounds = new(xPositionOnScreen + width / 2 - 135, yPositionOnScreen + height - 128, (int)acceptTextSize.X + 24, (int)acceptTextSize.Y + 24);
             acceptRightQuestButton.bounds = new(xPositionOnScreen + width - 360, yPositionOnScreen + height - 128, (int)acceptTextSize.X + 24, (int)acceptTextSize.Y + 24);
-
-            leftPaperTexture?.Dispose();
-            middlePaperTexture?.Dispose();
-            rightPaperTexture?.Dispose();
-            leftPaperTexture = null;
-            middlePaperTexture = null;
-            rightPaperTexture = null;
         }
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
@@ -118,18 +102,27 @@ namespace StardewRoguelike.UI
                 Game1.playSound("newArtifact");
                 Game1.player.set_FarmerActiveHatQuest(Quests[0]);
                 AcceptedQuest = true;
+
+                acceptMiddleQuestButton.visible = false;
+                acceptRightQuestButton.visible = false;
             }
             else if (acceptMiddleQuestButton.containsPoint(x, y))
             {
                 Game1.playSound("newArtifact");
                 Game1.player.set_FarmerActiveHatQuest(Quests[1]);
                 AcceptedQuest = true;
+
+                acceptLeftQuestButton.visible = false;
+                acceptRightQuestButton.visible = false;
             }
             else if (acceptRightQuestButton.containsPoint(x, y))
             {
                 Game1.playSound("newArtifact");
                 Game1.player.set_FarmerActiveHatQuest(Quests[2]);
                 AcceptedQuest = true;
+
+                acceptLeftQuestButton.visible = false;
+                acceptMiddleQuestButton.visible = false;
             }
         }
 
@@ -155,48 +148,22 @@ namespace StardewRoguelike.UI
         }
 
 
-        private void DrawHat(SpriteBatch b, HatQuest quest, int x, int y, float rotation)
+        private void DrawHat(SpriteBatch b, HatQuest quest, int x, int y, float alpha)
         {
-            b.Draw(FarmerRenderer.hatsTexture, new Vector2(x, y), quest.GetHatSourceRect(), Color.White, rotation, new Vector2(10f, 10f), 8f, SpriteEffects.None, 0.1f);
+            b.Draw(FarmerRenderer.hatsTexture, new Vector2(x, y), quest.GetHatSourceRect(), Color.White * alpha, 0f, new Vector2(10f, 10f), 8f, SpriteEffects.None, 0.1f);
         }
 
-        private void DrawQuestDetails(SpriteBatch b, ref RenderTarget2D? texture, HatQuest quest, int x, float rotation)
+        private void DrawQuestDetails(SpriteBatch b, HatQuest quest, int x, float alpha)
         {
-            var rTargetsOld = Game1.graphics.GraphicsDevice.GetRenderTargets();
-            if (rTargetsOld.Length == 0 || rTargetsOld[0].RenderTarget == null)
-                return;
-
-            if (rTargetsOld[0].RenderTarget is not RenderTarget2D rTargetOld)
-                return; // no old render target?
-
-            if (texture is not null)
-            {
-                b.Draw(texture, new Vector2(0, 0), new Rectangle(0, 0, rTargetOld.Width, rTargetOld.Height), Color.White, rotation, Vector2.Zero, 1f, SpriteEffects.None, 0.1f);
-                return;
-            }
-
-            texture = new(Game1.graphics.GraphicsDevice, rTargetOld.Width, rTargetOld.Height);
-
-            b.End();
-            Game1.graphics.GraphicsDevice.SetRenderTarget(texture);
-            b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
-
-            Game1.graphics.GraphicsDevice.Clear(Color.Transparent);
-
             Vector2 hatNameSize = Game1.dialogueFont.MeasureString(quest.GetHatName());
 
             int smallHatOffset = quest.IsBigHat() ? 0 : 32;
-            DrawHat(b, quest, x + 100, yPositionOnScreen + 220 + smallHatOffset, 0f);
-            b.DrawString(Game1.dialogueFont, quest.GetHatName(), new Vector2(x + 100 - (int)hatNameSize.X / 2, yPositionOnScreen + 300), Game1.textColor, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1f);
+            DrawHat(b, quest, x + 100, yPositionOnScreen + 220 + smallHatOffset, alpha);
+            b.DrawString(Game1.dialogueFont, quest.GetHatName(), new Vector2(x + 100 - (int)hatNameSize.X / 2, yPositionOnScreen + 300), Game1.textColor * alpha, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1f);
 
-            string parsed = Game1.parseText($"{quest.GetHatBuffDescription()}\n\n{quest.GetHatQuestDetails()}", Game1.smallFont, 320);
+            string parsed = Game1.parseText($"{quest.GetHatBuffDescription()}\n\n\n{quest.GetHatQuestDetails()}", Game1.smallFont, 320);
             Vector2 parsedSize = Game1.smallFont.MeasureString(parsed);
-            b.DrawString(Game1.smallFont, parsed, new Vector2(x + 100 - (int)parsedSize.X / 2, yPositionOnScreen + 350), Game1.textColor, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1f);
-
-            b.End();
-            Game1.graphics.GraphicsDevice.SetRenderTarget(rTargetOld);
-            b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
-            b.Draw(texture, new Vector2(0, 0), new Rectangle(0, 0, rTargetOld.Width, rTargetOld.Height), Color.White, rotation, Vector2.Zero, 1f, SpriteEffects.None, 0.1f);
+            b.DrawString(Game1.smallFont, parsed, new Vector2(x + 100 - (int)parsedSize.X / 2, yPositionOnScreen + 350), Game1.textColor * alpha, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1f);
         }
 
         public override void draw(SpriteBatch b)
@@ -204,9 +171,9 @@ namespace StardewRoguelike.UI
             b.Draw(Game1.fadeToBlackRect, Game1.graphics.GraphicsDevice.Viewport.Bounds, Color.Black * 0.75f);
             b.Draw(BoardTexture, new Vector2(xPositionOnScreen, yPositionOnScreen), new Rectangle(0, 0, 338, 198), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
 
-            DrawQuestDetails(b, ref leftPaperTexture, Quests[0], xPositionOnScreen + 150, 0);
-            DrawQuestDetails(b, ref middlePaperTexture, Quests[1], xPositionOnScreen + 582, 0);
-            DrawQuestDetails(b, ref rightPaperTexture, Quests[2], xPositionOnScreen + 1015, 0);
+            DrawQuestDetails(b, Quests[0], xPositionOnScreen + 150, acceptLeftQuestButton.visible ? 1f : 0.5f);
+            DrawQuestDetails(b, Quests[1], xPositionOnScreen + 582, acceptMiddleQuestButton.visible ? 1f : 0.5f);
+            DrawQuestDetails(b, Quests[2], xPositionOnScreen + 1015, acceptRightQuestButton.visible ? 1f : 0.5f);
 
             if (!AcceptedQuest)
             {
