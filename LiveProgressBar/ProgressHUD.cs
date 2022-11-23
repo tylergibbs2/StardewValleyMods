@@ -9,66 +9,61 @@ namespace LiveProgressBar
 {
     class ProgressHUD : IClickableMenu
     {
-        private float progress;
+        private float Progress { get; set; }
 
-        private bool showExtra = false;
-        private bool isVisible = true;
+        private bool ShowExtra { get; set; } = false;
+        private bool IsVisible { get; set; } = true;
 
         private int extraWidth;
         private int extraHeight;
 
-        private ClickableComponent percentClick;
-
         public ProgressHUD(float progress)
         {
-            this.width = 200;
-            this.height = 175;
+            width = 200;
+            height = 175;
 
-            this.extraWidth = 500;
-            this.extraHeight = 600;
+            extraWidth = 500;
+            extraHeight = 600;
 
-            this.progress = progress;
-            this.CalcPositions();
-            this.percentClick = new ClickableComponent(new Rectangle(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height), "percent");
+            Progress = progress;
+            CalculatePositions();
         }
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
         {
-            base.gameWindowSizeChanged(oldBounds, newBounds);
-            this.CalcPositions();
-            this.percentClick = new ClickableComponent(new Rectangle(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height), "percent");
+            CalculatePositions();
         }
 
-        private void CalcPositions()
+        private void CalculatePositions()
         {
-            this.xPositionOnScreen = Game1.uiViewport.Width - this.width;
-            this.yPositionOnScreen = (Game1.uiViewport.Height / 2) - this.height;
+            xPositionOnScreen = Game1.uiViewport.Width - width;
+            yPositionOnScreen = (Game1.uiViewport.Height / 2) - height;
         }
         public void SetProgress(float progress)
         {
-            this.progress = progress;
+            Progress = progress;
         }
 
         public void SetVisible(bool state)
         {
-            this.isVisible = state;
+            IsVisible = state;
         }
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            this.showExtra = !this.showExtra;
+            ShowExtra = !ShowExtra;
         }
 
-        private List<string> GetExtraStrings()
+        private static List<string> GetExtraStrings()
         {
             List<string> strings = new();
 
             float ItemsShippedPrct = Math.Min(0f + Utility.GetFarmCompletion((Farmer farmer) => Utility.getFarmerItemsShippedPercent(farmer)).Value, 1f);
             int ObelisksBuilt = Math.Min(Utility.numObelisksOnFarm(), 4);
-            float SlayerQuestsPrct = Math.Min(this.GetMonsterQuestPercent(), 1f);
+            float SlayerQuestsPrct = Math.Min(GetMonsterQuestPercent(), 1f);
             float MaxFriendshipPrct = Math.Min(Utility.GetFarmCompletion((Farmer farmer) => Utility.getMaxedFriendshipPercent(farmer)).Value, 1f);
             int Level = (int)Math.Min(Utility.GetFarmCompletion((Farmer farmer) => farmer.Level).Value, 25);
-            int StardropsFound = Math.Min(this.GetStardropsFound(), 7);
+            int StardropsFound = Math.Min(GetStardropsFound(), 7);
             float CookedRecipesPrct = Math.Min(Utility.GetFarmCompletion((Farmer farmer) => Utility.getCookedRecipesPercent(farmer)).Value, 1f);
             float CraftedRecipesPrct = Math.Min(Utility.GetFarmCompletion((Farmer farmer) => Utility.getCraftedRecipesPercent(farmer)).Value, 1f);
             float FishCaughtPrct = Math.Min(Utility.GetFarmCompletion((Farmer farmer) => Utility.getFishCaughtPercent(farmer)).Value, 1f);
@@ -90,39 +85,7 @@ namespace LiveProgressBar
             return strings;
         }
 
-        public override void draw(SpriteBatch b)
-        {
-            if (!isVisible)
-                return;
-
-            // removes the leading space
-            System.Globalization.CultureInfo newCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
-            newCulture.NumberFormat.PercentPositivePattern = 1;  // Avoid putting a space between a number and its percentage
-            System.Threading.Thread.CurrentThread.CurrentCulture = newCulture;
-
-            string percentString = progress > 1f ? "100%" : $"{progress:P2}";
-            Vector2 textPos = new(xPositionOnScreen + (width / 3) - 25, yPositionOnScreen + (height / 2) + 10);
-
-            Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, false, true);
-            Utility.drawTextWithShadow(b, percentString, Game1.dialogueFont, textPos, Game1.textColor);
-
-            if (showExtra)
-            {
-                int startingX = xPositionOnScreen - extraWidth;
-                int startingY = (Game1.uiViewport.Height / 2) - height;
-                Game1.drawDialogueBox(startingX, startingY, extraWidth, extraHeight, false, true);
-                textPos = new Vector2(startingX + 40, startingY + 100);
-                foreach (string stat in GetExtraStrings())
-                {
-                    Utility.drawTextWithShadow(b, stat, Game1.dialogueFont, textPos, Game1.textColor);
-                    textPos.Y += 42;
-                }
-            }
-
-            drawMouse(b);
-        }
-
-        private int GetStardropsFound()
+        private static int GetStardropsFound()
         {
             Farmer who = Game1.player;
 
@@ -146,7 +109,7 @@ namespace LiveProgressBar
             return found;
         }
 
-        private float GetMonsterQuestPercent()
+        private static float GetMonsterQuestPercent()
         {
             int num = Game1.stats.getMonstersKilled("Green Slime") + Game1.stats.getMonstersKilled("Frost Jelly") + Game1.stats.getMonstersKilled("Sludge") + Game1.stats.getMonstersKilled("Tiger Slime");
             int shadowsKilled = Game1.stats.getMonstersKilled("Shadow Guy") + Game1.stats.getMonstersKilled("Shadow Shaman") + Game1.stats.getMonstersKilled("Shadow Brute") + Game1.stats.getMonstersKilled("Shadow Sniper");
@@ -192,6 +155,38 @@ namespace LiveProgressBar
                 completed -= 1f;
 
             return completed / total;
+        }
+
+        public override void draw(SpriteBatch b)
+        {
+            if (!IsVisible)
+                return;
+
+            // removes the leading space
+            System.Globalization.CultureInfo newCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
+            newCulture.NumberFormat.PercentPositivePattern = 1;  // Avoid putting a space between a number and its percentage
+            System.Threading.Thread.CurrentThread.CurrentCulture = newCulture;
+
+            string percentString = Progress > 1f ? "100%" : $"{Progress:P2}";
+            Vector2 textPos = new(xPositionOnScreen + (width / 3) - 25, yPositionOnScreen + (height / 2) + 10);
+
+            Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, false, true);
+            Utility.drawTextWithShadow(b, percentString, Game1.dialogueFont, textPos, Game1.textColor);
+
+            if (ShowExtra)
+            {
+                int startingX = xPositionOnScreen - extraWidth;
+                int startingY = (Game1.uiViewport.Height / 2) - height;
+                Game1.drawDialogueBox(startingX, startingY, extraWidth, extraHeight, false, true);
+                textPos = new Vector2(startingX + 40, startingY + 100);
+                foreach (string stat in GetExtraStrings())
+                {
+                    Utility.drawTextWithShadow(b, stat, Game1.dialogueFont, textPos, Game1.textColor);
+                    textPos.Y += 42;
+                }
+            }
+
+            drawMouse(b);
         }
     }
 }

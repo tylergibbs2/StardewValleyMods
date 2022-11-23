@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -9,10 +9,10 @@ namespace LiveProgressBar
     {
         internal ModConfig? Config { get; private set; } = null;
 
-        internal bool menuVisible { get; private set; } = true;
-        private float lastProgress;
+        internal bool MenuVisible { get; private set; } = true;
+        private float LastProgress;
 
-        private ProgressHUD progressHUD { get; set; }
+        private ProgressHUD? ProgressHUD { get; set; } = null;
 
         public override void Entry(IModHelper helper)
         {
@@ -25,45 +25,42 @@ namespace LiveProgressBar
 
         private void SetProgressCmd(string command, string[] args)
         {
-            progressHUD.SetProgress(float.Parse(args[0]));
+            ProgressHUD?.SetProgress(float.Parse(args[0]));
         }
 
 
-        private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
+        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
             Config = Helper.ReadConfig<ModConfig>();
-            lastProgress = 0f;
-            progressHUD = new ProgressHUD(lastProgress);
-            progressHUD.SetVisible(menuVisible);
+            LastProgress = 0f;
+            ProgressHUD = new(LastProgress);
+            ProgressHUD.SetVisible(MenuVisible);
 
-            Game1.onScreenMenus.Add(progressHUD);
+            Game1.onScreenMenus.Add(ProgressHUD);
         }
 
-        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
+        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
-            if (Config is not null && Config.ToggleKey.JustPressed())
+            if (Config is not null && Config.ToggleKey.JustPressed() && ProgressHUD is not null)
             {
-                menuVisible = !menuVisible;
-                progressHUD.SetVisible(menuVisible);
+                MenuVisible = !MenuVisible;
+                ProgressHUD.SetVisible(MenuVisible);
             }
         }
 
-        private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
+        private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
-            if (!Context.IsWorldReady)
-                return;
-
-            if (!menuVisible)
+            if (!Context.IsWorldReady || !MenuVisible || ProgressHUD is null)
                 return;
 
             float latestProgress = Utility.percentGameComplete();
-            if (latestProgress == lastProgress)
+            if (latestProgress == LastProgress)
                 return;
 
-            Monitor.Log($"Progress Changed: {latestProgress:P2}.", LogLevel.Info);
-            lastProgress = latestProgress;
+            Monitor.Log($"Progress Changed: {latestProgress:P2}.", LogLevel.Debug);
+            LastProgress = latestProgress;
 
-            progressHUD.SetProgress(latestProgress);
+            ProgressHUD.SetProgress(latestProgress);
         }
     }
 }
