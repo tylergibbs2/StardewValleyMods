@@ -19,6 +19,8 @@ namespace LiveProgressBar
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
             helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
 
+            helper.Events.Input.ButtonPressed += OnButtonPressed;
+
             helper.ConsoleCommands.Add("progress", "Sets a fake progress percentage for testing.", SetProgressCmd);
         }
 
