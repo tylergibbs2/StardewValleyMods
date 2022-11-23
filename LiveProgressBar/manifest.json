@@ -1,8 +1,8 @@
 ﻿{
   "Name": "LiveProgressBar",
-  "Author": "Tyler Gibbs <gibbstyler7@gmail.com>",
-  "Version": "0.0.6",
-  "Description": "Always displays your total progress bar.",
+  "Author": "Tyler Gibbs",
+  "Version": "1.0.0",
+  "Description": "Displays your current game completion percentage on the HUD.",
   "UniqueID": "tylergibbs2.liveprogressbar",
   "EntryDll": "LiveProgressBar.dll",
   "MinimumApiVersion": "3.8.1",
