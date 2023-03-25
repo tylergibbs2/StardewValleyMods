@@ -1,0 +1,10 @@
+﻿{
+    "Name": "No Tools",
+    "Author": "Tyler Gibbs",
+    "Version": "1.0.0",
+    "Description": "Play the game without tools.",
+    "UniqueID": "tylergibbs2.NoTools",
+    "EntryDll": "NoTools.dll",
+    "MinimumApiVersion": "3.15.0",
+    "UpdateKeys": [ ]
+}
