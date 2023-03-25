@@ -1,0 +1,9 @@
+﻿{
+    "Name": "No Item Icons",
+    "Author": "Tyler Gibbs",
+    "Version": "1.0.0",
+    "Description": "Items have no icons in inventory menus.",
+    "UniqueID": "tylergibbs2.NoItemIcons",
+    "EntryDll": "NoItemIcons.dll",
+    "MinimumApiVersion": "3.15.0"
+}
