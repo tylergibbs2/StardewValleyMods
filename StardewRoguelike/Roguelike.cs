@@ -465,16 +465,14 @@ namespace StardewRoguelike
         {
             return track switch
             {
-                "junimoKart_slimeMusic" => "Slomp's Stomp - ConcernedApe",
-                "junimoKart_whaleMusic" => "The Gem Sea Giant - ConcernedApe",
-                "megalovania" => "MEGALOVANIA - Toby Fox",
+                "gelus_defensor" => "Gelus Defensor - Therm",
                 "photophobia" => "Photophobia - Therm",
                 "jelly_junktion" => "Jelly Junktion - Therm",
                 "hold_your_ground" => "Hold Your Ground - Therm",
+                "ceaseless_and_incessant" => "Ceaseless and Incessant - Therm",
+                "circus_freak" => "Circus Freak - Therm",
+                "invoke_the_ancient" => "Invoke the Ancient - Therm",
                 "bee_boss" => "Bee Boss - ConcernedApe",
-                "cowboy_boss" => "JOTPK Final Boss - ConcernedApe",
-                "VolcanoMines1" => "Molten Jelly - ConcernedApe",
-                "VolcanoMines2" => "Forgotten World - ConcernedApe",
                 _ => ""
             };
         }
