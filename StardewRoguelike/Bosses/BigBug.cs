@@ -30,9 +30,7 @@ namespace StardewRoguelike.Bosses
         }
 
         public List<string> MusicTracks
-        {
-            get { return new() { "junimoKart_whaleMusic" }; }
-        }
+        => new() { "ceaseless_and_incessant" };
 
         public bool InitializeWithHealthbar
         {

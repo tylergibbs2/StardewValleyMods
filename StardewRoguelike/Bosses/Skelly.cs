@@ -32,8 +32,13 @@ namespace StardewRoguelike.Bosses
 
         public List<string> MusicTracks
         {
-            get { return new() { "megalovania" }; }
-        }
+            get
+            {
+                if (Roguelike.FloorTickCounter <= TicksToChangeMusic)
+                    return new() { "gelus_defensor" };
+
+                return new() { "gelus_defensor_no_intro" };
+            }
 
         public bool InitializeWithHealthbar
         {
@@ -85,7 +90,7 @@ namespace StardewRoguelike.Bosses
         private int chargingTicksLeft = 0;
         private int ticksToFreezeAOE = 11 * 60;
 
-        public Skelly() { }
+        private readonly double TicksToChangeMusic = (129_706 / 1000) * 60;
 
         public Skelly(float difficulty) : base(Vector2.Zero)
         {

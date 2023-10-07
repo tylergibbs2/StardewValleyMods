@@ -91,8 +91,8 @@ namespace StardewRoguelike.Bosses
         {
             get
             {
-                if (encountered.Value)
-                    return new() { "cowboy_boss" };
+                if (Encountered.Value)
+                    return new() { "circus_freak" };
 
                 return new() { "Lava_Ambient" };
             }

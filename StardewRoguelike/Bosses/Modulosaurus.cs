@@ -29,10 +29,7 @@ namespace StardewRoguelike.Bosses
             get { return new(25, 30); }
         }
 
-        public List<string> MusicTracks
-        {
-            get { return new() { "VolcanoMines1", "VolcanoMines2" }; }
-        }
+        public List<string> MusicTracks => new() { "invoke_the_ancient" };
 
         public bool InitializeWithHealthbar
         {
