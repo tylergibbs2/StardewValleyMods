@@ -706,6 +706,8 @@ namespace StardewRoguelike
             Curse.RemoveAllCurses();
             Perks.RemoveAllPerks();
 
+            Game1.player.set_FarmerActiveHatQuest(null);
+
             ModEntry.Invincible = false;
 
             Game1.player.get_FarmerIsSpectating().Value = false;
