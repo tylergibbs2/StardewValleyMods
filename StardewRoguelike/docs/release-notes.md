@@ -1,6 +1,9 @@
 [← back to readme](README.md)
 
 # Release notes
+
+## 1.1.0
+
 Released on 8 October 2023 for SMAPI 3.15.0 or later.
 
 This release contains the full original game soundtrack created by [Therm](https://www.youtube.com/c/ThermChannel).
