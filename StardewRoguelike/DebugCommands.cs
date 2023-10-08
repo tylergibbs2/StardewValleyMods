@@ -215,7 +215,13 @@ namespace StardewRoguelike
                     break;
                 case "difficulty":
                     if (args.Length == 1)
-                        ModEntry.ModMonitor.Log("Invalid usage: difficulty float", LogLevel.Error);
+                    {
+                        MineShaft curmine = (MineShaft)Game1.player.currentLocation;
+                        int level = Roguelike.GetLevelFromMineshaft(curmine);
+                        float difficulty = BossFloor.GetLevelDifficulty(level);
+                        bool postloop = level > Constants.ScalingOrder[^1];
+                        ModEntry.ModMonitor.Log($"level: {level} difficulty: {difficulty} postloop: {postloop}");
+                    }
                     else
                         ForcedDifficulty = float.Parse(args[1]);
                     break;
