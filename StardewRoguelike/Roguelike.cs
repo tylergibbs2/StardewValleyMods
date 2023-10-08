@@ -655,7 +655,20 @@ namespace StardewRoguelike
             Game1.player.temporarilyInvincible = false;
             CurrentLevel = 0;
             Game1.screenGlow = false;
+            ModEntry.ActiveStats.Multiplayer = Context.IsMultiplayer;
+            ModEntry.ActiveStats.PlayerCount = Game1.getOnlineFarmers().Count;
             ModEntry.ActiveStats.EndTime = DateTime.UtcNow;
+            ModEntry.ActiveStats.Patch = ModEntry.CurrentVersion;
+            ModEntry.ActiveStats.Seed = FloorRngSeed.ToString();
+
+            ModPersistentData? globalData = ModEntry.Instance.Helper.Data.ReadGlobalData<ModPersistentData>("roguelike-persistent-data");
+            globalData ??= new ModPersistentData();
+
+            if (ModEntry.ActiveStats.DinoKillEndTime is not null)
+                globalData.UnlockedBossArena = true;
+            globalData.RunHistory.Add(ModEntry.ActiveStats);
+
+            ModEntry.Instance.Helper.Data.WriteGlobalData("roguelike-persistent-data", globalData);
 
             ResetLocalGameState();
             ResetLocalPlayer();
