@@ -71,7 +71,7 @@ namespace StardewRoguelike
 
             if (level > Constants.ScalingOrder[^1])
             {
-                int levelsPostLoop = Constants.ScalingOrder[^1] - level;
+                int levelsPostLoop = level - Constants.ScalingOrder[^1];
                 difficulty += 0.25f * (levelsPostLoop / 6f);
             }
 
