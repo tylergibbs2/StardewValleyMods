@@ -340,6 +340,10 @@ namespace StardewRoguelike
                 MineShaft mine = (MineShaft)Game1.player.currentLocation;
                 mine.SpawnLocalChest(new(Game1.currentCursorTile.X, Game1.currentCursorTile.Y));
             }
+            else if (e.Button == SButton.L)
+            {
+                Game1.onScreenMenus.Add(new AttackIndicator());
+            }
         }
 
         public static void ForceLadder(string[] args)

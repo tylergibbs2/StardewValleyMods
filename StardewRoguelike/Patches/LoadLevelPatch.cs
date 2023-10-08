@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
@@ -8,10 +9,9 @@ using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
-    internal class LoadLevelPatch : Patch
+    [HarmonyPatch(typeof(MineShaft), nameof(MineShaft.loadLevel))]
+    internal class LoadLevelPatch
     {
-        protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "loadLevel");
-
         public static bool Prefix(MineShaft __instance, int level)
         {
             bool loadedDarkArea = false;

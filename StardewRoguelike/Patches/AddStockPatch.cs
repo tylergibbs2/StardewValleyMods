@@ -1,13 +1,12 @@
+using HarmonyLib;
 using StardewValley;
-using System;
 using System.Collections.Generic;
 
 namespace StardewRoguelike.Patches
 {
-    internal class AddStockPatch : Patch
+    [HarmonyPatch(typeof(Utility), nameof(Utility.AddStock))]
+    internal class AddStockPatch
     {
-		protected override PatchDescriptor GetPatchDescriptor() => new(typeof(Utility), "AddStock");
-
 		public static bool Prefix(Dictionary<ISalable, int[]> stock, Item obj, int buyPrice = -1, int limitedQuantity = -1)
 		{
 			int price = buyPrice;

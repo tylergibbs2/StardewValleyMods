@@ -10,15 +10,15 @@ namespace StardewRoguelike.Bosses
 {
     public class BigBugMinion : Fly
     {
-        private MinionState previousState;
+        private MinionState PreviousState;
 
         public NetEnum<MinionState> CurrentState = new(MinionState.Normal);
 
         private Color? CurrentColor = null;
 
-        private int originalResilience;
+        private readonly int OriginalResilience;
 
-        private int originalDamage;
+        private readonly int OriginalDamage;
 
         public BigBugMinion() : base() { }
 
@@ -30,8 +30,8 @@ namespace StardewRoguelike.Bosses
             Health = MaxHealth;
             DamageToFarmer = (int)(12 * difficulty);
 
-            originalResilience = resilience.Value;
-            originalDamage = DamageToFarmer;
+            OriginalResilience = resilience.Value;
+            OriginalDamage = DamageToFarmer;
 
             moveTowardPlayerThreshold.Value = 35;
         }
@@ -44,8 +44,8 @@ namespace StardewRoguelike.Bosses
 
         public void SetDefaults()
         {
-            resilience.Value = originalResilience;
-            DamageToFarmer = originalDamage;
+            resilience.Value = OriginalResilience;
+            DamageToFarmer = OriginalDamage;
         }
 
         public void ChangeState(MinionState state)
@@ -85,10 +85,10 @@ namespace StardewRoguelike.Bosses
         {
             base.update(time, location);
 
-            if (previousState != CurrentState.Value)
+            if (PreviousState != CurrentState.Value)
                 CurrentColor = null;
 
-            previousState = CurrentState.Value;
+            PreviousState = CurrentState.Value;
 
             if (CurrentState.Value == MinionState.Fast)
                 CurrentColor = Color.Green;
@@ -105,10 +105,10 @@ namespace StardewRoguelike.Bosses
                 Debuff(Game1.player);
         }
 
-        private int GetRandomDebuff()
+        private static int GetRandomDebuff()
         {
-            int index = Game1.random.Next(Roguelike.RandomDebuffIds.Length);
-            return Roguelike.RandomDebuffIds[index];
+            int index = Game1.random.Next(Constants.RandomDebuffIds.Length);
+            return Constants.RandomDebuffIds[index];
         }
 
         public override void drawAboveAllLayers(SpriteBatch b)

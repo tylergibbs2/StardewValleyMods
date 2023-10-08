@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
@@ -15,10 +16,9 @@ namespace StardewRoguelike.Patches
 
         private static int swimShadowFrame;
 
-        internal class ResetLocalState : Patch
+        [HarmonyPatch(typeof(MineShaft), "resetLocalState")]
+        internal class ResetLocalState
         {
-            protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "resetLocalState");
-
             private static bool oldValue;
 
             public static bool Prefix(MineShaft __instance)
@@ -62,10 +62,9 @@ namespace StardewRoguelike.Patches
             }
         }
 
-        internal class CleanupBeforePlayerExit : Patch
+        [HarmonyPatch(typeof(MineShaft), nameof(MineShaft.cleanupBeforePlayerExit))]
+        internal class CleanupBeforePlayerExit
         {
-            protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "cleanupBeforePlayerExit");
-
             public static void Postfix(MineShaft __instance)
             {
                 if (Game1.player.swimming.Value)
@@ -77,10 +76,9 @@ namespace StardewRoguelike.Patches
             }
         }
 
-        internal class Draw : Patch
+        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.draw))]
+        internal class Draw
         {
-            protected override PatchDescriptor GetPatchDescriptor() => new(typeof(GameLocation), "draw");
-
             public static void Postfix(MineShaft __instance, SpriteBatch b)
             {
                 foreach (Farmer f in __instance.farmers)
@@ -91,10 +89,9 @@ namespace StardewRoguelike.Patches
             }
         }
 
-        internal class UpdateWhenCurrentLocation : Patch
+        [HarmonyPatch(typeof(MineShaft), nameof(MineShaft.UpdateWhenCurrentLocation))]
+        internal class UpdateWhenCurrentLocation
         {
-            protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "UpdateWhenCurrentLocation");
-
             public static void Postfix(MineShaft __instance, GameTime time)
             {
                 foreach (DwarfGate dwarfGate in __instance.get_MineShaftDwarfGates())
@@ -110,10 +107,9 @@ namespace StardewRoguelike.Patches
             }
         }
 
-        internal class PerformTouchAction : Patch
+        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performTouchAction))]
+        internal class PerformTouchAction
         {
-            protected override PatchDescriptor GetPatchDescriptor() => new(typeof(GameLocation), "performTouchAction");
-
             public static bool Prefix(MineShaft __instance, string fullActionString, Vector2 playerStandingPosition)
             {
                 if (fullActionString != "PoolEntrance")

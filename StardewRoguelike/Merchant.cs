@@ -31,11 +31,11 @@ namespace StardewRoguelike
             new(3, 9)
         };
 
-        public static ShopMenu CurrentShop { get; set; } = null!;
+        public static ShopMenu? CurrentShop { get; set; } = null;
 
-        public static ShopMenu CurrentSeedShop { get; set; } = null!;
+        public static ShopMenu? CurrentSeedShop { get; set; } = null;
 
-        public static HatBoard CurrentHatBoard { get; set; } = null!;
+        public static HatBoard? CurrentHatBoard { get; set; } = null;
 
         internal static CurseType? CurseToAdd { get; set; } = null;
 
@@ -45,9 +45,9 @@ namespace StardewRoguelike
             int level = Roguelike.GetLevelFromMineshaft(mine);
             if (DebugCommands.ForcedFortuneTeller)
                 result = "custom-merchant-curses";
-            else if (level == 1 || level == Roguelike.ScalingOrder[0] || level == Roguelike.ScalingOrder[2])
+            else if (level == 1 || level == Constants.ScalingOrder[0] || level == Constants.ScalingOrder[2])
                 result = "custom-merchant";
-            else if (level == Roguelike.ScalingOrder[1])
+            else if (level == Constants.ScalingOrder[1])
                 result = "custom-merchant-curses";
             else
                 result = Roguelike.FloorRng.NextDouble() < 0.5 ? "custom-merchant-curses" : "custom-merchant";
@@ -215,7 +215,7 @@ namespace StardewRoguelike
                     dialogueLocation.Y -= 16;
                     mine.DrawSpeechBubble(dialogueLocation, I18n.Merchant_MarlonIntroduction(), 400);
                 }
-                else if (level == Roguelike.ScalingOrder[0])
+                else if (level == Constants.ScalingOrder[0])
                 {
                     // Do Gil introduction
                     dialogueLocation = new Vector2(18, 3) * 64f;
@@ -224,7 +224,7 @@ namespace StardewRoguelike
                     mine.DrawSpeechBubble(dialogueLocation, I18n.Merchant_GilIntroduction(), 400);
 
                 }
-                else if (level == Roguelike.ScalingOrder[1])
+                else if (level == Constants.ScalingOrder[1])
                 {
                     // Do fortune teller introduction
                     dialogueLocation = new Vector2(13, 3) * 64f;
@@ -232,7 +232,7 @@ namespace StardewRoguelike
                     dialogueLocation.Y -= 16;
                     mine.DrawSpeechBubble(dialogueLocation, I18n.Merchant_FortuneIntroduction(), 400);
                 }
-                else if (level == Roguelike.ScalingOrder[2])
+                else if (level == Constants.ScalingOrder[2])
                 {
                     // Spawn hat board
                     TileSheet town_tilesheet = mine.map.GetTileSheet("z_Town");
@@ -249,7 +249,7 @@ namespace StardewRoguelike
                     mine.setMapTileIndex(13, 4, 2015, "Front", tilesheet_index);
                 }
 
-                else if (level == Roguelike.ScalingOrder[^1])
+                else if (level == Constants.ScalingOrder[^1])
                 {
                     // Spawn Qi when victory
                     SpawnQi(mine);
@@ -312,14 +312,15 @@ namespace StardewRoguelike
             mine.setTileProperty(19, 6, "Buildings", "Action", "RoguelikeBackpack");
         }
 
-        public static bool ShouldSpawnBackpack(MineShaft mine)
+        public static bool ShouldSpawnBackpack()
         {
             return Game1.player.MaxItems == 12;
         }
 
         public static bool ShouldSpawnGil(int level)
         {
-            return level > 1 || DebugCommands.ForcedGil;
+            int perkCount = Perks.GetActivePerks().Count;
+            return (level > 1 && perkCount < Constants.MaximumPerkCount) || DebugCommands.ForcedGil;
         }
 
         public static void SetupForLocalPlayer(MineShaft mine)
@@ -327,7 +328,7 @@ namespace StardewRoguelike
             if (!ShouldSpawnGil(Roguelike.GetLevelFromMineshaft(mine)))
                 DespawnGil(mine);
 
-            if (ShouldSpawnBackpack(mine))
+            if (ShouldSpawnBackpack())
                 SpawnBackpack(mine);
         }
 
@@ -457,7 +458,7 @@ namespace StardewRoguelike
 
         public static void Draw(MineShaft mine, SpriteBatch b)
         {
-            if (ShouldSpawnBackpack(mine))
+            if (ShouldSpawnBackpack())
                 b.Draw(Game1.mouseCursors, Game1.GlobalToLocal(new Vector2(1224, 320)), new Microsoft.Xna.Framework.Rectangle(255, 1436, 12, 14), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.01232f);
         }
 
@@ -483,21 +484,21 @@ namespace StardewRoguelike
             if (Perks.HasPerk(Perks.PerkType.Discount))
                 priceAdjustment *= 0.9f;
 
-            if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[0])         // Floor 1 Shop
+            if (Roguelike.CurrentLevel < Constants.ScalingOrder[0])         // Floor 1 Shop
                 MerchantFloors[0].AddToStock(stock, priceAdjustment, random);
-            else if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[1])    // Floor 10 Shop
+            else if (Roguelike.CurrentLevel < Constants.ScalingOrder[1])    // Floor 10 Shop
                 MerchantFloors[1].AddToStock(stock, priceAdjustment, random);
-            else if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[2])    // Floor 20 Shop
+            else if (Roguelike.CurrentLevel < Constants.ScalingOrder[2])    // Floor 20 Shop
                 MerchantFloors[2].AddToStock(stock, priceAdjustment, random);
-            else if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[3])    // Floor 30 Shop
+            else if (Roguelike.CurrentLevel < Constants.ScalingOrder[3])    // Floor 30 Shop
                 MerchantFloors[3].AddToStock(stock, priceAdjustment, random);
-            else if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[4])    // Floor 40 Shop
+            else if (Roguelike.CurrentLevel < Constants.ScalingOrder[4])    // Floor 40 Shop
                 MerchantFloors[4].AddToStock(stock, priceAdjustment, random);
-            else if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[5])    // Floor 50 Shop
+            else if (Roguelike.CurrentLevel < Constants.ScalingOrder[5])    // Floor 50 Shop
                 MerchantFloors[5].AddToStock(stock, priceAdjustment, random);
-            else if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[6])    // Floor 60 Shop
+            else if (Roguelike.CurrentLevel < Constants.ScalingOrder[6])    // Floor 60 Shop
                 MerchantFloors[6].AddToStock(stock, priceAdjustment, random);
-            else if (Roguelike.CurrentLevel < Roguelike.ScalingOrder[7])    // Floor 70 Shop
+            else if (Roguelike.CurrentLevel < Constants.ScalingOrder[7])    // Floor 70 Shop
                 MerchantFloors[7].AddToStock(stock, priceAdjustment, random);
             else                                                            // Floor 80+ Shop
                 MerchantFloors[8].AddToStock(stock, priceAdjustment, random);

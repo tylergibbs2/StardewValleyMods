@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
@@ -7,10 +8,9 @@ using System.Collections.Generic;
 
 namespace StardewRoguelike.Patches
 {
-    internal class MobDropHookPatch : Patch
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.monsterDrop))]
+    internal class MobDropHookPatch
     {
-        protected override PatchDescriptor GetPatchDescriptor() => new(typeof(GameLocation), "monsterDrop");
-
         public static bool Prefix(GameLocation __instance, Monster monster, int x, int y, Farmer who)
         {
             if (BossFloor.IsBossFloor((MineShaft)__instance) || ChallengeFloor.IsChallengeFloor((MineShaft)__instance))

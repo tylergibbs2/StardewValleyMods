@@ -1,11 +1,11 @@
-﻿using StardewValley.Locations;
+using HarmonyLib;
+using StardewValley.Locations;
 
 namespace StardewRoguelike.Patches
 {
-    internal class ClearInactiveMinesPatch : Patch
+    [HarmonyPatch(typeof(MineShaft), "clearInactiveMines")]
+    internal class ClearInactiveMinesPatch
     {
-        protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "clearInactiveMines");
-
         public static bool Prefix()
         {
             return false;

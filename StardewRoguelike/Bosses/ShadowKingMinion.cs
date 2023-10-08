@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Monsters;
 using StardewValley.Projectiles;
@@ -8,9 +8,9 @@ namespace StardewRoguelike.Bosses
 {
     public class ShadowKingMinion : Shooter
     {
-        private bool isGood;
+        private readonly bool IsGood;
 
-        private float difficulty;
+        private readonly float Difficulty;
 
         public ShadowKingMinion() { }
 
@@ -18,8 +18,8 @@ namespace StardewRoguelike.Bosses
         {
             setTileLocation(position);
             aimTime = 2f;
-            this.isGood = isGood;
-            this.difficulty = difficulty;
+            IsGood = isGood;
+            Difficulty = difficulty;
         }
 
         public override void updateMovement(GameLocation location, GameTime time)
@@ -36,7 +36,7 @@ namespace StardewRoguelike.Bosses
                     faceGeneralDirection(Player.getStandingPosition());
                     shooting.Value = true;
                     nextShot = aimTime;
-                    shotsLeft = isGood ? 3 : 1;
+                    shotsLeft = IsGood ? 3 : 1;
                 }
             }
             else
@@ -52,7 +52,7 @@ namespace StardewRoguelike.Bosses
                         {
                             Vector2 shot_velocity = Vector2.Zero;
                             float starting_rotation = 0f;
-                            if (isGood && Player is not null)
+                            if (IsGood && Player is not null)
                             {
                                 shot_velocity = Player.Position - Position;
                                 shot_velocity.Normalize();
@@ -84,7 +84,7 @@ namespace StardewRoguelike.Bosses
                             shot_velocity *= projectileSpeed;
                             fireEvent.Fire();
                             currentLocation.playSound(fireSound);
-                            BasicProjectile projectile = new((int)(DamageToFarmer * difficulty), firedProjectile, 0, 0, 0f, shot_velocity.X, shot_velocity.Y, Position, "", "", explode: false, damagesMonsters: false, base.currentLocation, this);
+                            BasicProjectile projectile = new((int)(DamageToFarmer * Difficulty), firedProjectile, 0, 0, 0f, shot_velocity.X, shot_velocity.Y, Position, "", "", explode: false, damagesMonsters: false, base.currentLocation, this);
                             projectile.startingRotation.Value = starting_rotation;
                             projectile.height.Value = 24f;
                             projectile.debuff.Value = projectileDebuff;

@@ -14,7 +14,7 @@ namespace StardewRoguelike.Patches
             if (__instance is CoopMenu || __instance is FarmhandMenu)
                 return true;
 
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $@"assets/Saves/{Roguelike.SaveFile}/SaveGameInfo");
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $@"assets/Saves/{Constants.SaveFile}/SaveGameInfo");
             SaveGame.Load(path);
             Game1.exitActiveMenu();
 

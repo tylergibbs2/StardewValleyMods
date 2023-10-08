@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Objects;
@@ -6,10 +7,9 @@ using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
-    internal class NoWeedDropsPatch : Patch
+    [HarmonyPatch(typeof(SObject), "cutWeed")]
+    internal class NoWeedDropsPatch
     {
-        protected override PatchDescriptor GetPatchDescriptor() => new(typeof(SObject), "cutWeed");
-
         public static bool Prefix(SObject __instance, Farmer who, GameLocation? location = null)
         {
             if (location is null && who is not null)

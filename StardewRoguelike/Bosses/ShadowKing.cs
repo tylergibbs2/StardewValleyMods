@@ -72,20 +72,11 @@ namespace StardewRoguelike.Bosses
     {
         public string DisplayName => "Ozul the Shadow King";
 
-        public string MapPath
-        {
-            get { return "boss-shadowking"; }
-        }
+        public string MapPath => "boss-shadowking";
 
-        public string TextureName
-        {
-            get { return "Characters\\Monsters\\Shadow Shaman_dangerous"; }
-        }
+        public string TextureName => "Characters\\Monsters\\Shadow Shaman_dangerous";
 
-        public Vector2 SpawnLocation
-        {
-            get { return new(21, 94); }
-        }
+        public Vector2 SpawnLocation => new(21, 94);
 
         public List<string> MusicTracks
         {
@@ -98,24 +89,15 @@ namespace StardewRoguelike.Bosses
             }
         }
 
-        private float _difficulty;
+        public float Difficulty { get; set; }
 
-        public float Difficulty
-        {
-            get { return _difficulty; }
-            set { _difficulty = value; }
-        }
+        public bool InitializeWithHealthbar => false;
 
-        public bool InitializeWithHealthbar
-        {
-            get { return false; }
-        }
+        private bool MapChangesEnabled = false;
 
-        private bool mapChangesEnabled = false;
+        private readonly int[] TilesToBlockIds = new int[] { 104, 106, 103, 120, 122, 119 };
 
-        private readonly int[] tilesToBlockIds = new int[] { 104, 106, 103, 120, 122, 119 };
-
-        private readonly List<Vector2> tilesToBlock = new()
+        private readonly List<Vector2> TilesToBlock = new()
         {
             new(20, 75),
             new(21, 75),
@@ -125,7 +107,7 @@ namespace StardewRoguelike.Bosses
             new(22, 76)
         };
 
-        private readonly List<Vector2> tilesToWarp = new()
+        private readonly List<Vector2> TilesToWarp = new()
         {
             new(20, 70),
             new(21, 70),
@@ -138,32 +120,32 @@ namespace StardewRoguelike.Bosses
             new(22, 76)
         };
 
-        private readonly Vector2 warpDestination = new(21, 78);
+        private readonly Vector2 WarpDestination = new(21, 78);
 
-        private bool oldEncountered = false;
+        private bool OldEncountered = false;
 
-        public readonly NetBool encountered = new();
+        public readonly NetBool Encountered = new();
 
-        private readonly int explosionCooldownTicks = 300;
+        private readonly int ExplosionCooldownTicks = 300;
 
-        private readonly int width;
-        private readonly int height;
+        private readonly int Width;
+        private readonly int Height;
 
-        private int attackPhase = 0;
+        private int AttackPhase = 0;
 
-        private int ticksSinceLastExplosion = 0;
-        private int ticksToExplode = 0;
-        private int explosionRadius;
-        private int explosionDamage;
+        private int TicksSinceLastExplosion = 0;
+        private int TicksToExplode = 0;
+        private int ExplosionRadius;
+        private int ExplosionDamage;
 
-        private int ticksToArrowVolley = 0;
+        private int TicksToArrowVolley = 0;
 
-        private int ticksToSpawnBadMinions = 0;
-        private int ticksToJinxCircle = 0;
+        private int TicksToSpawnBadMinions = 0;
+        private int TicksToJinxCircle = 0;
 
-        private int ticksToSpawnGoodMinions = 0;
+        private int TicksToSpawnGoodMinions = 0;
 
-        public MinionSpawnRectangle phase2_SpawnRect = new(10, 82, 32, 104);
+        public MinionSpawnRectangle Phase2_SpawnRect = new(10, 82, 32, 104);
 
         public ShadowKing() { }
 
@@ -172,10 +154,10 @@ namespace StardewRoguelike.Bosses
             setTileLocation(SpawnLocation);
             Difficulty = difficulty;
 
-            width = 16;
-            height = 24;
-            Sprite.SpriteWidth = width;
-            Sprite.SpriteHeight = height;
+            Width = 16;
+            Height = 24;
+            Sprite.SpriteWidth = Width;
+            Sprite.SpriteHeight = Height;
             Sprite.LoadTexture(TextureName);
             Scale = 2f;
 
@@ -186,7 +168,7 @@ namespace StardewRoguelike.Bosses
         {
             NetFields.AddFields(new INetSerializable[]
             {
-                encountered
+                Encountered
             });
             base.initNetFields();
         }
@@ -195,8 +177,8 @@ namespace StardewRoguelike.Bosses
         {
             Sprite = new(TextureName)
             {
-                SpriteWidth = width,
-                SpriteHeight = height
+                SpriteWidth = Width,
+                SpriteHeight = Height
             };
             Sprite.LoadTexture(TextureName);
             HideShadow = true;
@@ -206,13 +188,13 @@ namespace StardewRoguelike.Bosses
         {
             base.update(time, location);
 
-            if (Health > 0 && !mapChangesEnabled && encountered.Value)
+            if (Health > 0 && !MapChangesEnabled && Encountered.Value)
                 EnableMapChanges();
 
-            if (oldEncountered != encountered.Value)
+            if (OldEncountered != Encountered.Value)
                 RevealBoss();
 
-            oldEncountered = encountered.Value;
+            OldEncountered = Encountered.Value;
         }
 
         private static void RevealBoss()
@@ -224,47 +206,47 @@ namespace StardewRoguelike.Bosses
         {
             base.behaviorAtGameTick(time);
 
-            if (!mapChangesEnabled && withinPlayerThreshold(16))
+            if (!MapChangesEnabled && withinPlayerThreshold(16))
                 EnableMapChanges();
 
             if (Health <= 0)
                 return;
 
             // Explode on hit
-            if (ticksToExplode > 0)
+            if (TicksToExplode > 0)
             {
-                ticksToExplode--;
+                TicksToExplode--;
 
-                if (ticksToExplode == 0)
+                if (TicksToExplode == 0)
                 {
                     stopGlowing();
                     currentLocation.netAudio.StopPlaying("fuse");
 
                     currentLocation.playSound("explosion");
-                    currentLocation.explode(new Vector2(Position.X / 64, Position.Y / 64), explosionRadius, Player, damageFarmers: true, damage_amount: (int)(explosionDamage * Difficulty));
-                    ticksSinceLastExplosion = 0;
+                    currentLocation.explode(new Vector2(Position.X / 64, Position.Y / 64), ExplosionRadius, Player, damageFarmers: true, damage_amount: (int)(ExplosionDamage * Difficulty));
+                    TicksSinceLastExplosion = 0;
                 }
             }
             else
             {
-                ticksSinceLastExplosion++;
+                TicksSinceLastExplosion++;
             }
 
-            if (attackPhase == 0)
+            if (AttackPhase == 0)
             {
                 // do phase 1 stuff
 
-                if (withinPlayerThreshold(6) && ticksToExplode == 0 && ticksToArrowVolley == 0)
-                    ticksToArrowVolley = Game1.random.Next(60 * 5, 60 * 7);
+                if (withinPlayerThreshold(6) && TicksToExplode == 0 && TicksToArrowVolley == 0)
+                    TicksToArrowVolley = Game1.random.Next(60 * 5, 60 * 7);
 
-                if (ticksToArrowVolley > 0 && ticksToExplode == 0)
+                if (TicksToArrowVolley > 0 && TicksToExplode == 0)
                 {
-                    ticksToArrowVolley--;
+                    TicksToArrowVolley--;
 
-                    if (ticksToArrowVolley == 45)
-                        currentLocation.playSound("shadowpeep");
+                    if (TicksToArrowVolley == 45)
+                        RoguelikeUtility.DoAttackCue(currentLocation);
 
-                    if (ticksToArrowVolley == 0)
+                    if (TicksToArrowVolley == 0)
                         FireArrowCone();
                 }
 
@@ -272,8 +254,8 @@ namespace StardewRoguelike.Bosses
                 if (Health <= MaxHealth * 0.66f)
                 {
                     currentLocation.netAudio.StopPlaying("fuse");
-                    ticksToExplode = 0;
-                    ticksToArrowVolley = 0;
+                    TicksToExplode = 0;
+                    TicksToArrowVolley = 0;
 
                     Halt();
                     currentLocation.playSound("explosion");
@@ -283,27 +265,27 @@ namespace StardewRoguelike.Bosses
                         farmer.setTrajectory(trajectory * 2);
                     }
 
-                    ticksToJinxCircle = 120;
-                    ticksToSpawnBadMinions = 180;
+                    TicksToJinxCircle = 120;
+                    TicksToSpawnBadMinions = 180;
 
-                    attackPhase = 1;
+                    AttackPhase = 1;
                 }
             }
-            else if (attackPhase == 1)
+            else if (AttackPhase == 1)
             {
                 // do phase 2 stuff
 
-                if (ticksToSpawnBadMinions == 0)
-                    ticksToSpawnBadMinions = 60 * Game1.random.Next(10, 13);
+                if (TicksToSpawnBadMinions == 0)
+                    TicksToSpawnBadMinions = 60 * Game1.random.Next(10, 13);
 
-                if (ticksToJinxCircle == 0)
-                    ticksToJinxCircle = 60 * Game1.random.Next(5, 9);
+                if (TicksToJinxCircle == 0)
+                    TicksToJinxCircle = 60 * Game1.random.Next(5, 9);
 
-                if (ticksToSpawnBadMinions > 0)
+                if (TicksToSpawnBadMinions > 0)
                 {
-                    ticksToSpawnBadMinions--;
+                    TicksToSpawnBadMinions--;
 
-                    if (ticksToSpawnBadMinions == 0)
+                    if (TicksToSpawnBadMinions == 0)
                     {
                         if (Roguelike.HardMode)
                             SpawnGoodMinions(7);
@@ -312,62 +294,62 @@ namespace StardewRoguelike.Bosses
                     }
                 }
 
-                if (ticksToJinxCircle > 0)
+                if (TicksToJinxCircle > 0)
                 {
-                    ticksToJinxCircle--;
+                    TicksToJinxCircle--;
 
-                    if (ticksToJinxCircle == 0)
+                    if (TicksToJinxCircle == 0)
                         FireJinxCircle();
                 }
 
                 if (Health <= MaxHealth * 0.25f)
                 {
-                    ticksToSpawnGoodMinions = 120;
+                    TicksToSpawnGoodMinions = 120;
 
                     speed = 4;
-                    attackPhase = 2;
+                    AttackPhase = 2;
                 }
             }
-            else if (attackPhase == 2)
+            else if (AttackPhase == 2)
             {
                 // do phase 3 stuff
 
-                if (ticksToSpawnGoodMinions == 0)
-                    ticksToSpawnGoodMinions = 60 * Game1.random.Next(8, 11);
+                if (TicksToSpawnGoodMinions == 0)
+                    TicksToSpawnGoodMinions = 60 * Game1.random.Next(8, 11);
 
-                if (ticksToJinxCircle == 0)
-                    ticksToJinxCircle = 60 * Game1.random.Next(3, 7);
+                if (TicksToJinxCircle == 0)
+                    TicksToJinxCircle = 60 * Game1.random.Next(3, 7);
 
-                if (withinPlayerThreshold(6) && ticksToArrowVolley == 0)
-                    ticksToArrowVolley = Game1.random.Next(60 * 5, 60 * 7);
+                if (withinPlayerThreshold(6) && TicksToArrowVolley == 0)
+                    TicksToArrowVolley = Game1.random.Next(60 * 5, 60 * 7);
 
-                if (ticksToJinxCircle > 0)
+                if (TicksToJinxCircle > 0)
                 {
-                    ticksToJinxCircle--;
+                    TicksToJinxCircle--;
 
-                    if (ticksToJinxCircle == 0)
+                    if (TicksToJinxCircle == 0)
                         FireJinxCircle();
                 }
 
-                if (ticksToArrowVolley > 0)
+                if (TicksToArrowVolley > 0)
                 {
-                    ticksToArrowVolley--;
+                    TicksToArrowVolley--;
 
-                    if (ticksToArrowVolley == 45)
-                        currentLocation.playSound("shadowpeep");
+                    if (TicksToArrowVolley == 45)
+                        RoguelikeUtility.DoAttackCue(currentLocation);
 
-                    if (ticksToArrowVolley == 0)
+                    if (TicksToArrowVolley == 0)
                     {
                         speed = 4;
                         FireArrowCone();
                     }
                 }
 
-                if (ticksToSpawnGoodMinions > 0)
+                if (TicksToSpawnGoodMinions > 0)
                 {
-                    ticksToSpawnGoodMinions--;
+                    TicksToSpawnGoodMinions--;
 
-                    if (ticksToSpawnGoodMinions == 0)
+                    if (TicksToSpawnGoodMinions == 0)
                     {
                         if (Roguelike.HardMode)
                         {
@@ -384,17 +366,17 @@ namespace StardewRoguelike.Bosses
 
         private void StartExplosion()
         {
-            if (attackPhase == 0)
+            if (AttackPhase == 0)
             {
-                ticksToExplode = 120;
-                explosionDamage = 25;
-                explosionRadius = 3;
+                TicksToExplode = 120;
+                ExplosionDamage = 25;
+                ExplosionRadius = 3;
             }
-            else if (attackPhase == 1)
+            else if (AttackPhase == 1)
             {
-                ticksToExplode = 90;
-                explosionDamage = 40;
-                explosionRadius = 6;
+                TicksToExplode = 90;
+                ExplosionDamage = 40;
+                ExplosionRadius = 6;
             }
 
             Halt();
@@ -404,7 +386,7 @@ namespace StardewRoguelike.Bosses
 
         private void SpawnBadMinions(int amount)
         {
-            foreach (Vector2 pos in phase2_SpawnRect.GetRandomPositions(amount))
+            foreach (Vector2 pos in Phase2_SpawnRect.GetRandomPositions(amount))
             {
                 ShadowKingMinion minion = new(pos, Difficulty);
                 currentLocation.characters.Add(minion);
@@ -413,7 +395,7 @@ namespace StardewRoguelike.Bosses
 
         private void SpawnGoodMinions(int amount)
         {
-            foreach (Vector2 pos in phase2_SpawnRect.GetRandomPositions(amount))
+            foreach (Vector2 pos in Phase2_SpawnRect.GetRandomPositions(amount))
             {
                 ShadowKingMinion minion = new(pos, Difficulty, true);
                 currentLocation.characters.Add(minion);
@@ -486,7 +468,7 @@ namespace StardewRoguelike.Bosses
         private bool ShouldBeStill()
         {
             return (
-                ticksToExplode > 0
+                TicksToExplode > 0
             );
         }
 
@@ -507,29 +489,29 @@ namespace StardewRoguelike.Bosses
 
         public void EnableMapChanges()
         {
-            encountered.Value = true;
+            Encountered.Value = true;
             currentLocation.playSound("boulderBreak");
 
-            for (int i = 0; i < tilesToBlock.Count; i++)
+            for (int i = 0; i < TilesToBlock.Count; i++)
             {
-                int tileId = tilesToBlockIds[i];
-                Vector2 tile = tilesToBlock[i];
+                int tileId = TilesToBlockIds[i];
+                Vector2 tile = TilesToBlock[i];
 
                 currentLocation.setMapTileIndex((int)tile.X, (int)tile.Y, tileId, "Buildings");
             }
 
-            foreach (Vector2 warpTile in tilesToWarp)
-                currentLocation.warps.Add(new((int)warpTile.X, (int)warpTile.Y, currentLocation.Name, (int)warpDestination.X, (int)warpDestination.Y, flipFarmer: false));
+            foreach (Vector2 warpTile in TilesToWarp)
+                currentLocation.warps.Add(new((int)warpTile.X, (int)warpTile.Y, currentLocation.Name, (int)WarpDestination.X, (int)WarpDestination.Y, flipFarmer: false));
 
-            ((MineShaft)currentLocation).get_MineShaftCustomDestination().Value = warpDestination;
+            ((MineShaft)currentLocation).get_MineShaftCustomDestination().Value = WarpDestination;
 
-            mapChangesEnabled = true;
+            MapChangesEnabled = true;
         }
 
         public void DisableMapChanges()
         {
-            ((MineShaft)currentLocation).createLadderAt(warpDestination);
-            mapChangesEnabled = false;
+            ((MineShaft)currentLocation).createLadderAt(WarpDestination);
+            MapChangesEnabled = false;
         }
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)
@@ -537,7 +519,7 @@ namespace StardewRoguelike.Bosses
             if (isBomb)
                 return 0;
 
-            if ((attackPhase == 0 || attackPhase == 1) && ticksSinceLastExplosion > explosionCooldownTicks && ticksToExplode == 0)
+            if ((AttackPhase == 0 || AttackPhase == 1) && TicksSinceLastExplosion > ExplosionCooldownTicks && TicksToExplode == 0)
                 StartExplosion();
 
             int result = base.takeDamage(damage, xTrajectory, yTrajectory, isBomb, addedPrecision, who);

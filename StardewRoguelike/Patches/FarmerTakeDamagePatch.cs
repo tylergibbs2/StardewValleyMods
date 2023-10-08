@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewRoguelike.HatQuests;
 using StardewRoguelike.VirtualProperties;
@@ -8,11 +9,10 @@ using System;
 
 namespace StardewRoguelike.Patches
 {
-    internal class FarmerTakeDamagePatch : Patch
+    [HarmonyPatch(typeof(Farmer), nameof(Farmer.takeDamage))]
+    internal class FarmerTakeDamagePatch
     {
         public static int ShellCooldownSeconds = 0;
-
-        protected override PatchDescriptor GetPatchDescriptor() => new(typeof(Farmer), "takeDamage");
 
         public static bool Prefix(Farmer __instance, int damage, bool overrideParry, Monster damager)
         {
@@ -155,7 +155,7 @@ namespace StardewRoguelike.Patches
                     // Apply random buff/debuff
                     if (Game1.random.Next(11) >= __instance.immunity)
                     {
-                        int[] sourceArray = Game1.random.NextDouble() < 0.5 && !__instance.hasBuff(28) ? Roguelike.RandomDebuffIds : Roguelike.RandomBuffIds;
+                        int[] sourceArray = Game1.random.NextDouble() < 0.5 && !__instance.hasBuff(28) ? Constants.RandomDebuffIds : Constants.RandomBuffIds;
                         int buffId = sourceArray[Game1.random.Next(sourceArray.Length)];
                         Buff buff = new(buffId)
                         {

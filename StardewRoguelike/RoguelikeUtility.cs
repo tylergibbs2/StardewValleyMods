@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Menus;
 using System;
@@ -8,12 +9,18 @@ namespace StardewRoguelike
 {
     internal class RoguelikeUtility
     {
+        public static void DoAttackCue(GameLocation location)
+        {
+            Game1.playSound("shadowpeep");
+            Game1.onScreenMenus.Add(new AttackIndicator());
+        }
+
         public static void AddItemsByMenu(List<Item> items, ItemGrabMenu.behaviorOnItemSelect? itemSelectedCallback = null)
         {
             Game1.activeClickableMenu = new ItemGrabMenu(items).setEssential(essential: true);
             ((ItemGrabMenu)Game1.activeClickableMenu).inventory.showGrayedOutSlots = true;
             ((ItemGrabMenu)Game1.activeClickableMenu).inventory.onAddItem = itemSelectedCallback;
-            ((ItemGrabMenu)Game1.activeClickableMenu).source = 2;
+            ((ItemGrabMenu)Game1.activeClickableMenu).source = ItemGrabMenu.source_gift;
         }
 
         internal class SpeechBubble

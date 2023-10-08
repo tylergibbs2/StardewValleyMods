@@ -1,11 +1,11 @@
-﻿using StardewValley.Locations;
+using HarmonyLib;
+using StardewValley.Locations;
 
 namespace StardewRoguelike.Patches
 {
-    internal class MineShaftDisableRandomBug : Patch
+    [HarmonyPatch(typeof(MineShaft), nameof(MineShaft.spawnFlyingMonsterOffScreen))]
+    internal class MineShaftDisableRandomBug
     {
-        protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "spawnFlyingMonsterOffScreen");
-
         public static bool Prefix()
         {
             return false;

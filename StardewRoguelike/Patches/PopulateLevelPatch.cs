@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewRoguelike.Extensions;
 using StardewValley;
@@ -10,10 +11,9 @@ using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
-    internal class PopulateLevelPatch : Patch
+    [HarmonyPatch(typeof(MineShaft), "populateLevel")]
+    internal class PopulateLevelPatch
     {
-        protected override PatchDescriptor GetPatchDescriptor() => new(typeof(MineShaft), "populateLevel");
-
         public static bool Prefix(MineShaft __instance)
         {
             __instance.loadObjects();  // Loads trees for the egg hunt floor
@@ -34,7 +34,7 @@ namespace StardewRoguelike.Patches
 
             int level = Roguelike.GetLevelFromMineshaft(__instance);
 
-            int maxMonsters = level > Roguelike.ScalingOrder[^1] ? Roguelike.MaximumMonstersPerFloorPostLoop : Roguelike.MaximumMonstersPerFloorPreLoop;
+            int maxMonsters = level > Constants.ScalingOrder[^1] ? Constants.MaximumMonstersPerFloorPostLoop : Constants.MaximumMonstersPerFloorPreLoop;
             if (Curse.AnyFarmerHasCurse(CurseType.MoreEnemiesLessHealth))
                 maxMonsters *= 2;
 
@@ -209,7 +209,7 @@ namespace StardewRoguelike.Patches
 
                             Roguelike.AdjustMonster(__instance, ref monsterToAdd);
 
-                            if (level % 48 >= Roguelike.DangerousThreshold)
+                            if (level % 48 >= Constants.DangerousThreshold)
                                 monsterToAdd.DamageToFarmer = (int)Math.Round(monsterToAdd.DamageToFarmer * 1.75f);
 
                             monstersSpawned++;
@@ -269,9 +269,9 @@ namespace StardewRoguelike.Patches
                 }
             }
 
-            if (monstersSpawned < Roguelike.MinimumMonstersPerFloor)
+            if (monstersSpawned < Constants.MinimumMonstersPerFloor)
             {
-                int monstersToSpawn = Roguelike.MinimumMonstersPerFloor - monstersSpawned;
+                int monstersToSpawn = Constants.MinimumMonstersPerFloor - monstersSpawned;
                 __instance.SpawnMonsters(monstersToSpawn);
             }
 
