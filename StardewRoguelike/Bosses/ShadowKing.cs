@@ -244,7 +244,7 @@ namespace StardewRoguelike.Bosses
                     TicksToArrowVolley--;
 
                     if (TicksToArrowVolley == 45)
-                        RoguelikeUtility.DoAttackCue(currentLocation);
+                        RoguelikeUtility.DoAttackCue(currentLocation, 45);
 
                     if (TicksToArrowVolley == 0)
                         FireArrowCone();
@@ -336,7 +336,7 @@ namespace StardewRoguelike.Bosses
                     TicksToArrowVolley--;
 
                     if (TicksToArrowVolley == 45)
-                        RoguelikeUtility.DoAttackCue(currentLocation);
+                        RoguelikeUtility.DoAttackCue(currentLocation, 45);
 
                     if (TicksToArrowVolley == 0)
                     {

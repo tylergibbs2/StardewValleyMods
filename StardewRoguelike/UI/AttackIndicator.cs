@@ -7,12 +7,12 @@ namespace StardewRoguelike.UI
 {
     internal class AttackIndicator : IClickableMenu
     {
-        private static readonly float DisplayDuration = 1_000;
+        private float DurationRemaining;
 
-        private float DurationRemaining = DisplayDuration;
-
-        public AttackIndicator() : base()
+        public AttackIndicator(float durationTicks) : base()
         {
+            // ticks -> millis
+            DurationRemaining = durationTicks / 60 * 1000;
             UpdatePositions();
         }
 

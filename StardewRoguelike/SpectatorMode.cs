@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -12,18 +13,6 @@ using System.Linq;
 
 namespace StardewRoguelike
 {
-
-    class RespawnMessage
-    {
-        public int RespawnLevel;
-
-        public RespawnMessage() { }
-
-        public RespawnMessage(int level)
-        {
-            RespawnLevel = level;
-        }
-    }
 
     class SpectatorMode
     {

@@ -216,7 +216,7 @@ namespace StardewRoguelike.Bosses
                 TicksToSpawnBoneCircles--;
 
                 if (TicksToSpawnBoneCircles == 60)
-                    RoguelikeUtility.DoAttackCue(currentLocation);
+                    RoguelikeUtility.DoAttackCue(currentLocation, 60);
 
                 if (TicksToSpawnBoneCircles == 0)
                     SpawnBoneCircles();

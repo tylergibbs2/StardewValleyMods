@@ -11,24 +11,10 @@ using StardewValley.Locations;
 using StardewRoguelike.UI;
 using StardewRoguelike.VirtualProperties;
 using StardewRoguelike.Patches;
+using StardewRoguelike.Netcode;
 
 namespace StardewRoguelike.Bosses
 {
-    public class BossDeathMessage
-    {
-        public string BossName { get; set; } = "";
-
-        public int KillSeconds { get; set; } = 0;
-
-        public BossDeathMessage() { }
-
-        public BossDeathMessage(string bossName, int killSeconds)
-        {
-            BossName = bossName;
-            KillSeconds = killSeconds;
-        }
-    }
-
     public static class BossManager
     {
         private static Texture2D? healthBarTexture = null;

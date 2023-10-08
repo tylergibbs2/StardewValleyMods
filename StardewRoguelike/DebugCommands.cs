@@ -342,7 +342,7 @@ namespace StardewRoguelike
             }
             else if (e.Button == SButton.L)
             {
-                Game1.onScreenMenus.Add(new AttackIndicator());
+                RoguelikeUtility.DoAttackCue(Game1.player.currentLocation, 60);
             }
         }
 

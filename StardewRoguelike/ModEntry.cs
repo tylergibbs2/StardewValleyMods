@@ -4,6 +4,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Toolkit.Framework.Clients.WebApi;
 using StardewRoguelike.Bosses;
+using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Menus;
@@ -354,6 +355,11 @@ namespace StardewRoguelike
                 Game1.onScreenMenus.Add(
                     new BossKillAnnounceMenu(message.BossName, message.KillSeconds)
                 );
+            }
+            else if (e.Type == "AttackIndicator")
+            {
+                AttackIndicatorMessage message = e.ReadAs<AttackIndicatorMessage>();
+                message.Trigger();
             }
             else if (e.Type == "GameOver") // Signal that the game is over
                 Roguelike.GameOver();

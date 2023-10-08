@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Menus;
@@ -9,10 +10,15 @@ namespace StardewRoguelike
 {
     internal class RoguelikeUtility
     {
-        public static void DoAttackCue(GameLocation location)
+        public static void DoAttackCue(GameLocation location, int tickDuration)
         {
-            Game1.playSound("shadowpeep");
-            Game1.onScreenMenus.Add(new AttackIndicator());
+            AttackIndicatorMessage message = new()
+            {
+                LocationName = location.Name,
+                TickDuration = tickDuration
+            };
+            ModEntry.MultiplayerHelper.SendMessage(message, "AttackIndicator");
+            message.Trigger();
         }
 
         public static void AddItemsByMenu(List<Item> items, ItemGrabMenu.behaviorOnItemSelect? itemSelectedCallback = null)
