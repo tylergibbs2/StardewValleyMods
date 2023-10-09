@@ -2,6 +2,12 @@
 
 # Release notes
 
+## 1.1.1
+
+Released on 8 October 2023 for SMAPI 3.15.0 or later.
+
+- Fix: Possible crash when fishing
+
 ## 1.1.0
 
 Released on 8 October 2023 for SMAPI 3.15.0 or later.
