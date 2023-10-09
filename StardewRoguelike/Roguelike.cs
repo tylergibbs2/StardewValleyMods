@@ -922,7 +922,7 @@ namespace StardewRoguelike
             if (roll <= 0.4 && !HatQuest.HasBuffFor(HatQuestType.FISHING_HAT))
             {
                 // trash
-                itemId = Game1.random.Next(167, 174);
+                itemId = Game1.random.Next(167, 173);
                 quality = 0;
             }
             else if (roll <= 0.65)
