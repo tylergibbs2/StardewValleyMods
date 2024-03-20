@@ -1,9 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using StardewValley;
 
 namespace DefaultFarmer
 {
-    public class FarmerCustomizationData
+    public class FarmerCustomizationData1_6
     {
         public string Name { get; set; } = "";
 
@@ -23,15 +23,15 @@ namespace DefaultFarmer
 
         public int Hair { get; set; } = Game1.player.hair.Value;
 
-        public int Shirt { get; set; } = Game1.player.shirt.Value;
+        public string Shirt { get; set; } = Game1.player.shirt.Value;
 
-        public int Pants { get; set; } = Game1.player.pants.Value;
+        public string Pants { get; set; } = Game1.player.pants.Value;
 
         public int Accessory { get; set; } = Game1.player.accessory.Value;
 
-        public bool CatPerson { get; set; } = Game1.player.catPerson;
+        public string WhichPetType { get; set; } = Game1.player.whichPetType;
 
-        public int Pet { get; set; } = Game1.player.whichPetBreed;
+        public string WhichPetBreed { get; set; } = Game1.player.whichPetBreed;
 
         public bool SkipIntro { get; set; } = false;
     }
