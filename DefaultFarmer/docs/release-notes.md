@@ -2,6 +2,11 @@
 
 # Release notes
 
+## 1.2.1
+Released on 21 March 2024 for SMAPI 4.0.0 or later.
+
+- Include update key in mod manifest
+
 ## 1.2.0
 Released on 19 March 2024 for SMAPI 4.0.0 or later.
 
