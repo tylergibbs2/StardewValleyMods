@@ -91,7 +91,7 @@ namespace StardewRoguelike.Bosses
 							shot_velocity.Normalize();
 							shot_velocity *= 7f;
 							currentLocation.playSound("fireball");
-							BasicProjectile projectile = new(25, 10, 0, 3, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", explode: false, damagesMonsters: false, currentLocation, this);
+							BasicProjectile projectile = new(25, 10, 0, 3, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", explode: false, damagesMonsters: false, currentLocation, this);
 							projectile.IgnoreLocationCollision = true;
 							projectile.ignoreTravelGracePeriod.Value = true;
 							currentLocation.projectiles.Add(projectile);

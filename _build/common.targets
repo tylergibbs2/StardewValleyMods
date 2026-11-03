@@ -9,7 +9,8 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <ModZipPath>$(SolutionDir)\_releases</ModZipPath>
+    <!-- SolutionDir is undefined when a project is built on its own, which left this as a literal \_releases directory on Linux/macOS. -->
+    <ModZipPath>$(MSBuildThisFileDirectory)../_releases</ModZipPath>
   </PropertyGroup>
 
   <!-- stardew object alias -->

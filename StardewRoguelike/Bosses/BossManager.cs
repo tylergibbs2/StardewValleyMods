@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewValley.GameData;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -174,7 +175,7 @@ namespace StardewRoguelike.Bosses
 
             string sound = allFarmersNoHit ? "getNewSpecialItem" : "Cowboy_Secret";
             location.playSound(sound);
-            Game1.changeMusicTrack("none", true, Game1.MusicContext.Default);
+            Game1.changeMusicTrack("none", true, MusicContext.Default);
             location.checkForMusic(new GameTime());
 
             if (chestLocation.HasValue)

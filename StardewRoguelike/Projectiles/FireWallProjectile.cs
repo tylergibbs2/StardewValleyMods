@@ -13,20 +13,18 @@ namespace StardewRoguelike.Projectiles
 
         public FireWallProjectile() : base()
         {
-            InitNetFields();
         }
 
-        public FireWallProjectile(float distanceBeforeStopping, float disappearAfter, int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float velocityX, float velocityY, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation? location = null, Character? firer = null, bool spriteFromObjectSheet = false, onCollisionBehavior? collisionBehavior = null)
-            : base(damageToFarmer, parentSheetIndex, bouncesTillDestruct, tailLength, rotationVelocity, velocityX, velocityY, startingPosition, collisionSound, firingSound, explode, damagesMonsters, location, firer, spriteFromObjectSheet, collisionBehavior)
+        public FireWallProjectile(float distanceBeforeStopping, float disappearAfter, int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float velocityX, float velocityY, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation? location = null, Character? firer = null, onCollisionBehavior? collisionBehavior = null)
+            : base(damageToFarmer, parentSheetIndex, bouncesTillDestruct, tailLength, rotationVelocity, velocityX, velocityY, startingPosition, collisionSound, null, firingSound, explode, damagesMonsters, location, firer, collisionBehavior)
         {
-            InitNetFields();
-
             DisappearAfter.Value = disappearAfter;
             DistanceBeforeStopping.Value = distanceBeforeStopping;
         }
 
-        private void InitNetFields()
+        protected override void InitNetFields()
         {
+            base.InitNetFields();
             NetFields.AddField(DisappearAfter).AddField(DistanceBeforeStopping);
         }
 
@@ -51,8 +49,8 @@ namespace StardewRoguelike.Projectiles
             if (travelDistance >= DistanceBeforeStopping.Value)
                 return;
 
-            position.X += xVelocity;
-            position.Y += yVelocity;
+            position.X += xVelocity.Value;
+            position.Y += yVelocity.Value;
         }
 
         public override bool update(GameTime time, GameLocation location)
@@ -60,7 +58,7 @@ namespace StardewRoguelike.Projectiles
             if (Game1.IsMasterGame)
             {
                 DisappearAfter.Value -= (float)time.ElapsedGameTime.TotalSeconds;
-                if (DisappearAfter <= 0f)
+                if (DisappearAfter.Value <= 0f)
                     location.projectiles.Remove(this);
             }
 

@@ -58,7 +58,7 @@ namespace StardewRoguelike.Patches
                 }
             }
 
-            if (__instance.Items.Count == 0 && __instance.coins.Value == 0)
+            if (__instance.Items.Count == 0)
             {
                 who.currentLocation.removeObject(__instance.TileLocation, showDestroyedObject: false);
                 who.currentLocation.playSound("woodWhack");

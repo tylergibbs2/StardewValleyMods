@@ -14,10 +14,11 @@ namespace StardewRoguelike.ChallengeFloors
     {
         protected ChallengeBase()
         {
+            NetFields = new(NetFields.GetNameForInstance(this));
             InitNetFields();
         }
 
-        public NetFields NetFields { get; } = new();
+        public NetFields NetFields { get; }
 
         protected virtual void InitNetFields() { }
 

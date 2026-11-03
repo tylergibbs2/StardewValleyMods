@@ -127,7 +127,7 @@ namespace StardewRoguelike.Bosses
 
         public override void MovePosition(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
         {
-            if (CurrentState == State.Normal)
+            if (CurrentState.Value == State.Normal)
                 base.MovePosition(time, viewport, currentLocation);
         }
 
@@ -158,7 +158,7 @@ namespace StardewRoguelike.Bosses
                 {
                     if (CurrentMinionState.Value != MinionState.Normal)
                     {
-                        PreviousMinionState = CurrentMinionState;
+                        PreviousMinionState = CurrentMinionState.Value;
                         CurrentMinionState.Value = MinionState.Normal;
                         TicksToChangeMinions = 300;
                     }
@@ -172,11 +172,11 @@ namespace StardewRoguelike.Bosses
                         TicksToChangeMinions = Roguelike.HardMode ? 480 : 600;
                     }
 
-                    SetAllMinionStates(CurrentMinionState);
+                    SetAllMinionStates(CurrentMinionState.Value);
                 }
             }
 
-            if (CurrentState == State.Normal)
+            if (CurrentState.Value == State.Normal)
             {
                 base.behaviorAtGameTick(time);
 
@@ -197,7 +197,7 @@ namespace StardewRoguelike.Bosses
                     }
                 }
             }
-            else if (CurrentState == State.MovingToEgg)
+            else if (CurrentState.Value == State.MovingToEgg)
             {
                 Vector2 moveVector = (new Vector2(TargetEggSpot.X + 1, TargetEggSpot.Y + 1) * 64f) - GetBoundingBox().Center.ToVector2();
 
@@ -214,7 +214,7 @@ namespace StardewRoguelike.Bosses
                 Position += moveVector;
                 rotation = RoguelikeUtility.VectorToRadians(moveVector) + RoguelikeUtility.DegreesToRadians(90);
             }
-            else if (CurrentState == State.LayingEgg)
+            else if (CurrentState.Value == State.LayingEgg)
             {
                 if (StateTickCount > 120)
                 {
@@ -282,7 +282,7 @@ namespace StardewRoguelike.Bosses
                 if (Utility.isOnScreen(spawnLocation * 64f, 64))
                     spawnLocation.X -= Game1.viewport.Width / 64;
 
-                BigBugMinion minion = new(spawnLocation, Difficulty, CurrentMinionState);
+                BigBugMinion minion = new(spawnLocation, Difficulty, CurrentMinionState.Value);
                 minion.moveTowardPlayerThreshold.Value = 100;
                 minion.focusedOnFarmers = true;
                 currentLocation.characters.Add(minion);
@@ -302,7 +302,7 @@ namespace StardewRoguelike.Bosses
             while (bugsToSpawn > 0)
             {
                 tileLocation = new(tileLocation.X + 64 + Game1.random.Next(-32, 33), tileLocation.Y + 64 + Game1.random.Next(-32, 33));
-                BigBugMinion minion = new(tileLocation, Difficulty, CurrentMinionState);
+                BigBugMinion minion = new(tileLocation, Difficulty, CurrentMinionState.Value);
                 currentLocation.characters.Add(minion);
 
                 bugsToSpawn--;
@@ -337,7 +337,7 @@ namespace StardewRoguelike.Bosses
 
         protected override void updateAnimation(GameTime time)
         {
-            if (CurrentState == State.LayingEgg)
+            if (CurrentState.Value == State.LayingEgg)
             {
                 Sprite.currentFrame = 4;
                 Halt();

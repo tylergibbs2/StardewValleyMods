@@ -126,7 +126,7 @@ namespace StardewRoguelike.ChallengeFloors
             e.SpriteBatch.Draw(
                 kothBoxTexture,
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(kothBox.X, kothBox.Y)),
-                kothBox,
+                kothBox.Value,
                 Color.DarkGray * 0.4f,
                 0f,
                 Vector2.Zero,

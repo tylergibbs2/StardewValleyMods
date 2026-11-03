@@ -40,7 +40,7 @@ namespace StardewRoguelike.Patches
                 __instance.removeTile(new(0, 0), "Buildings");
 
                 bool foundAnyWater = false;
-                __instance.waterTiles = new bool[__instance.map.Layers[0].LayerWidth, __instance.map.Layers[0].LayerHeight];
+                __instance.waterTiles = new WaterTiles(new bool[__instance.map.Layers[0].LayerWidth, __instance.map.Layers[0].LayerHeight]);
                 __instance.waterColor.Value = ((__instance.getMineArea() == 80) ? (Color.Red * 0.8f) : (new Color(50, 100, 200) * 0.5f));
                 for (int y = 0; y < __instance.map.GetLayer("Buildings").LayerHeight; y++)
                 {

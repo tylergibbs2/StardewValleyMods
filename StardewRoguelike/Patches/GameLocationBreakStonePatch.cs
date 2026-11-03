@@ -25,7 +25,7 @@ namespace StardewRoguelike.Patches
             {
                 Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
-                Game1.createMultipleObjectDebris(384, x, y, 2, who.UniqueMultiplayerID, __instance);
+                Game1.createMultipleObjectDebris("384", x, y, 2, who.UniqueMultiplayerID, __instance);
                 multiplayer.broadcastSprites(__instance, Utility.sparkleWithinArea(new Rectangle(x * 64, (y - 1) * 64, 32, 96), 3, Color.Yellow * 0.5f, 175, 100));
             }
         }

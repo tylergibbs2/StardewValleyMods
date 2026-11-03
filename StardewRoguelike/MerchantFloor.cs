@@ -1,4 +1,5 @@
 using StardewValley;
+using StardewValley.Extensions;
 using StardewValley.Objects;
 using StardewValley.Tools;
 using System;
@@ -84,22 +85,22 @@ namespace StardewRoguelike
 
             List<Item> validItems = new();
 
-            foreach (int swordId in Swords.Keys)
+            foreach (string swordId in Swords.Keys)
                 validItems.Add(new MeleeWeapon(swordId));
 
-            foreach (int ringId in Rings.Keys)
+            foreach (string ringId in Rings.Keys)
                 validItems.Add(new Ring(ringId));
 
-            foreach (int ringId in SpecialRings.Keys)
+            foreach (string ringId in SpecialRings.Keys)
                 validItems.Add(new Ring(ringId));
 
-            foreach (int bootId in Boots.Keys)
+            foreach (string bootId in Boots.Keys)
                 validItems.Add(new Boots(bootId));
 
-            foreach (int specialFoodId in SpecialFood.Keys)
+            foreach (string specialFoodId in SpecialFood.Keys)
                 validItems.Add(new SObject(specialFoodId, 1));
 
-            return Utility.GetRandom(validItems, random);
+            return random.ChooseFrom(validItems);
         }
 
         public Item PickAnyRandomAvoiding(List<string> toAvoid, Random? random = null)
@@ -108,19 +109,19 @@ namespace StardewRoguelike
 
             List<Item> validItems = new();
 
-            foreach (int swordId in Swords.Keys)
+            foreach (string swordId in Swords.Keys)
                 validItems.Add(new MeleeWeapon(swordId));
 
-            foreach (int ringId in Rings.Keys)
+            foreach (string ringId in Rings.Keys)
                 validItems.Add(new Ring(ringId));
 
-            foreach (int ringId in SpecialRings.Keys)
+            foreach (string ringId in SpecialRings.Keys)
                 validItems.Add(new Ring(ringId));
 
-            foreach (int bootId in Boots.Keys)
+            foreach (string bootId in Boots.Keys)
                 validItems.Add(new Boots(bootId));
 
-            foreach (int specialFoodId in SpecialFood.Keys)
+            foreach (string specialFoodId in SpecialFood.Keys)
                 validItems.Add(new SObject(specialFoodId, 1));
 
             while (toAvoid.Count >= validItems.Count)
@@ -128,13 +129,13 @@ namespace StardewRoguelike
 
             validItems.RemoveAll(item => toAvoid.Contains(item.DisplayName));
 
-            return Utility.GetRandom(validItems, random);
+            return random.ChooseFrom(validItems);
         }
 
         public MeleeWeapon PickAnySword(Random? random = null)
         {
             random ??= Game1.random;
-            int swordId = Utility.GetRandom(PickNFromList(Swords.Keys.ToList(), SwordsToPick), random);
+            string swordId = random.ChooseFrom(PickNFromList(Swords.Keys.ToList(), SwordsToPick));
             return new(swordId);
         }
 
@@ -142,23 +143,23 @@ namespace StardewRoguelike
         {
             random ??= Game1.random;
             var allRingIds = Rings.Keys.ToList().Concat(SpecialRings.Keys.ToList()).ToList();
-            int ringId = Utility.GetRandom(PickNFromList(allRingIds, RingsToPick + SpecialRingsToPick), random);
+            string ringId = random.ChooseFrom(PickNFromList(allRingIds, RingsToPick + SpecialRingsToPick));
             return new(ringId);
         }
 
         public Boots PickAnyBoots(Random? random = null)
         {
             random ??= Game1.random;
-            int bootId = Utility.GetRandom(PickNFromList(Boots.Keys.ToList(), BootsToPick), random);
+            string bootId = random.ChooseFrom(PickNFromList(Boots.Keys.ToList(), BootsToPick));
             return new(bootId);
         }
 
         public SObject PickAnyFood(Random? random = null)
         {
             random ??= Game1.random;
-            List<int> regularFoodIds = new() { 194, 196, 773 };
+            List<string> regularFoodIds = new() { "194", "196", "773" };
             var allFoodIds = SpecialFood.Keys.ToList().Concat(regularFoodIds).ToList();
-            int specialFoodId = Utility.GetRandom(PickNFromList(allFoodIds, SpecialFoodToPick + 3, random), random);
+            string specialFoodId = random.ChooseFrom(PickNFromList(allFoodIds, SpecialFoodToPick + 3, random));
             return new(specialFoodId, 1);
         }
 

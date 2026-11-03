@@ -19,14 +19,11 @@ namespace StardewRoguelike.Projectiles
 
         public CircularProjectile() : base()
         {
-            InitNetFields();
         }
 
-        public CircularProjectile(int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float angularVelocity, Vector2 pointOfRotation, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation? location = null, Character? firer = null, bool spriteFromObjectSheet = false, onCollisionBehavior? collisionBehavior = null)
-            : base(damageToFarmer, parentSheetIndex, bouncesTillDestruct, tailLength, rotationVelocity, 0f, 0f, startingPosition, collisionSound, firingSound, explode, damagesMonsters, location, firer, spriteFromObjectSheet, collisionBehavior)
+        public CircularProjectile(int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float angularVelocity, Vector2 pointOfRotation, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation? location = null, Character? firer = null, onCollisionBehavior? collisionBehavior = null)
+            : base(damageToFarmer, parentSheetIndex, bouncesTillDestruct, tailLength, rotationVelocity, 0f, 0f, startingPosition, collisionSound, null, firingSound, explode, damagesMonsters, location, firer, collisionBehavior)
         {
-            InitNetFields();
-
             AngularVelocity.Value = angularVelocity;
             Distance.Value = Vector2.Distance(pointOfRotation, startingPosition);
             PointOfRotation.Value = pointOfRotation;
@@ -34,8 +31,9 @@ namespace StardewRoguelike.Projectiles
             angle.Value = RoguelikeUtility.VectorToRadians(pointOfRotation - startingPosition);
         }
 
-        private void InitNetFields()
+        protected override void InitNetFields()
         {
+            base.InitNetFields();
             NetFields.AddField(angle).AddField(AngularVelocity).AddField(Distance).AddField(PointOfRotation);
         }
 

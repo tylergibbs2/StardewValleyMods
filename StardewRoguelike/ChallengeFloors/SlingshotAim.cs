@@ -100,14 +100,14 @@ namespace StardewRoguelike.ChallengeFloors
             ModEntry.Events.Display.RenderedHud += RenderHud;
 
             Slingshot slingshot = new();
-            slingshot.attachments[0] = new(388, 50);
+            slingshot.attachments[0] = new("388", 50);
 
             Vector2 chestSpot = new(6, 23);
             List<Item> chestItems = new()
             {
                 slingshot
             };
-            Chest chest = new(0, chestItems, chestSpot)
+            Chest chest = new(chestItems, chestSpot)
             {
                 Tint = Color.White
             };
@@ -159,7 +159,7 @@ namespace StardewRoguelike.ChallengeFloors
         public void GameOver(MineShaft mine)
         {
             gameOver = true;
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
 
             if (wavesKilled.Value == 0)
                 return;
@@ -191,7 +191,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
+                new SObject(gemReward.ToString(), 1),
                 new SObject("384", goldAmount)
             };
 

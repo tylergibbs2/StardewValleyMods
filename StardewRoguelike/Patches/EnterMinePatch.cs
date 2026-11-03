@@ -10,7 +10,6 @@ namespace StardewRoguelike.Patches
         {
             Roguelike.NextFloor();
 
-            Game1.inMine = true;
             // Warp to mine level 1. We handle choosing the map
             // elsewhere.
             Game1.warpFarmer($"UndergroundMine1/{Roguelike.CurrentLevel}", 6, 6, 2);

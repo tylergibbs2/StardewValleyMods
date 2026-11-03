@@ -27,7 +27,7 @@ namespace StardewRoguelike.Patches
                     location.debris.Add(new Debris(toDrop, new Vector2(x * 64 + 32, y * 64 + 32), Game1.player.getStandingPosition()));
                 }
                 else if (itemId > 0 && quantity > 0)
-                    Game1.createMultipleObjectDebris(itemId, x, y, quantity, location);
+                    Game1.createMultipleObjectDebris(itemId.ToString(), x, y, quantity, location);
             }
 
             if (who == Game1.player && who.get_FarmerActiveHatQuest() is not null)

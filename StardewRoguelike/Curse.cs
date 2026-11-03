@@ -170,7 +170,7 @@ namespace StardewRoguelike
 
             MineShaft mine = (MineShaft)Game1.player.currentLocation;
 
-            SObject bomb = new(286, 1);
+            SObject bomb = new("286", 1);
             int bombsToSpawn = 3;
             int spawnPadding = 3;
             while (bombsToSpawn > 0)

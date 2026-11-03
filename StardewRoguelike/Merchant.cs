@@ -76,7 +76,7 @@ namespace StardewRoguelike
             if (level == 1 && !Roguelike.HardMode)
             {
                 Vector2 signTile = new(17, 16);
-                Sign sign = new(signTile, 38);
+                Sign sign = new(signTile, "38");
                 sign.displayItem.Value = new SObject("773", 1);
                 sign.displayType.Value = 1;
                 mine.Objects.Add(signTile, sign);
@@ -108,16 +108,16 @@ namespace StardewRoguelike
 
             switch (crop.netSeedIndex.Value)
             {
-                case 472:  // Parsnips
+                case "472":  // Parsnips
                     crop.currentPhase.Value = crop.phaseDays.Count - 1;
                     break;
-                case 479:  // Melons
+                case "479":  // Melons
                     if (plantedAgo == 1)
                         crop.currentPhase.Value = 2;
                     else
                         crop.currentPhase.Value = crop.phaseDays.Count - 1;
                     break;
-                case 490:  // Pumpkins
+                case "490":  // Pumpkins
                     if (plantedAgo == 1)
                         crop.currentPhase.Value = 1;
                     else if (plantedAgo == 2)
@@ -125,7 +125,7 @@ namespace StardewRoguelike
                     else
                         crop.currentPhase.Value = crop.phaseDays.Count - 1;
                     break;
-                case 486:  // Starfruit
+                case "486":  // Starfruit
                     if (plantedAgo == 1)
                         crop.currentPhase.Value = 1;
                     else if (plantedAgo == 2)
@@ -135,7 +135,7 @@ namespace StardewRoguelike
                     else
                         crop.currentPhase.Value = crop.phaseDays.Count - 1;
                     break;
-                case 347:  // Sweet Gem Berry
+                case "347":  // Sweet Gem Berry
                     if (plantedAgo == 1)
                         crop.currentPhase.Value = 1;
                     else if (plantedAgo == 2)
@@ -169,7 +169,7 @@ namespace StardewRoguelike
                 if (previousCrop is null)
                     continue;
 
-                Crop currentCrop = new(previousCrop.netSeedIndex.Value, (int)tile.X, (int)tile.Y);
+                Crop currentCrop = new(previousCrop.netSeedIndex.Value, (int)tile.X, (int)tile.Y, mine);
                 currentCrop.set_CropMerchantsPlantedAgo(previousCrop.get_CropMerchantsPlantedAgo() + 1);
 
                 GrowCrop(currentCrop);
@@ -197,7 +197,7 @@ namespace StardewRoguelike
                 foreach (Vector2 potTile in GardenPotTiles)
                 {
                     Vector2 sprinklerTile = new(potTile.X - 1, potTile.Y);
-                    mine.objects[sprinklerTile].ApplySprinklerAnimation(mine);
+                    mine.Objects[sprinklerTile].ApplySprinklerAnimation();
                 }
 
                 if (Perks.HasPerk(Perks.PerkType.Deconstructor))
@@ -237,18 +237,18 @@ namespace StardewRoguelike
                 else if (level == Constants.ScalingOrder[2])
                 {
                     // Spawn hat board
-                    TileSheet town_tilesheet = mine.map.GetTileSheet("z_Town");
-                    int tilesheet_index = mine.map.TileSheets.IndexOf(town_tilesheet);
+                    // 1.6 takes the tilesheet's ID rather than its index.
+                    string townTilesheetId = mine.map.GetTileSheet("z_Town").Id;
 
-                    mine.setMapTileIndex(11, 5, 2045, "Buildings", tilesheet_index);
-                    mine.setMapTileIndex(12, 5, 2046, "Buildings", tilesheet_index);
-                    mine.setMapTileIndex(13, 5, 2047, "Buildings", tilesheet_index);
+                    mine.setMapTile(11, 5, 2045, "Buildings", townTilesheetId);
+                    mine.setMapTile(12, 5, 2046, "Buildings", townTilesheetId);
+                    mine.setMapTile(13, 5, 2047, "Buildings", townTilesheetId);
                     mine.setTileProperty(11, 5, "Buildings", "Action", "HatBoard");
                     mine.setTileProperty(12, 5, "Buildings", "Action", "HatBoard");
                     mine.setTileProperty(13, 5, "Buildings", "Action", "HatBoard");
-                    mine.setMapTileIndex(11, 4, 2013, "Front", tilesheet_index);
-                    mine.setMapTileIndex(12, 4, 2014, "Front", tilesheet_index);
-                    mine.setMapTileIndex(13, 4, 2015, "Front", tilesheet_index);
+                    mine.setMapTile(11, 4, 2013, "Front", townTilesheetId);
+                    mine.setMapTile(12, 4, 2014, "Front", townTilesheetId);
+                    mine.setMapTile(13, 4, 2015, "Front", townTilesheetId);
                 }
 
                 else if (level == Constants.ScalingOrder[^1])

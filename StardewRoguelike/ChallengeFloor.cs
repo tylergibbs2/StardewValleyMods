@@ -129,7 +129,7 @@ namespace StardewRoguelike
         /// <returns>The map path to load.</returns>
         public static string GetMapPath(MineShaft mine)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
 
             return
                 challenge.MapPaths?[Roguelike.FloorRng.Next(challenge.MapPaths.Count)] ??
@@ -143,7 +143,7 @@ namespace StardewRoguelike
         /// <returns>A list of valid music tracks to play.</returns>
         public static List<string> GetMusicTracks(MineShaft mine)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             return challenge.GetMusicTracks(mine);
         }
 
@@ -158,7 +158,7 @@ namespace StardewRoguelike
         {
             Vector2? tileBeneathLadder = (Vector2?)mine.GetType().GetProperty("tileBeneathLadder", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mine);
 
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             return challenge.GetSpawnLocation(mine) ?? tileBeneathLadder ?? new(0, 0);
         }
 
@@ -229,12 +229,12 @@ namespace StardewRoguelike
 
             if (e.OldLocation is MineShaft && IsChallengeFloor((MineShaft)e.OldLocation))
             {
-                ChallengeBase challenge = ((MineShaft)e.OldLocation).get_MineShaftChallengeFloor();
+                ChallengeBase challenge = ((MineShaft)e.OldLocation).get_MineShaftChallengeFloor().Value;
                 challenge.PlayerLeft((MineShaft)e.OldLocation);
             }
             if (e.NewLocation is MineShaft && IsChallengeFloor((MineShaft)e.NewLocation))
             {
-                ChallengeBase challenge = ((MineShaft)e.NewLocation).get_MineShaftChallengeFloor();
+                ChallengeBase challenge = ((MineShaft)e.NewLocation).get_MineShaftChallengeFloor().Value;
                 challenge.PlayerEntered((MineShaft)e.NewLocation);
             }
         }
@@ -249,7 +249,7 @@ namespace StardewRoguelike
         /// <returns></returns>
         public static bool AnswerDialogueAction(MineShaft mine, string questionAndAnswer, string[] questionParams)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             if (challenge is null)
                 return false;
 
@@ -258,7 +258,7 @@ namespace StardewRoguelike
 
         public static void DrawBeforeLocation(MineShaft mine, SpriteBatch b)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             if (challenge is null)
                 return;
 
@@ -267,7 +267,7 @@ namespace StardewRoguelike
 
         public static void DrawAfterLocation(MineShaft mine, SpriteBatch b)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             if (challenge is null)
                 return;
 
@@ -276,7 +276,7 @@ namespace StardewRoguelike
 
         public static bool CheckForCollision(MineShaft mine, Microsoft.Xna.Framework.Rectangle position, Farmer who)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             if (challenge is null)
                 return false;
 
@@ -285,7 +285,7 @@ namespace StardewRoguelike
 
         public static bool CheckAction(MineShaft mine, Location tileLocation, xTile.Dimensions.Rectangle viewport, Farmer who)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             if (challenge is null)
                 return false;
 
@@ -294,7 +294,7 @@ namespace StardewRoguelike
 
         public static bool PerformAction(MineShaft mine, string action, Farmer who, Location tileLocation)
         {
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             if (challenge is null)
                 return false;
 
@@ -312,7 +312,7 @@ namespace StardewRoguelike
             if (!IsChallengeFloor(mine))
                 return;
 
-            ChallengeBase challenge = mine.get_MineShaftChallengeFloor();
+            ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             challenge.Update(mine, time);
         }
     }

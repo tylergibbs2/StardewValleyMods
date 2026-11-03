@@ -7,9 +7,11 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(DwarfGate), "ApplyTiles")]
     internal class DwarfGateApplyTiles
     {
-        private static (int, int) GetTileIndex(xTile.Map map, int x, int y)
+        private const string DungeonTileSheetId = "volcano_dungeon";
+
+        private static int GetTileIndex(xTile.Map map, int x, int y)
         {
-            return Roguelike.GetTileIndexForMap(map, "volcano_dungeon", x + y * 16, doSum: true);
+            return Roguelike.GetTileIndexForMap(map, DungeonTileSheetId, x + y * 16, doSum: true);
         }
 
         public static void Postfix(DwarfGate __instance)
@@ -20,8 +22,8 @@ namespace StardewRoguelike.Patches
                 __instance.locationRef.Value.removeTile(__instance.tilePosition.X, __instance.tilePosition.Y + 1, "Buildings");
             else
             {
-                var (tileSheetIndex, tileIndex) = GetTileIndex(map, 0, 0);
-                __instance.locationRef.Value.setMapTileIndex(__instance.tilePosition.X, __instance.tilePosition.Y + 1, tileIndex, "Buildings", whichTileSheet: tileSheetIndex);
+                int tileIndex = GetTileIndex(map, 0, 0);
+                __instance.locationRef.Value.setMapTile(__instance.tilePosition.X, __instance.tilePosition.Y + 1, tileIndex, "Buildings", DungeonTileSheetId);
             }
         }
     }

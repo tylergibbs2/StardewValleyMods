@@ -38,15 +38,15 @@ namespace StardewRoguelike.Patches
                 switch (__instance.grassType.Value)
                 {
                     case 1:
-                        switch (location.GetSeasonForLocation())
+                        switch (location.GetSeason())
                         {
-                            case "spring":
+                            case Season.Spring:
                                 c = new Color(60, 180, 58);
                                 break;
-                            case "summer":
+                            case Season.Summer:
                                 c = new Color(110, 190, 24);
                                 break;
-                            case "fall":
+                            case Season.Fall:
                                 c = new Color(219, 102, 58);
                                 break;
                         }

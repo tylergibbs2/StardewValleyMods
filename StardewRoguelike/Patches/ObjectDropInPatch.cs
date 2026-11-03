@@ -1,78 +1,43 @@
 using HarmonyLib;
 using StardewValley;
-using StardewValley.Objects;
+using StardewValley.Internal;
 using StardewValley.Tools;
-using System;
 using System.Collections.Generic;
 
 namespace StardewRoguelike.Patches
 {
-    [HarmonyPatch(typeof(SObject), "performObjectDropInAction")]
-    internal class ObjectDropInPatch
-    {
-        public static bool Prefix(SObject __instance, ref bool __result, Item dropInItem, bool probe, Farmer who)
-        {
-            if (__instance.Name != "Deconstructor")
-                return true;
-
-            if (__instance.isTemporarilyInvisible)
-                return true;
-
-            if (__instance.heldObject.Value is not null)
-            {
-                Game1.showRedMessage("Deconstructor is already in use.");
-                return false;
-            }
-
-            if (dropInItem is not null)
-            {
-                SObject deconstructor_output = __instance.GetDeconstructorOutput(dropInItem);
-                if (deconstructor_output != null)
-                {
-                    __instance.heldObject.Value = new SObject(dropInItem.ParentSheetIndex, 1);
-                    if (!probe)
-                    {
-                        __instance.heldObject.Value = deconstructor_output;
-                        __instance.MinutesUntilReady = 5;
-                        Game1.playSound("furnace");
-                        __result = true;
-                        return false;
-                    }
-                    __result = true;
-                    return false;
-                }
-                if (!probe)
-                {
-                    if (SObject.autoLoadChest == null)
-                        Game1.showRedMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Deconstructor_fail"));
-
-                    return false;
-                }
-            }
-
-            return false;
-        }
-    }
-
-    [HarmonyPatch(typeof(SObject), "GetDeconstructorOutput")]
+    /// <summary>
+    /// Makes the Deconstructor pay out gold ore for almost anything, so it stays a
+    /// useful way to turn junk into money during a run.
+    ///
+    /// 1.5.6 needed a full <c>performObjectDropInAction</c> prefix plus a patch on
+    /// <c>Object.GetDeconstructorOutput</c>. In 1.6 machines are data-driven: the
+    /// Deconstructor entry in <c>Data/Machines</c> dispatches to the static
+    /// <see cref="StardewValley.Object.OutputDeconstructor"/>, which is the only
+    /// thing the mod has to override. Vanilla handles the rest of the interaction.
+    /// </summary>
+    [HarmonyPatch(typeof(SObject), nameof(SObject.OutputDeconstructor))]
     internal class DeconstructorOutputPatch
     {
-        public static readonly List<int> InvalidItemIndices = new()
+        /// <summary>
+        /// Items the Deconstructor refuses, so it can't be used to mint gold out of
+        /// its own output or out of the shop's cheap stock.
+        /// </summary>
+        public static readonly HashSet<string> InvalidItemIds = new()
         {
-            384,  // Gold Ore
-            39,   // Dark Sign
-            322   // Wood Fence
+            "384",  // Gold Ore
+            "39",   // Dark Sign
+            "322"   // Wood Fence
         };
 
-        public static bool Prefix(ref SObject? __result, Item item)
+        public static bool Prefix(Item inputItem, ref Item? __result, out int? overrideMinutesUntilReady)
         {
-            if (InvalidItemIndices.Contains(item.ParentSheetIndex) || item is Pickaxe)
-            {
-                __result = null;
-                return false;
-            }
+            overrideMinutesUntilReady = null;
 
-            __result = new(384, 3);
+            if (inputItem is null || InvalidItemIds.Contains(inputItem.ItemId) || inputItem is Pickaxe)
+                __result = null;
+            else
+                __result = ItemRegistry.Create("(O)384", 3);
 
             return false;
         }

@@ -93,7 +93,7 @@ namespace StardewRoguelike.Patches
             if (!__instance.isSideBranch())
             {
                 MineShaft.lowestLevelReached = Math.Max(MineShaft.lowestLevelReached, level);
-                __instance.setMapTileIndex(0, 0, 0, "Buildings");
+                __instance.setMapTile(0, 0, 0, "Buildings", __instance.map.TileSheets[0].Id);
             }
 
             if (loadedDarkArea)

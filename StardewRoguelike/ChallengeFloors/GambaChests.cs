@@ -44,7 +44,7 @@ namespace StardewRoguelike.ChallengeFloors
             {
                 Chest chest = mine.overlayObjects[v] as Chest;
                 Item chestItem = chest.Items[0];
-                Sign sign = new(v, 39);
+                Sign sign = new(v, "39");
                 sign.displayItem.Value = chestItem;
                 sign.displayType.Value = chestItem is Ring ? 4 : 1;
                 mine.overlayObjects[v] = sign;

@@ -11,7 +11,7 @@ namespace StardewRoguelike.Netcode
 {
     public class NetChest : INetObject<NetFields>
     {
-        public NetFields NetFields { get; } = new();
+        public NetFields NetFields { get; }
 
         public readonly NetVector2 TileLocation = new();
 
@@ -27,6 +27,7 @@ namespace StardewRoguelike.Netcode
 
         public NetChest()
         {
+            NetFields = new(NetFields.GetNameForInstance(this));
             InitNetFields();
         }
 
@@ -100,7 +101,7 @@ namespace StardewRoguelike.Netcode
             }
             else
             {
-                chest = new(0, items, TileLocation.Value)
+                chest = new(items, TileLocation.Value)
                 {
                     Tint = Color.White
                 };

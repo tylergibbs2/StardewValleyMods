@@ -369,7 +369,7 @@ namespace StardewRoguelike.Bosses
                 int fireAngle = angle + (offset ? 15 : 0) % 360;
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fireAngle)), -(float)Math.Sin(RoguelikeUtility.DegreesToRadians(fireAngle)));
                 shot_velocity *= 10f;
-                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
+                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", false, false, currentLocation, this, null);
                 projectile.ignoreTravelGracePeriod.Value = true;
                 projectile.IgnoreLocationCollision = true;
                 projectile.ignoreMeleeAttacks.Value = true;
@@ -394,7 +394,7 @@ namespace StardewRoguelike.Bosses
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)), (float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)));
                 shot_velocity *= 10f;
 
-                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
+                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", false, false, currentLocation, this, null);
                 projectile.ignoreTravelGracePeriod.Value = true;
                 projectile.ignoreMeleeAttacks.Value = true;
                 projectile.IgnoreLocationCollision = true;
@@ -420,7 +420,7 @@ namespace StardewRoguelike.Bosses
             Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle)), (float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle)));
             shot_velocity *= 10f;
 
-            BasicProjectile projectile = new(25, 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", explode: false, damagesMonsters: false, currentLocation, this);
+            BasicProjectile projectile = new(25, 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", explode: false, damagesMonsters: false, currentLocation, this);
             projectile.ignoreTravelGracePeriod.Value = true;
             projectile.ignoreMeleeAttacks.Value = true;
             projectile.IgnoreLocationCollision = true;
@@ -460,7 +460,7 @@ namespace StardewRoguelike.Bosses
                 if (wanderState)
                 {
                     moveLeft = moveUp = moveRight = moveDown = false;
-                    tryToMoveInDirection(facingDirection.Value, isFarmer: false, DamageToFarmer, isGlider);
+                    tryToMoveInDirection(facingDirection.Value, isFarmer: false, DamageToFarmer, isGlider.Value);
                 }
             }
         }

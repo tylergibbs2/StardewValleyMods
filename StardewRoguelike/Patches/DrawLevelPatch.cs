@@ -29,10 +29,10 @@ namespace StardewRoguelike.Patches
 
             if (!Game1.game1.takingMapScreenshot && !__instance.isSideBranch())
 			{
-				int col = __instance.getMineArea() == 0 ? 4 : ((__instance.getMineArea() == 10) ? 6 : ((__instance.getMineArea() == 40) ? 7 : ((__instance.getMineArea() == 80) ? 2 : 3)));
+				Color col = __instance.getMineArea() == 0 ? SpriteText.color_White : ((__instance.getMineArea() == 10) ? SpriteText.color_Green : ((__instance.getMineArea() == 40) ? SpriteText.color_Cyan : ((__instance.getMineArea() == 80) ? SpriteText.color_Red : SpriteText.color_Purple)));
 				string txt = __instance.get_MineShaftLevel().Value.ToString();
-				Rectangle tsarea = Game1.game1.GraphicsDevice.Viewport.GetTitleSafeArea();
-				SpriteText.drawString(b, txt, tsarea.Left + 16, tsarea.Top + 16, 999999, -1, 999999, 1f, 1f, junimoText: false, 2, "", col);
+				Rectangle tsarea = Game1.game1.GraphicsDevice.Viewport.TitleSafeArea;
+				SpriteText.drawString(b, txt, tsarea.Left + 16, tsarea.Top + 16, 999999, -1, 999999, 1f, 1f, junimoText: false, 2, "", color: col);
 				int text_width = SpriteText.getWidthOfString(txt);
 				if (Roguelike.HardMode)
 					b.Draw(Game1.mouseCursors, new Vector2(tsarea.Left + 16 + text_width + 16, tsarea.Top + 16) + new Vector2(4f, 6f) * 4f, new Rectangle(192, 324, 7, 10), Color.White, 0f, new Vector2(3f, 5f), 4f + Game1.dialogueButtonScale / 25f, SpriteEffects.None, 1f);

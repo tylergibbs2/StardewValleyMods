@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewValley.Pathfinding;
 using Netcode;
 using StardewModdingAPI;
 using StardewRoguelike.Extensions;

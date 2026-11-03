@@ -146,7 +146,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void GameOver(MineShaft mine)
         {
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
 
             gameOver.Value = true;
             mine.createLadderAt(new(20, 20));

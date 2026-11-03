@@ -22,7 +22,7 @@ namespace StardewRoguelike.Patches
                 if (tf.isPassable())
                     continue;
 
-                if (tf.getBoundingBox(tileLocation).Intersects(position))
+                if (tf.getBoundingBox().Intersects(position))
                 {
                     __result = true;
                     return;

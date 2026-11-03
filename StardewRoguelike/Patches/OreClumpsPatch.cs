@@ -22,7 +22,7 @@ namespace StardewRoguelike.Patches
 			{
 				if (__instance.CanItemBePlacedHere(endPoint) && __instance.isTileOnClearAndSolidGround(endPoint) && __instance.doesTileHaveProperty((int)endPoint.X, (int)endPoint.Y, "Diggable", "Back") is null)
 				{
-                    SObject ore = new(endPoint, 764, "Stone", canBeSetDown: true, canBeGrabbed: false, isHoedirt: false, isSpawnedObject: false);
+                    SObject ore = new("764", 1) { TileLocation = endPoint };
 					ore.MinutesUntilReady = 8;
 					Utility.recursiveObjectPlacement(ore, (int)endPoint.X, (int)endPoint.Y, 0.949999988079071, 0.30000001192092896, __instance, "Dirt", (ore.ParentSheetIndex == 668) ? 1 : 0, 0.05000000074505806, (ore.ParentSheetIndex != 668) ? 1 : 2);
 				}

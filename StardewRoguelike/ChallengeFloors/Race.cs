@@ -43,7 +43,7 @@ namespace StardewRoguelike.ChallengeFloors
             gameOver = true;
             mine.createLadderAt(ChallengeFloor.GetSpawnLocation(mine));
 
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
 
             if (wavesKilled.Value == 0)
                 return;
@@ -88,7 +88,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
+                new SObject(gemReward.ToString(), 1),
                 new SObject("384", goldAmount)
             };
 

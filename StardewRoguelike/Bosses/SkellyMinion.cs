@@ -59,15 +59,15 @@ namespace StardewRoguelike.Bosses
                     if (isMage.Value)
                     {
                         if (Game1.random.NextDouble() < 0.5)
-                            currentLocation.projectiles.Add(new DebuffingProjectile(19, 14, 4, 4, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), currentLocation, this));
+                            currentLocation.projectiles.Add(new DebuffingProjectile(Buff.frozen, 14, 4, 4, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), currentLocation, this));
                         else
-                            currentLocation.projectiles.Add(new BasicProjectile(DamageToFarmer * 2, 9, 0, 4, 0f, v.X, v.Y, new Vector2(Position.X, Position.Y), "flameSpellHit", "flameSpell", explode: false, damagesMonsters: false, currentLocation, this));
+                            currentLocation.projectiles.Add(new BasicProjectile(DamageToFarmer * 2, 9, 0, 4, 0f, v.X, v.Y, new Vector2(Position.X, Position.Y), "flameSpellHit", null, "flameSpell", explode: false, damagesMonsters: false, currentLocation, this));
                     }
                     else
-                        currentLocation.projectiles.Add(new BasicProjectile(DamageToFarmer, 4, 0, 0, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), "skeletonHit", "skeletonStep", explode: false, damagesMonsters: false, currentLocation, this));
+                        currentLocation.projectiles.Add(new BasicProjectile(DamageToFarmer, 4, 0, 0, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), "skeletonHit", null, "skeletonStep", explode: false, damagesMonsters: false, currentLocation, this));
                 }
             }
-            else if (spottedPlayer && Game1.random.NextDouble() < (isMage ? 0.008 : 0.002) && Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, Player.Tile, LineOfSightDistance))
+            else if (spottedPlayer && Game1.random.NextDouble() < (isMage.Value ? 0.008 : 0.002) && Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, Player.Tile, LineOfSightDistance))
             {
                 throwing.Value = true;
                 Halt();

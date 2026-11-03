@@ -1,4 +1,5 @@
 using HarmonyLib;
+using StardewValley.Extensions;
 using StardewRoguelike.Enchantments;
 using StardewValley;
 using StardewValley.Enchantments;
@@ -34,7 +35,7 @@ namespace StardewRoguelike.Patches
             }
 
             if (Utility.IsNormalObjectAtParentSheetIndex(item, "74"))
-                __result = Utility.GetRandom(BaseEnchantment.GetAvailableEnchantmentsForItem(base_item as Tool), Game1.random);
+                __result = Game1.random.ChooseFrom(BaseEnchantment.GetAvailableEnchantmentsForItem(base_item as Tool));
 
             return false;
         }

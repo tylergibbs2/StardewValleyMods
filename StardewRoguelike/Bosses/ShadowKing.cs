@@ -437,7 +437,7 @@ namespace StardewRoguelike.Bosses
             {
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)), -(float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)));
                 shot_velocity *= 10f;
-                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 12, 0, 1, 0f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
+                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 12, 0, 1, 0f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", false, false, currentLocation, this, null);
                 projectile.startingRotation.Value = RoguelikeUtility.VectorToRadians(shot_velocity) + (float)RoguelikeUtility.DegreesToRadians(90);
                 projectile.ignoreTravelGracePeriod.Value = true;
                 projectile.ignoreMeleeAttacks.Value = true;
@@ -455,7 +455,7 @@ namespace StardewRoguelike.Bosses
             {
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)), -(float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)));
                 shot_velocity *= 10f;
-                DebuffingProjectile projectile = new(14, 7, 1, 4, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, new Vector2(GetBoundingBox().X, GetBoundingBox().Y), currentLocation, this);
+                DebuffingProjectile projectile = new(Buff.evilEye, 7, 1, 4, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, new Vector2(GetBoundingBox().X, GetBoundingBox().Y), currentLocation, this);
                 projectile.maxTravelDistance.Value = 64 * 5;
                 projectile.ignoreTravelGracePeriod.Value = true;
                 currentLocation.projectiles.Add(projectile);
@@ -494,7 +494,7 @@ namespace StardewRoguelike.Bosses
                 int tileId = TilesToBlockIds[i];
                 Vector2 tile = TilesToBlock[i];
 
-                currentLocation.setMapTileIndex((int)tile.X, (int)tile.Y, tileId, "Buildings");
+                currentLocation.setMapTile((int)tile.X, (int)tile.Y, tileId, "Buildings", currentLocation.map.TileSheets[0].Id);
             }
 
             foreach (Vector2 warpTile in TilesToWarp)

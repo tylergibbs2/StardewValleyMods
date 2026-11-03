@@ -43,7 +43,7 @@ namespace StardewRoguelike.Enchantments
 
             Vector2 shotVelocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fireAngle)), -(float)Math.Sin(RoguelikeUtility.DegreesToRadians(fireAngle)));
             shotVelocity *= 10f;
-            BasicProjectile projectile = new(Game1.random.Next(weapon.minDamage.Value, weapon.maxDamage.Value), 16, 0, 1, 0.16f, shotVelocity.X, shotVelocity.Y, shotOrigin, "", "fallenstar", false, true, farmer.currentLocation, farmer, false, null);
+            BasicProjectile projectile = new(Game1.random.Next(weapon.minDamage.Value, weapon.maxDamage.Value), 16, 0, 1, 0.16f, shotVelocity.X, shotVelocity.Y, shotOrigin, "", null, "fallenstar", false, true, farmer.currentLocation, farmer, null);
             projectile.ignoreTravelGracePeriod.Value = true;
             projectile.ignoreMeleeAttacks.Value = true;
             farmer.currentLocation.projectiles.Add(projectile);

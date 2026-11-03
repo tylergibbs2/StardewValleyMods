@@ -219,7 +219,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
+                new SObject(gemReward.ToString(), 1),
                 new SObject("384", goldAmount)
             };
 
@@ -351,10 +351,11 @@ namespace StardewRoguelike.ChallengeFloors
 
         private Microsoft.Xna.Framework.Rectangle boundingRect;
 
-        public NetFields NetFields { get; } = new();
+        public NetFields NetFields { get; }
 
         public Egg()
         {
+            NetFields = new(NetFields.GetNameForInstance(this));
             InitializeNetFields();
         }
 

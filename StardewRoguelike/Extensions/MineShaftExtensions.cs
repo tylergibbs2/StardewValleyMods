@@ -40,11 +40,11 @@ namespace StardewRoguelike.Extensions
 
         public static void SetTile(this MineShaft mine, int x, int y, string layer, string tileSheetId, int tileId, int animationInterval = -1, int[] animationOrder = null)
         {
-            var (tileSheetIndex, tileIndex) = Roguelike.GetTileIndexForMap(mine.map, tileSheetId, tileId);
+            int tileIndex = Roguelike.GetTileIndexForMap(mine.map, tileSheetId, tileId);
             if (animationInterval != -1 && animationOrder is not null)
-                mine.setAnimatedMapTile(x, y, animationOrder, animationInterval, layer, "", tileSheetIndex);
+                mine.setAnimatedMapTile(x, y, animationOrder, animationInterval, layer, tileSheetId);
             else
-                mine.setMapTileIndex(x, y, tileIndex, layer, whichTileSheet: tileSheetIndex);
+                mine.setMapTile(x, y, tileIndex, layer, tileSheetId);
         }
 
         public static DwarfGate CreateDwarfGate(this MineShaft mine, int index, Point gatePosition, Point switchPosition)
@@ -108,7 +108,7 @@ namespace StardewRoguelike.Extensions
 
         public static bool TryToAddMonster(this MineShaft mine, Monster m, int tileX, int tileY)
         {
-            if (mine.isTileClearForMineObjects(tileX, tileY) && !mine.isTileOccupied(new Vector2(tileX, tileY)))
+            if (mine.isTileClearForMineObjects(tileX, tileY) && !mine.IsTileBlockedBy(new Vector2(tileX, tileY)))
             {
                 m.setTilePosition(tileX, tileY);
                 mine.characters.Add(m);

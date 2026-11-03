@@ -9,9 +9,11 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(Fence), "performToolAction")]
     internal class EnableFencePickaxe
     {
-        public static bool Prefix(Fence __instance, Tool t, GameLocation location)
+        public static bool Prefix(Fence __instance, Tool t)
         {
-            if ((__instance.whichType.Value == 1 || __instance.whichType.Value == 5) && (t == null || t is Pickaxe))
+            // Wood (322) and hardwood (298) fences; 1.6 identifies the kind by item ID.
+            GameLocation location = __instance.Location;
+            if ((__instance.ItemId == "322" || __instance.ItemId == "298") && (t == null || t is Pickaxe))
             {
                 location.playSound("axchop");
                 location.objects.Remove(__instance.TileLocation);
@@ -24,15 +26,7 @@ namespace StardewRoguelike.Patches
 
                 if ((float)__instance.maxHealth.Value - (float)__instance.health.Value < 0.5f)
                 {
-                    switch (__instance.whichType.Value)
-                    {
-                        case 1:
-                            location.debris.Add(new Debris(new SObject("322", 1), __instance.TileLocation * 64f + new Vector2(32f, 32f)));
-                            break;
-                        case 5:
-                            location.debris.Add(new Debris(new SObject("298", 1), __instance.TileLocation * 64f + new Vector2(32f, 32f)));
-                            break;
-                    }
+location.debris.Add(new Debris(new SObject(__instance.ItemId, 1), __instance.TileLocation * 64f + new Vector2(32f, 32f)));
                 }
             }
 

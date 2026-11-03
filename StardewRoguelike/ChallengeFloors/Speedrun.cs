@@ -133,10 +133,10 @@ namespace StardewRoguelike.ChallengeFloors
             Vector2 chestSpot = new(89, 11);
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
+                new SObject(gemReward.ToString(), 1),
                 new SObject("384", goldAmount)
             };
-            Chest chest = new(0, chestItems, chestSpot)
+            Chest chest = new(chestItems, chestSpot)
             {
                 Tint = Color.White
             };

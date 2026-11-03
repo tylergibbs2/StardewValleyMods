@@ -16,7 +16,7 @@ namespace StardewRoguelike.Patches
                 return;
 
             bool foundAnyWater = false;
-            __instance.waterTiles = new bool[__instance.map.Layers[0].LayerWidth, __instance.map.Layers[0].LayerHeight];
+            __instance.waterTiles = new WaterTiles(new bool[__instance.map.Layers[0].LayerWidth, __instance.map.Layers[0].LayerHeight]);
             __instance.waterColor.Value = new Color(50, 100, 200) * 0.5f;
             for (int y = 0; y < __instance.map.GetLayer("Buildings").LayerHeight; y++)
             {

@@ -35,10 +35,10 @@ namespace StardewRoguelike
             Buff.nauseous, Buff.darkness, Buff.weakness
         };
 
-        internal readonly static int[] RandomBuffIds = new int[]
+        internal readonly static string[] RandomBuffIds = new string[]
         {
-            20, 21, 22,
-            28
+            Buff.warriorEnergy, Buff.yobaBlessing, Buff.adrenalineRush,
+            Buff.squidInkRavioli
         };
 
         public static readonly int MinimumMonstersPerFloor = 5;

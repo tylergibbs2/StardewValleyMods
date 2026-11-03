@@ -207,7 +207,7 @@ namespace StardewRoguelike.Bosses
                                 shot_velocity *= 7f + (Roguelike.HardMode ? 2f : 0);
                                 currentLocation.playSound("fireball");
 
-                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 3, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", explode: false, damagesMonsters: false, currentLocation, this);
+                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 3, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", explode: false, damagesMonsters: false, currentLocation, this);
                                 projectile.ignoreMeleeAttacks.Value = true;
                                 projectile.ignoreTravelGracePeriod.Value = true;
                                 currentLocation.projectiles.Add(projectile);
@@ -288,7 +288,7 @@ namespace StardewRoguelike.Bosses
                                 shot_velocity *= 6f + this.AdjustRangeForHealth(0f, 10f) + (Roguelike.HardMode ? 2f : 0);
                                 currentLocation.playSound("fireball");
 
-                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 0, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", explode: false, damagesMonsters: false, currentLocation, this);
+                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 0, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", explode: false, damagesMonsters: false, currentLocation, this);
                                 projectile.ignoreMeleeAttacks.Value = true;
                                 projectile.ignoreTravelGracePeriod.Value = true;
                                 projectile.startingScale.Value = 2.5f;

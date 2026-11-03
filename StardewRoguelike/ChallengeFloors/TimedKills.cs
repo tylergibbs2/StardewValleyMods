@@ -46,7 +46,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void DespawnMonsters(MineShaft mine)
         {
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
         }
 
         public void Win(MineShaft mine)

@@ -163,9 +163,9 @@ namespace StardewRoguelike
                 Game1.player.set_FarmerActiveHatQuest(null);
             }
 
-            if (HardMode && !DidHardModeDowngrade && Game1.player.hasItemInInventory(194, 1))
+            if (HardMode && !DidHardModeDowngrade && Game1.player.Items.CountId("194") >= 1)
             {
-                Game1.player.removeFirstOfThisItemFromInventory(194);
+                Game1.player.removeFirstOfThisItemFromInventory("194");
                 DelayedAction.playSoundAfterDelay("clank", 250);
                 DidHardModeDowngrade = true;
             }
@@ -298,7 +298,7 @@ namespace StardewRoguelike
         {
             Game1.options.screenFlash = false;
             Game1.options.zoomButtons = true;
-            Game1.player.FishingLevel = 10;
+            Game1.player.fishingLevel.Value = 10;
 
             var loadedOptions = ModEntry.DataHelper.ReadGlobalData<Options>("RoguelikeGameOptions");
             if (loadedOptions is not null)
@@ -333,7 +333,7 @@ namespace StardewRoguelike
                 mine.addCharacter(qi);
 
                 Vector2 computerTile = new(19, 7);
-                mine.Objects[computerTile] = new SObject(computerTile, 239);
+                mine.Objects[computerTile] = new SObject(computerTile, "239");
 
                 Game1.player.Name = "";
                 Game1.player.favoriteThing.Value = "";
@@ -726,7 +726,6 @@ namespace StardewRoguelike
             Game1.player.Money = StartingGold;
 
             Game1.player.hasSkullKey = true;
-            Game1.player.MagneticRadius = 256;
 
             Game1.player.ClearBuffs();
 
@@ -734,22 +733,20 @@ namespace StardewRoguelike
             if (Game1.player.leftRing.Value is not null)
             {
                 Ring ring = Game1.player.leftRing.Value;
-                ring.onUnequip(Game1.player, Game1.player.currentLocation);
+                ring.onUnequip(Game1.player);
             }
 
             if (Game1.player.rightRing.Value is not null)
             {
                 Ring ring = Game1.player.rightRing.Value;
-                ring.onUnequip(Game1.player, Game1.player.currentLocation);
+                ring.onUnequip(Game1.player);
             }
 
             if (Game1.player.boots.Value is not null)
             {
                 Boots boots = Game1.player.boots.Value;
-                boots.onUnequip();
+                boots.onUnequip(Game1.player);
             }
-
-            Game1.player.resilience = 0;
 
             Game1.player.leftRing.Set(null);
             Game1.player.rightRing.Set(null);
@@ -977,7 +974,7 @@ namespace StardewRoguelike
             }
 
 
-            return new SObject(itemId, 1, quality: quality);
+            return new SObject(itemId.ToString(), 1, quality: quality);
         }
 
         /// <summary>
@@ -1051,14 +1048,20 @@ namespace StardewRoguelike
         /// <param name="doSum">Whether or not to return the tile ID as the sum of all previous or standalone</param>
         /// <returns>tilesheet index, tile ID</returns>
         /// <exception cref="Exception">The tilesheet passed could not be found.</exception>
-        public static (int, int) GetTileIndexForMap(xTile.Map map, string tileSheetId, int tileId, bool doSum = false)
+        /// <summary>
+        /// Resolves a tile index within a named tilesheet, optionally offset by the
+        /// tile counts of the sheets before it.
+        ///
+        /// 1.6's setMapTile/setAnimatedMapTile take a tilesheet ID rather than an
+        /// index, so only the tile index is returned now.
+        /// </summary>
+        public static int GetTileIndexForMap(xTile.Map map, string tileSheetId, int tileId, bool doSum = false)
         {
             int idSum = 0;
-            for (int i = 0; i < map.TileSheets.Count; i++)
+            foreach (TileSheet tileSheet in map.TileSheets)
             {
-                TileSheet tileSheet = map.TileSheets[i];
                 if (tileSheet.Id == tileSheetId)
-                    return (i, doSum ? tileId + idSum : tileId);
+                    return doSum ? tileId + idSum : tileId;
 
                 idSum += tileSheet.TileCount - 1;
             }
