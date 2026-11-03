@@ -38,6 +38,8 @@ namespace StardewRoguelike
         private static int cooldown;
         private static int swings;
         private static int kills;
+        private static int totalDamage;
+        private static int whiffs;
         private static int startHealth;
         private static float lastDistance = float.MaxValue;
         private static int stuckFor;
@@ -65,6 +67,8 @@ namespace StardewRoguelike
             cooldown = 0;
             swings = 0;
             kills = 0;
+            totalDamage = 0;
+            whiffs = 0;
             startHealth = Game1.player.health;
             lastDistance = float.MaxValue;
             stuckFor = 0;
@@ -83,7 +87,7 @@ namespace StardewRoguelike
 
             running = false;
             ModEntry.Events.GameLoop.UpdateTicked -= OnTick;
-            Log($"stopped ({reason}): {swings} swings, {kills} kills, " +
+            Log($"stopped ({reason}): {swings} swings ({totalDamage} damage, {whiffs} whiffs), {kills} kills, " +
                 $"{CountMonsters()} monsters left, player {Game1.player.health}/{Game1.player.maxHealth} hp " +
                 $"(started {startHealth})");
         }
@@ -176,6 +180,16 @@ namespace StardewRoguelike
 
             swings++;
             cooldown = SwingCooldownTicks;
+
+            int dealt = healthBefore - target.Health;
+            totalDamage += dealt;
+            if (dealt <= 0)
+                whiffs++;
+
+            // Report the first few swings outright: if damage never lands, that is the
+            // interesting result, and it would otherwise be invisible.
+            if (swings <= 5 || dealt <= 0 && whiffs <= 8)
+                Log($"swing {swings} on {name}: {dealt} damage ({target.Health}/{target.MaxHealth} left)");
 
             if (target.Health <= 0 && healthBefore > 0)
             {

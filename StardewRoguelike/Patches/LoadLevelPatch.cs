@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Locations;
+using xTile.Tiles;
 using System;
 
 namespace StardewRoguelike.Patches
@@ -11,6 +12,30 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(MineShaft), nameof(MineShaft.loadLevel))]
     internal class LoadLevelPatch
     {
+        /// <summary>The tilesheet ID 1.6 expects a mine level to carry.</summary>
+        private const string MineTileSheetId = "mine";
+
+        /// <summary>
+        /// Gives the map's mine-derived tilesheet the ID vanilla looks for, so the
+        /// game's own mine-tile lookups resolve instead of throwing. Only sheets
+        /// already named after the mine art are renamed, so sheets the mod addresses
+        /// by name itself (bugLandTiles, z_Town) are left alone.
+        /// </summary>
+        private static void AliasMineTileSheet(MineShaft mine)
+        {
+            if (mine.map is null)
+                return;
+
+            foreach (TileSheet sheet in mine.map.TileSheets)
+            {
+                if (sheet.Id.Contains(MineTileSheetId, StringComparison.OrdinalIgnoreCase))
+                {
+                    sheet.Id = MineTileSheetId;
+                    return;
+                }
+            }
+        }
+
         public static bool Prefix(MineShaft __instance, int level)
         {
             bool loadedDarkArea = false;
@@ -25,12 +50,19 @@ namespace StardewRoguelike.Patches
             __instance.get_MineShaftLoadedMap().Value = mapToLoad;
             __instance.updateMap();
 
-            // 1.6 validates that the map has a tilesheet with the ID "mine" whenever
-            // mapImageSource changes, and throws KeyNotFoundException if it doesn't.
-            // A few of the mod's arenas ship their own tilesheet (bugLandTiles,
-            // mine_lava, 1_mine), so there is nothing for the mine retint to apply to
-            // and the level load used to blow up on them.
+            // 1.6 expects every mine level to have a tilesheet with the ID "mine", and
+            // throws KeyNotFoundException when it doesn't. Four separate places rely on
+            // it: the mapImageSource change handler, ApplyDiggableTileFixes,
+            // doCreateLadderDown (when the ladder spawns) and setElevatorLit (during
+            // resetLocalState, where the throw leaves the screen faded to black).
+            //
+            // The mod's themed arenas name their sheet 1_mine, 1_mine_dino, mine_lava
+            // and so on, so give whichever one that is the ID vanilla looks for. The
+            // retint is still skipped for them, because pointing it at Maps/Mines/mine
+            // would replace the arena's own art.
             bool canRetintMineTiles = __instance.map?.GetTileSheet("mine") is not null;
+            if (!canRetintMineTiles)
+                AliasMineTileSheet(__instance);
 
             if (canRetintMineTiles)
             {
