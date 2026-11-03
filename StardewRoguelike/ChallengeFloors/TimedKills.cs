@@ -28,7 +28,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(floorSecondsLeft);
+            NetFields.AddField(floorSecondsLeft);
         }
 
         public void SpawnMonsters(MineShaft mine)

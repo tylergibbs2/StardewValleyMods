@@ -71,7 +71,7 @@ namespace StardewRoguelike.Bosses
             moveTowardPlayerThreshold.Value = 20;
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName);
             Sprite.LoadTexture(TextureName);
@@ -83,7 +83,7 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
-            NetFields.AddFields(MeteorStrikeWarningEvent);
+            NetFields.AddField(MeteorStrikeWarningEvent);
             MeteorStrikeWarningEvent.onEvent += MeteorStrikeWarning;
             base.initNetFields();
         }

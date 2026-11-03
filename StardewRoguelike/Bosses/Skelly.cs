@@ -94,7 +94,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(Invincible, Charging, ThrowingAnim);
+            NetFields.AddField(Invincible).AddField(Charging).AddField(ThrowingAnim);
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -360,7 +360,7 @@ namespace StardewRoguelike.Bosses
             MethodInfo rumbleAndFade = currentLocation.GetType().BaseType!.GetMethod("rumbleAndFade", BindingFlags.Instance | BindingFlags.NonPublic)!;
             rumbleAndFade.Invoke(currentLocation, new object[] { 300 + radius * 100 });
 
-            currentLocation.debuffPlayers(areaOfEffect, 19);
+            currentLocation.debuffPlayers(areaOfEffect, Buff.frozen);
 
             Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 

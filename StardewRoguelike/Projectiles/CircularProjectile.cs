@@ -36,7 +36,7 @@ namespace StardewRoguelike.Projectiles
 
         private void InitNetFields()
         {
-            NetFields.AddFields(angle, AngularVelocity, Distance, PointOfRotation);
+            NetFields.AddField(angle).AddField(AngularVelocity).AddField(Distance).AddField(PointOfRotation);
         }
 
         public override void updatePosition(GameTime time)

@@ -34,7 +34,7 @@ namespace StardewRoguelike.Projectiles
 
         private void InitNetFields()
         {
-            NetFields.AddFields(TargetDistance);
+            NetFields.AddField(TargetDistance);
         }
 
         public override bool update(GameTime time, GameLocation location)

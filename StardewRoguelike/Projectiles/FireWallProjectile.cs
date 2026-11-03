@@ -27,7 +27,7 @@ namespace StardewRoguelike.Projectiles
 
         private void InitNetFields()
         {
-            NetFields.AddFields(DisappearAfter, DistanceBeforeStopping);
+            NetFields.AddField(DisappearAfter).AddField(DistanceBeforeStopping);
         }
 
         public override void behaviorOnCollisionWithPlayer(GameLocation location, Farmer player)
@@ -35,10 +35,10 @@ namespace StardewRoguelike.Projectiles
             if (damagesMonsters.Value)
                 return;
 
-            if (debuff.Value != -1 && player.CanBeDamaged() && Game1.random.Next(11) >= player.immunity && !player.hasBuff(28))
+            if (debuff.Value is not null && player.CanBeDamaged() && Game1.random.Next(11) >= player.Immunity && !player.hasBuff(Buff.squidInkRavioli))
             {
                 if (Game1.player == player)
-                    Game1.buffsDisplay.addOtherBuff(new Buff(debuff));
+                    player.applyBuff(debuff.Value);
 
                 location.playSound(debuffSound.Value);
             }

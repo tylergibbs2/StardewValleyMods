@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.UI;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;

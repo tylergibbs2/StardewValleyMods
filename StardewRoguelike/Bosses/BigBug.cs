@@ -100,13 +100,13 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(SpawnEggEvent, despawnEggEvent, OnAttackedEvent);
+            NetFields.AddField(SpawnEggEvent).AddField(despawnEggEvent).AddField(OnAttackedEvent);
             SpawnEggEvent.onEvent += SpawnEgg;
             despawnEggEvent.onEvent += DespawnEgg;
             OnAttackedEvent.onEvent += OnAttacked;
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName);
             Sprite.LoadTexture(TextureName);

@@ -21,6 +21,12 @@ namespace StardewRoguelike
     {
         public static readonly string WebsiteBaseUrl = "https://roguelike.tyler.solutions";
 
+        /// <summary>
+        /// This mod's unique ID, used to prefix the string IDs that 1.6
+        /// requires for things like buffs.
+        /// </summary>
+        public const string ModId = "tylergibbs2.StardewRoguelike";
+
         public static ModEntry Instance { get; private set; } = null!;
 
         public static IModEvents Events { get; private set; } = null!;

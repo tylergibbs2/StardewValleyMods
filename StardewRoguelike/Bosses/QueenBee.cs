@@ -304,7 +304,7 @@ namespace StardewRoguelike.Bosses
             resetAnimationSpeed();
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName);
             HideShadow = true;

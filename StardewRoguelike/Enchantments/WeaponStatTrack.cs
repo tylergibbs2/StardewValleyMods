@@ -2,28 +2,34 @@ using System;
 using StardewRoguelike.HatQuests;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Monsters;
 
 namespace StardewRoguelike.Enchantments
 {
     public class WeaponStatTrack : BaseEnchantment
     {
-        protected override void _OnDealDamage(Monster monster, GameLocation location, Farmer who, ref int amount)
+        public override void OnCalculateDamage(Monster monster, GameLocation location, Farmer who, bool fromBomb, ref int amount)
         {
-            ModEntry.ActiveStats.DamageDealt += amount / 2;
+            if (who != Game1.player)
+                return;
+
+            if (HatQuest.HasBuffFor(HatQuestType.WARRIOR_HELM))
+                amount = (int)Math.Round(amount * 1.2f);
+        }
+
+        public override void OnDealtDamage(Monster monster, GameLocation location, Farmer who, bool fromBomb, int amount)
+        {
+            ModEntry.ActiveStats.DamageDealt += amount;
 
             if (who != Game1.player)
                 return;
 
             if (who.get_FarmerActiveHatQuest() is not null)
-                who.get_FarmerActiveHatQuest()!.DamageDealt += amount / 2;
-
-            if (HatQuest.HasBuffFor(HatQuestType.WARRIOR_HELM))
-                amount = (int)Math.Round(amount * 1.2f);
-
+                who.get_FarmerActiveHatQuest()!.DamageDealt += amount;
         }
 
-        protected override void _OnMonsterSlay(Monster monster, GameLocation location, Farmer who)
+        public override void OnMonsterSlay(Monster monster, GameLocation location, Farmer who, bool slainByBomb)
         {
             ModEntry.ActiveStats.MonstersKilled++;
         }

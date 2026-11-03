@@ -80,7 +80,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(state, boxTimer, kothBox);
+            NetFields.AddField(state).AddField(boxTimer).AddField(kothBox);
         }
 
         public override void Initialize(MineShaft mine)

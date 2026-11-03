@@ -23,11 +23,11 @@ namespace StardewRoguelike.VirtualProperties
 
     public static class GameLocationDebuffPlayersEvent
     {
-        internal class Holder { public readonly NetEvent2Field<Rectangle, NetRectangle, int, NetInt> Value = new(); }
+        internal class Holder { public readonly NetEvent2Field<Rectangle, NetRectangle, string, NetString> Value = new(); }
 
         internal static ConditionalWeakTable<GameLocation, Holder> values = new();
 
-        public static NetEvent2Field<Rectangle, NetRectangle, int, NetInt> get_DebuffPlayerEvent(this GameLocation location)
+        public static NetEvent2Field<Rectangle, NetRectangle, string, NetString> get_DebuffPlayerEvent(this GameLocation location)
         {
             bool got = values.TryGetValue(location, out Holder holder);
             if (got)

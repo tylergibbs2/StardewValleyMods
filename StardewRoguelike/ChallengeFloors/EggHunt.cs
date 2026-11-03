@@ -51,7 +51,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(eggsFound, eggsOnMap, floorSecondsLeft);
+            NetFields.AddField(eggsFound).AddField(eggsOnMap).AddField(floorSecondsLeft);
         }
 
         public override bool ShouldSpawnLadder(MineShaft mine) => gameOver;
@@ -366,7 +366,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         private void InitializeNetFields()
         {
-            this.NetFields.AddFields(tileLocation, variant);
+            this.NetFields.AddField(tileLocation).AddField(variant);
         }
 
         private void Initialize()

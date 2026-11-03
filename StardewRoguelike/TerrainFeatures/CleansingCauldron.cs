@@ -29,12 +29,12 @@ namespace StardewRoguelike.TerrainFeatures
             return Game1.content.Load<Texture2D>(textureName);
         }
 
-        public override Rectangle getBoundingBox(Vector2 tileLocation)
+        public override Rectangle getBoundingBox()
         {
-            return new((int)tileLocation.X * 64, (int)(tileLocation.Y + 1) * 64, 192, 128);
+            return new((int)Tile.X * 64, (int)(Tile.Y + 1) * 64, 192, 128);
         }
 
-        public override bool performUseAction(Vector2 tileLocation, GameLocation location)
+        public override bool performUseAction(Vector2 tileLocation)
         {
             if (used || !Curse.HasAnyCurse())
                 return false;
@@ -62,9 +62,9 @@ namespace StardewRoguelike.TerrainFeatures
             return false;
         }
 
-        public override void draw(SpriteBatch spriteBatch, Vector2 tileLocation)
+        public override void draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(texture.Value, Game1.GlobalToLocal(Game1.viewport, tileLocation * 64f), new Rectangle(0, 0, 48, 48), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, (tileLocation.Y + 2f) * 64f / 10000f);
+            spriteBatch.Draw(texture.Value, Game1.GlobalToLocal(Game1.viewport, Tile * 64f), new Rectangle(0, 0, 48, 48), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, (Tile.Y + 2f) * 64f / 10000f);
         }
     }
 }

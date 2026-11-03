@@ -39,7 +39,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(CurrentState);
+            NetFields.AddField(CurrentState);
         }
 
         public void SetDefaults()
@@ -105,7 +105,7 @@ namespace StardewRoguelike.Bosses
                 Debuff(Game1.player);
         }
 
-        private static int GetRandomDebuff()
+        private static string GetRandomDebuff()
         {
             int index = Game1.random.Next(Constants.RandomDebuffIds.Length);
             return Constants.RandomDebuffIds[index];
@@ -126,20 +126,13 @@ namespace StardewRoguelike.Bosses
 
         public void Debuff(Farmer player)
         {
-            if (Game1.random.Next(11) >= player.immunity && !player.hasBuff(28))
+            if (Game1.random.Next(11) >= player.Immunity && !player.hasBuff(Buff.squidInkRavioli))
             {
-                int debuff = GetRandomDebuff();
+                string debuff = GetRandomDebuff();
                 if (Game1.player == player)
-                {
-                    Buff buff = new(debuff)
-                    {
-                        millisecondsDuration = 5000
-                    };
-                    Game1.buffsDisplay.addOtherBuff(buff);
+                    player.applyBuff(new Buff(debuff, duration: 5000));
 
-                }
-
-                if (debuff == 19)
+                if (debuff == Buff.frozen)
                     currentLocation.playSound("frozen");
                 else
                     currentLocation.playSound("debuffHit");

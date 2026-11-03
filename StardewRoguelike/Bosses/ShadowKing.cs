@@ -166,14 +166,11 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
-            NetFields.AddFields(new INetSerializable[]
-            {
-                Encountered
-            });
+            NetFields.AddField(Encountered);
             base.initNetFields();
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName)
             {

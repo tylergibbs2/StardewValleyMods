@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Projectiles;
 using StardewValley.Tools;
 using System;

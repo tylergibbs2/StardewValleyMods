@@ -1,5 +1,6 @@
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
+using StardewValley.Buffs;
 using StardewValley.Locations;
 using StardewValley.Objects;
 using StardewValley.Tools;
@@ -28,6 +29,11 @@ namespace StardewRoguelike
 {
     public static class Roguelike
     {
+        /// <summary>
+        /// The adrenaline buff granted while the player is on a mine floor.
+        /// </summary>
+        private const string AdrenalineBuffId = $"{ModEntry.ModId}_Adrenaline";
+
         public static int FloorRngSeed { get; set; } = Guid.NewGuid().GetHashCode();
 
         public static bool RerollRandomEveryRun { get; set; } = true;
@@ -179,15 +185,15 @@ namespace StardewRoguelike
                     chest.Spawn(mine);
             }
 
-            int buffId = 88999;
-            Buff? buff = Game1.buffsDisplay.otherBuffs.FirstOrDefault(p => p.which == buffId);
-            if (buff is null)
-            {
-                Game1.buffsDisplay.addOtherBuff(
-                    buff = new Buff(0, 0, 0, 0, 0, 0, 0, 0, 0, speed: 1, 0, 0, minutesDuration: 1, source: "Roguelike", displaySource: I18n.Roguelike_Adrenaline()) { which = buffId }
-                );
-            }
-            buff.millisecondsDuration = 50;
+            // Re-applied every tick with a very short duration, so it lapses as soon
+            // as the player stops qualifying for it.
+            Game1.player.applyBuff(new Buff(
+                id: AdrenalineBuffId,
+                source: "Roguelike",
+                displaySource: I18n.Roguelike_Adrenaline(),
+                duration: 50,
+                effects: new BuffEffects() { Speed = { 1 } }
+            ));
 
             if (Game1.player.Stamina < 0 && Game1.player.health > 0)
             {

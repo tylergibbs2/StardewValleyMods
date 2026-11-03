@@ -2,9 +2,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
+using StardewValley.Buffs;
 using StardewValley.TerrainFeatures;
 using System;
-using System.Linq;
 
 namespace StardewRoguelike.TerrainFeatures
 {
@@ -17,6 +17,10 @@ namespace StardewRoguelike.TerrainFeatures
         private Rectangle SourceRect = new(0, 0, 32, 16);
 
         private static readonly int FrameDuration = 200;
+
+        private const string SpeedBuffId = $"{ModEntry.ModId}_SpeedPad";
+
+        private const string SlowBuffId = $"{ModEntry.ModId}_SlowPad";
 
         private NetBool IsSlowPad { get; } = new();
 
@@ -45,30 +49,33 @@ namespace StardewRoguelike.TerrainFeatures
             return Game1.content.Load<Texture2D>(textureName);
         }
 
-        public override Rectangle getBoundingBox(Vector2 tileLocation)
+        public override Rectangle getBoundingBox()
         {
-            return new Rectangle((int)tileLocation.X * 64, (int)tileLocation.Y * 64, 64 * 2, 64);
+            return new Rectangle((int)Tile.X * 64, (int)Tile.Y * 64, 64 * 2, 64);
         }
 
-        public override void doCollisionAction(Rectangle positionOfCollider, int speedOfCollision, Vector2 tileLocation, Character who, GameLocation location)
+        public override void doCollisionAction(Rectangle positionOfCollider, int speedOfCollision, Vector2 tileLocation, Character who)
         {
             if (who != Game1.player)
                 return;
 
-            int buffId = IsSlowPad.Value ? 88998 : 88997;
+            string buffId = IsSlowPad.Value ? SlowBuffId : SpeedBuffId;
             int speedAdjustment = IsSlowPad.Value ? -3 : 3;
             string soundEffect = IsSlowPad.Value ? "debuffHit" : "cowboy_powerup";
             int duration = IsSlowPad.Value ? 750 : 1500;
 
-            Buff? buff = Game1.buffsDisplay.otherBuffs.FirstOrDefault(p => p.which == buffId);
-            if (buff is null)
-            {
-                Game1.buffsDisplay.addOtherBuff(
-                    buff = new Buff(0, 0, 0, 0, 0, 0, 0, 0, 0, speed: speedAdjustment, 0, 0, minutesDuration: 1, source: "Roguelike", displaySource: "Speedpad") { which = buffId }
-                );
+            if (!Game1.player.hasBuff(buffId))
                 Game1.playSound(soundEffect);
-            }
-            buff.millisecondsDuration = duration;
+
+            // Re-applying a buff with the same ID replaces it, which refreshes the duration.
+            Game1.player.applyBuff(new Buff(
+                id: buffId,
+                source: "Roguelike",
+                displaySource: "Speedpad",
+                duration: duration,
+                effects: new BuffEffects() { Speed = { speedAdjustment } },
+                isDebuff: IsSlowPad.Value
+            ));
         }
 
         public override bool isPassable(Character? c = null)
@@ -76,7 +83,7 @@ namespace StardewRoguelike.TerrainFeatures
             return true;
         }
 
-        public override bool tickUpdate(GameTime time, Vector2 tileLocation, GameLocation location)
+        public override bool tickUpdate(GameTime time)
         {
             if (IsSlowPad.Value && SourceRect.X != 32)
                 SourceRect.X = 32;
@@ -95,9 +102,9 @@ namespace StardewRoguelike.TerrainFeatures
             return false;
         }
 
-        public override void draw(SpriteBatch spriteBatch, Vector2 tileLocation)
+        public override void draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(texture.Value, Game1.GlobalToLocal(Game1.viewport, tileLocation * 64f), SourceRect, Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 64f / 10000f);
+            spriteBatch.Draw(texture.Value, Game1.GlobalToLocal(Game1.viewport, Tile * 64f), SourceRect, Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 64f / 10000f);
         }
     }
 }

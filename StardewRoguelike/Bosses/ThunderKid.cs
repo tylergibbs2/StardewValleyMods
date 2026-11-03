@@ -93,7 +93,7 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
-            NetFields.AddFields(LightningStrikeEvent, LightningStrikeWarningEvent, OnAttackedNetEvent, Charging);
+            NetFields.AddField(LightningStrikeEvent).AddField(LightningStrikeWarningEvent).AddField(OnAttackedNetEvent).AddField(Charging);
             LightningStrikeEvent.onEvent += LightningStrike;
             LightningStrikeWarningEvent.onEvent += LightningStrikeWarning;
             OnAttackedNetEvent.onEvent += OnAttacked;
@@ -147,7 +147,7 @@ namespace StardewRoguelike.Bosses
             MethodInfo rumbleAndFade = currentLocation.GetType().BaseType!.GetMethod("rumbleAndFade", BindingFlags.Instance | BindingFlags.NonPublic)!;
             rumbleAndFade.Invoke(currentLocation, new object[] { 300 + radius * 100 });
 
-            currentLocation.debuffPlayers(areaOfEffect, 12);
+            currentLocation.debuffPlayers(areaOfEffect, Buff.goblinsCurse);
 
             MethodInfo damagePlayers = currentLocation.GetType().BaseType!.GetMethod("damagePlayers", BindingFlags.Instance | BindingFlags.NonPublic)!;
             damagePlayers.Invoke(currentLocation, new object[] { areaOfEffect, DamageToFarmer });

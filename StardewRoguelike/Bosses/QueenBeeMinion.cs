@@ -22,7 +22,7 @@ namespace StardewRoguelike.Bosses
             Sprite = new(textureName);
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(textureName);
             HideShadow = true;

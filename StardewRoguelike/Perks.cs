@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using StardewRoguelike.UI;
 using StardewValley;
+using StardewValley.Buffs;
 using System;
 using System.Collections.Generic;
 
@@ -249,24 +250,13 @@ namespace StardewRoguelike
                 case PerkType.Geologist:
                     Game1.player.professions.Add(19);
                     break;
-                case PerkType.SpecialCharm:
-                    Game1.player.addedLuckLevel.Value += 1;
-                    break;
-                case PerkType.Swift:
-                    Game1.player.addedSpeed += 1;
-                    break;
-                case PerkType.Immunity:
-                    Game1.player.immunity += 2;
-                    break;
-                case PerkType.RabbitsFoot:
-                    Game1.player.addedLuckLevel.Value += 3;
-                    break;
                 case PerkType.Tiller:
                     Game1.player.professions.Add(1);
                     break;
             }
 
             ActivePerks.Add(perkType);
+            RefreshPerkBuff();
         }
 
         public static void RemovePerk(PerkType perkType)
@@ -304,24 +294,57 @@ namespace StardewRoguelike
                 case PerkType.Geologist:
                     Game1.player.professions.Remove(19);
                     break;
-                case PerkType.SpecialCharm:
-                    Game1.player.addedLuckLevel.Value -= 1;
-                    break;
-                case PerkType.Swift:
-                    Game1.player.addedSpeed -= 1;
-                    break;
-                case PerkType.Immunity:
-                    Game1.player.immunity -= 2;
-                    break;
-                case PerkType.RabbitsFoot:
-                    Game1.player.addedLuckLevel.Value -= 3;
-                    break;
                 case PerkType.Tiller:
                     Game1.player.professions.Remove(1);
                     break;
             }
 
             ActivePerks.Remove(perkType);
+            RefreshPerkBuff();
+        }
+
+        /// <summary>
+        /// The buff carrying the passive stats the active perks grant.
+        /// </summary>
+        private const string PerkBuffId = $"{ModEntry.ModId}_Perks";
+
+        /// <summary>
+        /// Rebuilds <see cref="PerkBuffId"/> from the currently active perks.
+        ///
+        /// 1.6 removed the settable <c>Farmer.addedLuckLevel</c>, <c>addedSpeed</c> and
+        /// <c>immunity</c> fields that these perks used to adjust; passive stats now
+        /// have to come from the buff manager. One invisible buff holds the lot so the
+        /// perks don't each take up a slot in the buff bar.
+        /// </summary>
+        private static void RefreshPerkBuff()
+        {
+            BuffEffects effects = new();
+
+            if (HasPerk(PerkType.SpecialCharm))
+                effects.LuckLevel.Value += 1;
+            if (HasPerk(PerkType.RabbitsFoot))
+                effects.LuckLevel.Value += 3;
+            if (HasPerk(PerkType.Swift))
+                effects.Speed.Value += 1;
+            if (HasPerk(PerkType.Immunity))
+                effects.Immunity.Value += 2;
+
+            if (!effects.HasAnyValue())
+            {
+                Game1.player.buffs.Remove(PerkBuffId);
+                return;
+            }
+
+            Game1.player.applyBuff(new Buff(
+                id: PerkBuffId,
+                source: "Roguelike",
+                displaySource: "Roguelike",
+                duration: Buff.ENDLESS,
+                effects: effects
+            )
+            {
+                visible = false
+            });
         }
 
         public static bool HasPerk(PerkType perkType)

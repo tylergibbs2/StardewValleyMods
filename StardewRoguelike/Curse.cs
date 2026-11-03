@@ -1,9 +1,12 @@
 using Microsoft.Xna.Framework;
+using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewRoguelike.Enchantments;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
+using StardewValley.Buffs;
+using StardewValley.Enchantments;
 using StardewValley.Locations;
 using StardewValley.Monsters;
 using System;
@@ -14,8 +17,9 @@ using System.Reflection;
 namespace StardewRoguelike
 {
     /// <summary>
-    /// All types of curses. The enum value is the unique
-    /// buff ID to be used in-game.
+    /// All types of curses. The enum value is the identifier synced between
+    /// players in <see cref="VirtualProperties.FarmerCurses"/>; the in-game
+    /// buff ID is derived from the name by <see cref="Curse.GetBuffId"/>.
     /// </summary>
     #pragma warning disable format
     internal enum CurseType
@@ -86,11 +90,6 @@ namespace StardewRoguelike
         }
 
         /// <summary>
-        /// The description of the Curse instance.
-        /// </summary>
-        public readonly string Description;
-
-        /// <summary>
         /// The buff icon to use when displaying curses.
         /// </summary>
         public static readonly int IconId = 18;
@@ -119,18 +118,47 @@ namespace StardewRoguelike
         /// </summary>
         public static int HOTHealToTick = 0;
 
-        public Curse(CurseType curseType) : base(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, minutesDuration: 1, "Roguelike", "Roguelike")
+        /// <summary>
+        /// Gets the ID this curse is tracked under in <see cref="Farmer.buffs"/>.
+        /// </summary>
+        public static string GetBuffId(CurseType curseType)
         {
-            Description = $"{GetCurseDisplayName(curseType)}\n{GetCurseDescription(curseType)}";
+            return $"{ModEntry.ModId}_Curse_{curseType}";
+        }
+
+        /// <summary>
+        /// Gets the stat changes a curse applies passively, if any. Everything
+        /// else about a curse is implemented in code rather than as buff effects.
+        /// </summary>
+        private static BuffEffects GetCurseEffects(CurseType curseType)
+        {
+            BuffEffects effects = new();
 
             if (curseType == CurseType.DoubleSpeedEveryone)
-                buffAttributes[9] = 1;
+                effects.Speed.Value = 1;
 
-            which = (int)curseType;
-
-            // Give the curse the maximum duration.
-            millisecondsDuration = int.MaxValue;
+            return effects;
         }
+
+        public Curse(CurseType curseType) : base(
+            id: GetBuffId(curseType),
+            source: "Roguelike",
+            displaySource: "Roguelike",
+            duration: ENDLESS,
+            iconTexture: Game1.buffsIcons,
+            iconSheetIndex: IconId,
+            effects: GetCurseEffects(curseType),
+            isDebuff: true,
+            displayName: GetCurseDisplayName(curseType),
+            description: GetCurseDescription(curseType))
+        {
+            CurseType = curseType;
+        }
+
+        /// <summary>
+        /// Which curse this buff represents.
+        /// </summary>
+        public readonly CurseType CurseType;
 
         /// <summary>
         /// Spawns three cherry bombs within 3 tiles of the local player.
@@ -181,7 +209,7 @@ namespace StardewRoguelike
             if (!Context.IsWorldReady)
                 return;
 
-            bool isMonsterArea = Game1.player.currentLocation is MineShaft mine && (bool)mine.GetType().GetProperty("isMonsterArea", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mine);
+            bool isMonsterArea = Game1.player.currentLocation is MineShaft mine && mine.isMonsterArea;
             if (isMonsterArea && HasCurse(CurseType.BombsAroundPlayer) && Game1.shouldTimePass())
             {
                 if (TicksToSpawnBombs > 0)
@@ -260,10 +288,59 @@ namespace StardewRoguelike
             }
         }
 
+        /// <summary>
+        /// The IDs 1.6 gives buffs that came from eating or drinking something.
+        /// </summary>
+        public static readonly string[] FoodBuffIds = new[] { "food", "drink" };
+
+        /// <summary>
+        /// Strengthens any food/drink buff the player already has, for when the
+        /// <see cref="CurseType.BuffsMorePotent"/> curse is picked up while one is active.
+        /// </summary>
+        public static void MakeActiveFoodBuffsPotent()
+        {
+            foreach (string buffId in FoodBuffIds)
+            {
+                if (!Game1.player.buffs.AppliedBuffs.TryGetValue(buffId, out Buff? buff))
+                    continue;
+
+                MakePotent(buff);
+
+                // Re-applying replaces the buff, which recalculates its effects.
+                Game1.player.applyBuff(buff);
+            }
+        }
+
+        /// <summary>
+        /// Applies the <see cref="CurseType.BuffsMorePotent"/> curse to a buff by
+        /// bumping each of its positive effects and shortening it to
+        /// <see cref="PotentBuffDuration"/>.
+        /// </summary>
+        public static void MakePotent(Buff buff)
+        {
+            buff.millisecondsDuration = PotentBuffDuration;
+            buff.totalMillisecondsDuration = PotentBuffDuration;
+
+            // Only the additive stats; +1 on a multiplier would be +100%.
+            NetFloat[] additive = new[]
+            {
+                buff.effects.CombatLevel, buff.effects.FarmingLevel, buff.effects.FishingLevel,
+                buff.effects.MiningLevel, buff.effects.LuckLevel, buff.effects.ForagingLevel,
+                buff.effects.MaxStamina, buff.effects.MagneticRadius, buff.effects.Speed,
+                buff.effects.Defense, buff.effects.Attack, buff.effects.Immunity
+            };
+
+            foreach (NetFloat effect in additive)
+            {
+                if (effect.Value > 0)
+                    effect.Value += 1;
+            }
+        }
+
         // Only works for Game1.player
         public static bool HasCurse(CurseType curseType)
         {
-            return Game1.buffsDisplay.otherBuffs.Any(b => b.which == (int)curseType);
+            return Game1.player.hasBuff(GetBuffId(curseType));
         }
 
         public static bool HasAnyCurse()
@@ -322,7 +399,7 @@ namespace StardewRoguelike
                     if (Game1.player.boots.Value != null)
                     {
                         Game1.player.boots.Value.reloadData();
-                        Game1.player.boots.Value.onUnequip();
+                        Game1.player.boots.Value.onUnequip(Game1.player);
                     }
                     break;
                 default:
@@ -331,7 +408,8 @@ namespace StardewRoguelike
 
             Curse curse = new(curseType);
             Game1.player.get_FarmerCurses().Add((int)curseType);
-            bool result = Game1.buffsDisplay.addOtherBuff(curse);
+            Game1.player.applyBuff(curse);
+            bool result = HasCurse(curseType);
 
             switch (curseType)
             {
@@ -349,33 +427,11 @@ namespace StardewRoguelike
                     if (Game1.player.boots.Value != null)
                     {
                         Game1.player.boots.Value.reloadData();
-                        Game1.player.boots.Value.onEquip();
+                        Game1.player.boots.Value.onEquip(Game1.player);
                     }
                     break;
                 case CurseType.BuffsMorePotent:
-                    if (Game1.buffsDisplay.food is not null)
-                    {
-                        Game1.player.removeBuffAttributes(Game1.buffsDisplay.food.buffAttributes);
-                        Game1.buffsDisplay.food.millisecondsDuration = PotentBuffDuration;
-                        for (int i = 0; i < Game1.buffsDisplay.food.buffAttributes.Length; i++)
-                        {
-                            if (Game1.buffsDisplay.food.buffAttributes[i] > 0)
-                                Game1.buffsDisplay.food.buffAttributes[i] += 1;
-                        }
-                        Game1.player.addBuffAttributes(Game1.buffsDisplay.food.buffAttributes);
-                    }
-                    if (Game1.buffsDisplay.drink is not null)
-                    {
-                        Game1.player.removeBuffAttributes(Game1.buffsDisplay.drink.buffAttributes);
-                        Game1.buffsDisplay.drink.millisecondsDuration = PotentBuffDuration;
-                        for (int i = 0; i < Game1.buffsDisplay.drink.buffAttributes.Length; i++)
-                        {
-                            if (Game1.buffsDisplay.drink.buffAttributes[i] > 0)
-                                Game1.buffsDisplay.drink.buffAttributes[i] += 1;
-                        }
-                        Game1.player.addBuffAttributes(Game1.buffsDisplay.drink.buffAttributes);
-                    }
-                    Game1.buffsDisplay.syncIcons();
+                    MakeActiveFoodBuffsPotent();
                     break;
                 default:
                     break;
@@ -414,7 +470,7 @@ namespace StardewRoguelike
                 case CurseType.BootsBetterImmunity:
                     if (Game1.player.boots.Value != null)
                     {
-                        Game1.player.boots.Value.onUnequip();
+                        Game1.player.boots.Value.onUnequip(Game1.player);
                     }
                     break;
                 default:
@@ -422,7 +478,8 @@ namespace StardewRoguelike
             }
 
             Game1.player.get_FarmerCurses().Remove((int)curseType);
-            bool result = Game1.buffsDisplay.removeOtherBuff((int)curseType);
+            Game1.player.buffs.Remove(GetBuffId(curseType));
+            bool result = !HasCurse(curseType);
 
             switch (curseType)
             {
@@ -431,7 +488,7 @@ namespace StardewRoguelike
                     if (Game1.player.boots.Value != null)
                     {
                         Game1.player.boots.Value.reloadData();
-                        Game1.player.boots.Value.onEquip();
+                        Game1.player.boots.Value.onEquip(Game1.player);
                     }
                     break;
                 default:

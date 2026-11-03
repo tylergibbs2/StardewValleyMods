@@ -67,7 +67,7 @@ namespace StardewRoguelike.ChallengeFloors
         protected override void InitNetFields()
         {
             base.InitNetFields();
-            NetFields.AddFields(InitializedRoomType, InaccessibleRoomType, IsLeftSide, ShouldSpawnRooms);
+            NetFields.AddField(InitializedRoomType).AddField(InaccessibleRoomType).AddField(IsLeftSide).AddField(ShouldSpawnRooms);
         }
 
         public void OnGateOpen(Point point)

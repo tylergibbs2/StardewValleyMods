@@ -1,63 +1,34 @@
-﻿using HarmonyLib;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using StardewValley;
+using HarmonyLib;
+using StardewValley.Buffs;
 using StardewValley.Objects;
-using System;
-using System.Reflection;
-using System.Text;
 
 namespace StardewRoguelike.Patches
 {
-    [HarmonyPatch(typeof(Boots), "onEquip")]
-    internal class CursedBootsEquipPatch
+    /// <summary>
+    /// Swaps the defense and immunity the player's boots grant when they carry
+    /// one of the boots curses.
+    ///
+    /// 1.5.6 needed this on <c>Boots.onEquip</c>/<c>onUnequip</c>, where the boots
+    /// mutated the farmer's stats directly and had to be re-equipped for a change
+    /// to take hold. In 1.6 equipment contributes through
+    /// <see cref="Boots.AddEquipmentEffects"/>, which is recalculated whenever buffs
+    /// change, so overriding the numbers there is enough.
+    /// </summary>
+    [HarmonyPatch(typeof(Boots), nameof(Boots.AddEquipmentEffects))]
+    internal class CursedBootsPatch
     {
-        public static bool Prefix(Boots __instance)
+        public static void Postfix(Boots __instance, BuffEffects effects)
         {
-            bool hasCurse = false;
             if (Curse.HasCurse(CurseType.BootsBetterDefense))
             {
-                __instance.defenseBonus.Value = 10;
-                __instance.immunityBonus.Value = -10;
-                hasCurse = true;
+                effects.Defense.Value += 10 - __instance.defenseBonus.Value;
+                effects.Immunity.Value += -10 - __instance.immunityBonus.Value;
             }
-            if (Curse.HasCurse(CurseType.BootsBetterImmunity))
+            else if (Curse.HasCurse(CurseType.BootsBetterImmunity))
             {
-                __instance.defenseBonus.Value = -10;
-                __instance.immunityBonus.Value = 10;
-                hasCurse = true;
+                effects.Defense.Value += -10 - __instance.defenseBonus.Value;
+                effects.Immunity.Value += 10 - __instance.immunityBonus.Value;
             }
-
-            if (!hasCurse)
-                __instance.reloadData();
-
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(Boots), "onUnequip")]
-    internal class CursedBootsUnequipPatch
-    {
-        public static bool Prefix(Boots __instance)
-        {
-            bool hasCurse = false;
-            if (Curse.HasCurse(CurseType.BootsBetterDefense))
-            {
-                __instance.defenseBonus.Value = 10;
-                __instance.immunityBonus.Value = -10;
-                hasCurse = true;
-            }
-            if (Curse.HasCurse(CurseType.BootsBetterImmunity))
-            {
-                __instance.defenseBonus.Value = -10;
-                __instance.immunityBonus.Value = 10;
-                hasCurse = true;
-            }
-
-            if (!hasCurse)
-                __instance.reloadData();
-
-            return true;
         }
     }
 }

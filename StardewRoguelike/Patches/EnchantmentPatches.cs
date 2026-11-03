@@ -1,6 +1,7 @@
 using HarmonyLib;
 using StardewRoguelike.Enchantments;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Tools;
 using System;
 using System.Collections.Generic;

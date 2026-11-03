@@ -37,7 +37,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(floorSecondsLeft, wavesKilled);
+            NetFields.AddField(floorSecondsLeft).AddField(wavesKilled);
         }
 
         public override bool ShouldSpawnLadder(MineShaft mine)
@@ -276,7 +276,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.initNetFields();
 
-            NetFields.AddFields(seenPlayer);
+            NetFields.AddField(seenPlayer);
             position.Field.AxisAlignedMovement = true;
         }
 

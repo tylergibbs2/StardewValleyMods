@@ -1,12 +1,13 @@
 ﻿using StardewValley.Monsters;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewRoguelike.Bosses;
 
 namespace StardewRoguelike.Enchantments
 {
     public class CustomBugKillerEnchantment : BaseWeaponEnchantment
     {
-        protected override void _OnDealDamage(Monster monster, GameLocation location, Farmer who, ref int amount)
+        public override void OnCalculateDamage(Monster monster, GameLocation location, Farmer who, bool fromBomb, ref int amount)
         {
             if (monster is Grub || monster is Fly || monster is Bug || monster is Leaper || monster is LavaCrab || monster is RockCrab)
                 amount = (int)(amount * 2f);

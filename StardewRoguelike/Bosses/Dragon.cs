@@ -79,7 +79,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(Firing, CurrentState, CurrentAttack);
+            NetFields.AddField(Firing).AddField(CurrentState).AddField(CurrentAttack);
         }
 
         public override void MovePosition(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
@@ -265,7 +265,7 @@ namespace StardewRoguelike.Bosses
             }
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName)
             {

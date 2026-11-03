@@ -28,7 +28,7 @@ namespace StardewRoguelike.Projectiles
 
         private void InitNetFields()
         {
-            NetFields.AddFields(ReturningVelocityMultiplier, StartingPosition);
+            NetFields.AddField(ReturningVelocityMultiplier).AddField(StartingPosition);
         }
 
         public override void behaviorOnCollisionWithOther(GameLocation location)

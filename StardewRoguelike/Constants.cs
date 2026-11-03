@@ -27,11 +27,11 @@ namespace StardewRoguelike
         public static readonly List<int> FloorsIncreaseGoldMax = new() { 6 };
         public static readonly List<int> FloorsIncreaseGoldMin = new() { 24 };
 
-        internal readonly static int[] RandomDebuffIds = new int[]
+        internal readonly static string[] RandomDebuffIds = new string[]
         {
-            12, 17, 13,
-            18, 14, 19,
-            25, 26, 27
+            Buff.goblinsCurse, Buff.tipsy, Buff.slimed,
+            Buff.fear, Buff.evilEye, Buff.frozen,
+            Buff.nauseous, Buff.darkness, Buff.weakness
         };
 
         internal readonly static int[] RandomBuffIds = new int[]

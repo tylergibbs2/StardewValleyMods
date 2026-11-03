@@ -55,7 +55,7 @@ namespace StardewRoguelike.Bosses
                 base.MovePosition(time, viewport, currentLocation);
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName)
             {

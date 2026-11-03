@@ -26,7 +26,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(alreadyUsed);
+            NetFields.AddField(alreadyUsed);
         }
 
         public override List<string> MapPaths => new() { "custom-dwarf" };

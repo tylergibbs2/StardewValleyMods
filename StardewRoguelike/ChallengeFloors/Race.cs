@@ -29,7 +29,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(floorSecondsLeft, wavesKilled);
+            NetFields.AddField(floorSecondsLeft).AddField(wavesKilled);
         }
 
         public override List<string> MapPaths => new() {

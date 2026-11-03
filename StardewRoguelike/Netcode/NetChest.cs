@@ -56,7 +56,7 @@ namespace StardewRoguelike.Netcode
 
         protected void InitNetFields()
         {
-            NetFields.AddFields(TileLocation, Items, IndeterminateItemChest, IsTimedChest, MustOpenBy);
+            NetFields.AddField(TileLocation).AddField(Items).AddField(IndeterminateItemChest).AddField(IsTimedChest).AddField(MustOpenBy);
         }
 
         // Is only called for Game1.player
