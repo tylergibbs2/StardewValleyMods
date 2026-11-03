@@ -44,11 +44,6 @@ namespace StardewRoguelike
         public static IMonitor ModMonitor { get; private set; } = null!;
 
         /// <summary>
-        /// Used for uploading the run statistics online.
-        /// </summary>
-        public static readonly HttpClient WebClient = new();
-
-        /// <summary>
         /// Tracks the statistics of the game.
         /// </summary>
         public static readonly Stats ActiveStats = new();
@@ -59,17 +54,12 @@ namespace StardewRoguelike
 
         public static ModConfig Config { get; private set; } = null!;
 
-        /// <summary>
-        /// Whether or not being able to upload a run online is disabled.
-        /// </summary>
-        public static bool DisableUpload { get; set; } = false;
-
         public static string? CurrentVersion { get; private set; } = null;
         public static string? NewUpdateVersion { get; private set; } = null;
 
         /// <summary>
-        /// Manifest IDs of mods that are allowed to be played with while
-        /// also being able to upload a run online.
+        /// Manifest IDs of mods that the roguelike considers fair to play alongside.
+        /// Anything else trips the disclaimer menu.
         /// </summary>
         public static readonly List<string> WhitelistedMods = new()
         {
@@ -330,8 +320,6 @@ namespace StardewRoguelike
 
             string error = I18n.Roguelike_InvalidClientMods(count: invalidMods.Count);
             Game1.chatBox.addErrorMessage(error);
-
-            DisableUpload = true;
         }
 
         /// <summary>

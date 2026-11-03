@@ -41,14 +41,6 @@
     "UI.PerkDisplayMenu.NoPerks": "You do not currently have any perks.",
 
     "UI.StatsMenu.Title": "Statistics",
-    "UI.StatsMenu.Errors.Mods": "Cannot upload due to mods.",
-    "UI.StatsMenu.Errors.NotHost": "Only the host can upload stats in multiplayer.",
-    "UI.StatsMenu.Errors.MidRun": "Cannot upload mid-run.",
-    "UI.StatsMenu.Errors.AlreadyUploaded": "Run has already been uploaded",
-    "UI.StatsMenu.Errors.NotStarted": "Run has not started",
-    "UI.StatsMenu.Errors.Generic": "There was an error uploading.",
-    "UI.StatsMenu.Upload": "Upload",
-    "UI.StatsMenu.UploadSuccess": "Run successfully uploaded.",
 
     "UI.SeedMenu.Title": "Seed",
     "UI.SeedMenu.RerollEveryRun": "Regenerate Seed Every Run",

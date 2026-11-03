@@ -266,9 +266,6 @@ namespace StardewRoguelike
                 case "printstats":
                     ModEntry.ModMonitor.Log(JsonSerializer.Serialize(ModEntry.ActiveStats), LogLevel.Info);
                     break;
-                case "uploadstats":
-                    ModEntry.ActiveStats.Upload();
-                    break;
                 case "forceboss":
                     if (args.Length == 1)
                     {
@@ -477,8 +474,7 @@ namespace StardewRoguelike
             help.AppendLine("monsterchance <float:chance> : sets the chance for monster spawns");
             help.AppendLine("darkchance <float:chance> : sets the chance for dark floors on hard mode");
             help.AppendLine("hardmode [bool:status] : enable or disable hard mode");
-            help.AppendLine("printstats : prints the stats upload payload");
-            help.AppendLine("uploadstats : forces a stats upload");
+            help.AppendLine("printstats : prints the stats payload");
             help.AppendLine("forceboss [int:which] : forces boss floors to appear when possible");
             help.AppendLine("forcechallenge [int:which] : forces challenge floors to appear when possible");
             help.AppendLine("forceforge [bool:status] : forces forge floors to appear when possible");

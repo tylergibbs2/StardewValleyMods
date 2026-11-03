@@ -335,7 +335,6 @@ namespace StardewRoguelike
             if (loadedOptions is not null)
                 Game1.options = loadedOptions;
 
-            ModEntry.DisableUpload = false;
 
             List<IModInfo> invalidMods = ModEntry.GetInvalidMods();
             if (invalidMods.Count > 0)
