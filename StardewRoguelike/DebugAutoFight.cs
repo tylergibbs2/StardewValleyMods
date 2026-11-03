@@ -27,8 +27,8 @@ namespace StardewRoguelike
         /// <summary>Ticks between swings, roughly a sword's swing rate.</summary>
         private const int SwingCooldownTicks = 22;
 
-        /// <summary>Pixels per tick the farmer closes the distance at.</summary>
-        private const float WalkSpeed = 7f;
+        /// <summary>Ticks of no progress before the farmer is considered stuck on geometry.</summary>
+        private const int StuckTicks = 90;
 
         /// <summary>How close the farmer gets before swinging.</summary>
         private const float MeleeRange = 72f;
@@ -39,6 +39,8 @@ namespace StardewRoguelike
         private static int swings;
         private static int kills;
         private static int startHealth;
+        private static float lastDistance = float.MaxValue;
+        private static int stuckFor;
         private static readonly Dictionary<string, string> LastBossState = new();
         private static readonly Dictionary<string, int> LastBossHealthBucket = new();
 
@@ -64,6 +66,8 @@ namespace StardewRoguelike
             swings = 0;
             kills = 0;
             startHealth = Game1.player.health;
+            lastDistance = float.MaxValue;
+            stuckFor = 0;
             LastBossState.Clear();
             LastBossHealthBucket.Clear();
 
@@ -140,14 +144,17 @@ namespace StardewRoguelike
             }
 
             Vector2 delta = target.Position - Game1.player.Position;
+            float distance = delta.Length();
             Game1.player.faceGeneralDirection(target.Position);
 
-            if (delta.Length() > MeleeRange)
+            if (distance > MeleeRange)
             {
-                // walk in, the way a player closes distance
-                Game1.player.Position += Vector2.Normalize(delta) * WalkSpeed;
+                WalkToward(delta, distance);
                 return;
             }
+
+            lastDistance = distance;
+            stuckFor = 0;
 
             if (cooldown > 0)
             {
@@ -175,6 +182,45 @@ namespace StardewRoguelike
                 kills++;
                 Log($"killed {name} (swing {swings})");
             }
+        }
+
+        /// <summary>
+        /// Walks toward the target using the game's own movement, so walls and
+        /// obstacles stop the farmer the way they stop a player.
+        ///
+        /// Mine layouts can wall the farmer off from a monster entirely, and a bot
+        /// that only presses toward it would stall the whole test; if no ground has
+        /// been made for a while it slides across instead, and says so.
+        /// </summary>
+        private static void WalkToward(Vector2 delta, float distance)
+        {
+            if (distance < lastDistance - 1f)
+            {
+                lastDistance = distance;
+                stuckFor = 0;
+            }
+            else
+            {
+                stuckFor++;
+            }
+
+            if (stuckFor > StuckTicks)
+            {
+                Log($"stuck {StuckTicks} ticks at {distance:F0}px, sliding past geometry");
+                Game1.player.Position += Vector2.Normalize(delta) * 24f;
+                stuckFor = 0;
+                lastDistance = float.MaxValue;
+                return;
+            }
+
+            // 0 = up, 1 = right, 2 = down, 3 = left
+            bool horizontalFirst = Math.Abs(delta.X) > Math.Abs(delta.Y);
+            int primary = horizontalFirst ? (delta.X > 0 ? 1 : 3) : (delta.Y > 0 ? 2 : 0);
+            int secondary = horizontalFirst ? (delta.Y > 0 ? 2 : 0) : (delta.X > 0 ? 1 : 3);
+
+            Game1.player.tryToMoveInDirection(primary, isFarmer: true, damagesFarmer: 0, glider: false);
+            if (stuckFor > 10)
+                Game1.player.tryToMoveInDirection(secondary, isFarmer: true, damagesFarmer: 0, glider: false);
         }
 
         /// <summary>Logs boss health milestones and phase changes as they happen.</summary>
