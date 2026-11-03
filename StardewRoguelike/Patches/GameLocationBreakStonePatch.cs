@@ -11,10 +11,10 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(GameLocation), "breakStone")]
     internal class GameLocationBreakStonePatch
     {
-        public static void Postfix(GameLocation __instance, int indexOfStone, int x, int y, Farmer who, Random r)
+        public static void Postfix(GameLocation __instance, string stoneId, int x, int y, Farmer who, Random r)
         {
             // gold ore
-            if (indexOfStone != 764 || who != Game1.player)
+            if (stoneId != "764" || who != Game1.player)
                 return;
 
             if (Game1.player.get_FarmerActiveHatQuest() is not null)

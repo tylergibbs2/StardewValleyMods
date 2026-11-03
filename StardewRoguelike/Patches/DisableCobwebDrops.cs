@@ -11,8 +11,11 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(Grass), "performToolAction")]
     internal class DisableCobwebDrops
     {
-        public static bool Prefix(Grass __instance, Tool t, int explosion, Vector2 tileLocation, GameLocation location)
+        public static bool Prefix(Grass __instance, Tool t, int explosion, Vector2 tileLocation)
         {
+            // 1.6 dropped the GameLocation parameter; placed objects carry their own Location.
+            GameLocation location = __instance.Location;
+
             location ??= Game1.currentLocation;
 
             if ((t != null && t is MeleeWeapon weapon && weapon.type.Value != 2) || explosion > 0)

@@ -34,6 +34,17 @@ namespace StardewRoguelike
         /// </summary>
         private const string AdrenalineBuffId = $"{ModEntry.ModId}_Adrenaline";
 
+        /// <summary>
+        /// The buff that widens the player's item-pickup radius for the whole run.
+        /// </summary>
+        private const string MagnetismBuffId = $"{ModEntry.ModId}_Magnetism";
+
+        /// <summary>
+        /// How much to add to <see cref="Farmer.BaseMagneticRadius"/> (128), to keep
+        /// the pre-1.6 pickup radius of 256.
+        /// </summary>
+        private const int AddedMagneticRadius = 128;
+
         public static int FloorRngSeed { get; set; } = Guid.NewGuid().GetHashCode();
 
         public static bool RerollRandomEveryRun { get; set; } = true;
@@ -728,6 +739,19 @@ namespace StardewRoguelike
             Game1.player.hasSkullKey = true;
 
             Game1.player.ClearBuffs();
+
+            // 1.6 made BaseMagneticRadius readonly and derives the rest from buffs,
+            // so the run's wider pickup radius has to be one.
+            Game1.player.applyBuff(new Buff(
+                id: MagnetismBuffId,
+                source: "Roguelike",
+                displaySource: "Roguelike",
+                duration: Buff.ENDLESS,
+                effects: new BuffEffects() { MagneticRadius = { AddedMagneticRadius } }
+            )
+            {
+                visible = false
+            });
 
             // Remove items
             if (Game1.player.leftRing.Value is not null)

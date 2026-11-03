@@ -10,10 +10,10 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(SObject), "cutWeed")]
     internal class NoWeedDropsPatch
     {
-        public static bool Prefix(SObject __instance, Farmer who, GameLocation? location = null)
+        public static bool Prefix(SObject __instance, Farmer who)
         {
-            if (location is null && who is not null)
-                location = who.currentLocation;
+            // 1.6 dropped the GameLocation parameter; placed objects carry their own Location.
+            GameLocation? location = __instance.Location ?? who?.currentLocation;
             if (location is null)
                 return true;
 

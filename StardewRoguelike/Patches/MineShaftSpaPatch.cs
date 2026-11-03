@@ -1,4 +1,5 @@
 using HarmonyLib;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
@@ -110,12 +111,12 @@ namespace StardewRoguelike.Patches
             }
         }
 
-        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performTouchAction))]
+        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performTouchAction), new Type[] { typeof(string[]), typeof(Vector2) })]
         internal class PerformTouchAction
         {
-            public static bool Prefix(MineShaft __instance, string fullActionString, Vector2 playerStandingPosition)
+            public static bool Prefix(MineShaft __instance, string[] action, Vector2 playerStandingPosition)
             {
-                if (fullActionString != "PoolEntrance")
+                if (action.Length == 0 || action[0] != "PoolEntrance")
                     return true;
 
                 Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;

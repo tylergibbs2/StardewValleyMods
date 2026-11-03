@@ -10,7 +10,8 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(
         typeof(GameLocation),
         "isCollidingPosition",
-        new Type[] { typeof(Rectangle), typeof(xTile.Dimensions.Rectangle), typeof(bool), typeof(int), typeof(bool), typeof(Character), typeof(bool), typeof(bool), typeof(bool) }
+        // 1.6 appended skipCollisionEffects; without it the overload no longer resolves.
+        new Type[] { typeof(Rectangle), typeof(xTile.Dimensions.Rectangle), typeof(bool), typeof(int), typeof(bool), typeof(Character), typeof(bool), typeof(bool), typeof(bool), typeof(bool) }
     )]
     internal class GameLocationCollisionPatch
     {

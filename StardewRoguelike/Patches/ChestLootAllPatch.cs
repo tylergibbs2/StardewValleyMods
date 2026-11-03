@@ -72,7 +72,7 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(Chest), "dumpContents")]
     internal class ChestDumpContentsPatch
     {
-        public static bool Prefix(Chest __instance, GameLocation location)
+        public static bool Prefix(Chest __instance)
         {
             if (__instance.synchronized.Value && (__instance.GetMutex().IsLocked() || !Game1.IsMasterGame) && !__instance.GetMutex().IsLockHeld())
                 return false;
