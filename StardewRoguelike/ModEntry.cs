@@ -50,28 +50,10 @@ namespace StardewRoguelike
 
         public static bool Invincible { get; set; } = false;
 
-        public static bool ShouldShowModDisclaimer { get; set; } = false;
-
         public static ModConfig Config { get; private set; } = null!;
 
         public static string? CurrentVersion { get; private set; } = null;
         public static string? NewUpdateVersion { get; private set; } = null;
-
-        /// <summary>
-        /// Manifest IDs of mods that the roguelike considers fair to play alongside.
-        /// Anything else trips the disclaimer menu.
-        /// </summary>
-        public static readonly List<string> WhitelistedMods = new()
-        {
-            "SMAPI.ErrorHandler",
-            "SMAPI.SaveBackup",
-            "tylergibbs2.StardewRoguelike",
-            "tylergibbs2.StardewNametags",
-            "tylergibbs2.DefaultFarmer",
-            "spacechase0.GenericModConfigMenu",
-            "jltaylor-us.GMCMOptions",
-            "thespbgamer.ZoomLevel"
-        };
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
@@ -110,7 +92,6 @@ namespace StardewRoguelike
             helper.Events.Content.AssetRequested += ContentManager.AssetRequested;
 
             helper.Events.Multiplayer.ModMessageReceived += ModMessageReceived;
-            helper.Events.Multiplayer.PeerConnected += PeerConnected;
 
             helper.Events.Display.MenuChanged += MenuChanged;
             helper.Events.Display.MenuChanged += Roguelike.MenuChanged;
@@ -193,69 +174,15 @@ namespace StardewRoguelike
         }
 
         /// <summary>
-        /// Gets all installed mods for mods are aren't on the whitelist.
-        /// </summary>
-        /// <returns>All mods that aren't whitelisted.</returns>
-        public static List<IModInfo> GetInvalidMods()
-        {
-            List<IModInfo> invalidMods = new();
-
-            foreach (IModInfo mod in ModRegistry.GetAll())
-            {
-                if (!WhitelistedMods.Contains(mod.Manifest.UniqueID))
-                    invalidMods.Add(mod);
-            }
-
-            if (invalidMods.Count > 0)
-                ModMonitor.Log("Found invalid mods: " + string.Join(", ", invalidMods.Select(m => m.Manifest.Name)), LogLevel.Debug);
-            else
-                ModMonitor.Log("No invalid mods found.", LogLevel.Debug);
-
-            return invalidMods;
-        }
-
-        /// <summary>
-        /// Gets all installed mods that aren't whitelisted. from a multiplayer peer connection.
-        /// </summary>
-        /// <param name="peer">The multiplayer peer.</param>
-        /// <returns>All mods that aren't whitelisted.</returns>
-        public static List<IMultiplayerPeerMod> GetInvalidMods(IMultiplayerPeer peer)
-        {
-            List<IMultiplayerPeerMod> invalidMods = new();
-
-            foreach (IMultiplayerPeerMod mod in peer.Mods)
-            {
-                if (!WhitelistedMods.Contains(mod.ID))
-                    invalidMods.Add(mod);
-            }
-
-            if (invalidMods.Count > 0)
-                ModMonitor.Log("Found invalid mods for multiplayer peer: " + string.Join(", ", invalidMods.Select(m => m.Name)), LogLevel.Info);
-            else
-                ModMonitor.Log("No invalid mods found for multiplayer peer.", LogLevel.Info);
-
-            return invalidMods;
-        }
-
-        /// <summary>
         /// Event handler for when the Game1 activeClickableMenu changes.
-        /// This handles showing the disclaimer for if the player has invalid mods.
+        /// This persists the player's game options when they close the menu.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="MenuChangedEventArgs"/> instance containing the event data.</param>
         public void MenuChanged(object? sender, MenuChangedEventArgs e)
         {
             if (e.OldMenu is GameMenu && e.NewMenu is null)
-            {
                 Helper.Data.WriteGlobalData("RoguelikeGameOptions", Game1.options);
-                return;
-            }
-
-            if (!ShouldShowModDisclaimer || e.NewMenu is not null || Config.SkipModDisclaimer)
-                return;
-
-            Game1.activeClickableMenu = new DisclaimerMenu();
-            ShouldShowModDisclaimer = false;
         }
 
         private void SetupGMCM(object? sender, GameLaunchedEventArgs e)
@@ -268,14 +195,6 @@ namespace StardewRoguelike
                 mod: ModManifest,
                 reset: () => Config = new ModConfig(),
                 save: () => Helper.WriteConfig(Config)
-            );
-
-            configMenu.AddBoolOption(
-                mod: ModManifest,
-                name: () => I18n.Config_SkipDisclaimer_Name(),
-                tooltip: () => I18n.Config_SkipDisclaimer_Tooltip(),
-                getValue: () => Config.SkipModDisclaimer,
-                setValue: value => Config.SkipModDisclaimer = value
             );
 
             configMenu.AddBoolOption(
@@ -301,25 +220,6 @@ namespace StardewRoguelike
                 getValue: () => Config.AutomaticallyFaceMouse,
                 setValue: value => Config.AutomaticallyFaceMouse = value
             );
-        }
-
-        /// <summary>
-        /// Event handler for when a multiplayer peer connects.
-        /// This handles checking if a connected peer has mods that are invalid/illegal.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="PeerConnectedEventArgs"/> instance containing the event data.</param>
-        public void PeerConnected(object? sender, PeerConnectedEventArgs e)
-        {
-            if (!Context.IsMainPlayer || !e.Peer.HasSmapi)
-                return;
-
-            List<IMultiplayerPeerMod> invalidMods = GetInvalidMods(e.Peer);
-            if (invalidMods.Count == 0)
-                return;
-
-            string error = I18n.Roguelike_InvalidClientMods(count: invalidMods.Count);
-            Game1.chatBox.addErrorMessage(error);
         }
 
         /// <summary>

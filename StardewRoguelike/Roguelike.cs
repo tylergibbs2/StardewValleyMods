@@ -336,10 +336,6 @@ namespace StardewRoguelike
                 Game1.options = loadedOptions;
 
 
-            List<IModInfo> invalidMods = ModEntry.GetInvalidMods();
-            if (invalidMods.Count > 0)
-                ModEntry.ShouldShowModDisclaimer = true;
-
             WarpLocalPlayerToStart();
             Game1.player.team.useSeparateWallets.Value = true;
 
@@ -368,11 +364,6 @@ namespace StardewRoguelike
 
             if (!ModEntry.Config.SkipCharacterCreation)
                 Game1.activeClickableMenu = new CharacterCustomization(CharacterCustomization.Source.NewFarmhand);
-            else if (!ModEntry.Config.SkipModDisclaimer && ModEntry.ShouldShowModDisclaimer)
-            {
-                Game1.activeClickableMenu = new DisclaimerMenu();
-                ModEntry.ShouldShowModDisclaimer = false;
-            }
 
             ResetLocalGameState();
             ResetLocalPlayer();
