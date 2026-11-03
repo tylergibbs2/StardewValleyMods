@@ -323,9 +323,7 @@ namespace StardewRoguelike.ChallengeFloors
                     return;
             }
 
-            NPC marlon = Game1.getCharacterFromName("Marlon");
-            marlon.setTileLocation(new Vector2(xOrigin + 3, yOrigin));
-            mine.addCharacter(marlon);
+            Merchant.SpawnVillager(mine, "Marlon", new Vector2(xOrigin + 3, yOrigin), 2);
         }
 
         public void SpawnHealingStatue(MineShaft mine, Point topLeftTile)

@@ -1,4 +1,6 @@
 using Microsoft.Xna.Framework;
+using StardewValley.GameData.Characters;
+using StardewModdingAPI;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewRoguelike.ChallengeFloors;
@@ -276,23 +278,66 @@ namespace StardewRoguelike
             qi.setNewDialogue(new Dialogue(qi, null, I18n.Merchant_QiVictory()));
         }
 
+        /// <summary>
+        /// Puts a villager on a floor, creating them if the world does not already
+        /// have one.
+        ///
+        /// 1.6 only instantiates villagers in loaded locations, so
+        /// Game1.getCharacterFromName returns null for anyone whose home location the
+        /// run never loads. The roguelike borrows Qi and Marlon purely as set
+        /// dressing, so when they are missing they are built straight from
+        /// Data/Characters instead.
+        /// </summary>
+        public static void SpawnVillager(MineShaft mine, string name, Vector2 tile, int facingDirection)
+        {
+            if (mine.getCharacterFromName(name) is not null)
+                return;
+
+            NPC? villager = Game1.getCharacterFromName(name) ?? CreateVillagerFromData(name, mine, tile);
+            if (villager is null)
+            {
+                ModEntry.ModMonitor.Log($"Could not spawn '{name}'; no character data found.", LogLevel.Warn);
+                return;
+            }
+
+            villager.setTileLocation(tile);
+            villager.faceDirection(facingDirection);
+            mine.addCharacter(villager);
+        }
+
+        private static NPC? CreateVillagerFromData(string name, MineShaft mine, Vector2 tile)
+        {
+            if (!Game1.characterData.TryGetValue(name, out CharacterData? data))
+                return null;
+
+            try
+            {
+                string textureName = NPC.getTextureNameForCharacter(name);
+                return new NPC(
+                    new AnimatedSprite($"Characters\\{textureName}", 0, data.Size.X, data.Size.Y),
+                    tile * 64f,
+                    mine.Name,
+                    0,
+                    name,
+                    data.CanBeRomanced,
+                    Game1.content.Load<Texture2D>($"Portraits\\{textureName}")
+                );
+            }
+            catch (Exception ex)
+            {
+                ModEntry.ModMonitor.Log($"Failed to create '{name}': {ex.Message}", LogLevel.Warn);
+                return null;
+            }
+        }
+
         public static void SpawnQi(MineShaft mine)
         {
-            NPC qi = mine.getCharacterFromName("Mister Qi");
-            if (qi is null)
-            {
-                qi = Game1.getCharacterFromName("Mister Qi");
-                qi.setTileLocation(new(17, 11));
-                qi.faceDirection(3);
-                mine.addCharacter(qi);
-            }
+            SpawnVillager(mine, "Mister Qi", new(17, 11), 3);
         }
 
         public static void SpawnMarlon(MineShaft mine)
         {
-            NPC marlon = Game1.getCharacterFromName("Marlon");
-            marlon.setTileLocation(new(23, 5));
-            mine.addCharacter(marlon);
+            SpawnVillager(mine, "Marlon", new(23, 5), 2);
         }
 
         public static void DespawnGil(MineShaft mine)

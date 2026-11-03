@@ -345,14 +345,11 @@ namespace StardewRoguelike
             Game1.player.team.useSeparateWallets.Value = true;
 
             GameLocation mine = Game1.getLocationFromName("Mine");
-            NPC qi = mine.getCharacterFromName("Mister Qi");
-            if (qi is null)
-            {
-                qi = Game1.getCharacterFromName("Mister Qi");
-                qi = qi.ShallowClone();
-            }
+            NPC? qi = mine.getCharacterFromName("Mister Qi") ?? Game1.getCharacterFromName("Mister Qi")?.ShallowClone();
 
-            qi.showTextAboveHead(I18n.Lobby_QiIntroduction(), duration: 15000);
+            // 1.6 only instantiates villagers in loaded locations, so this can come
+            // back empty; the intro bubble is cosmetic, so just skip it.
+            qi?.showTextAboveHead(I18n.Lobby_QiIntroduction(), duration: 15000);
 
             if (Context.IsMainPlayer)
             {
