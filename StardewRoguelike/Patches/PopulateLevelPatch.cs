@@ -80,8 +80,12 @@ namespace StardewRoguelike.Patches
                     if (!__instance.isTileClearForMineObjects(tile))
                         continue;
 
-                    // 5 minutes into the run
-                    long openBy = ((DateTimeOffset)ModEntry.ActiveStats.StartTime!).ToUnixTimeSeconds() + 300;
+                    // 5 minutes into the run. The run clock is set a tick after the
+                    // first floor is entered, so a floor generated before that (the
+                    // rdebug genmines command, or a fast descent) has no start time
+                    // yet; time it from now instead of throwing.
+                    DateTime runStart = ModEntry.ActiveStats.StartTime ?? DateTime.UtcNow;
+                    long openBy = ((DateTimeOffset)runStart).ToUnixTimeSeconds() + 300;
                     __instance.SpawnLocalChest(tile, openBy);
 
                     spawnedTimedChest = true;
