@@ -835,7 +835,7 @@ namespace StardewRoguelike
             qi.CurrentDialogue.Clear();
 
             string perkKey = string.Join('+', Game1.options.journalButton);
-            qi.setNewDialogue(I18n.Lobby_QiDialogue(perkKey: perkKey));
+            qi.setNewDialogue(new Dialogue(qi, null, I18n.Lobby_QiDialogue(perkKey: perkKey)));
         }
 
         /// <summary>

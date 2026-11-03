@@ -273,7 +273,7 @@ namespace StardewRoguelike
 
             qi.CurrentDialogue.Clear();
 
-            qi.setNewDialogue(I18n.Merchant_QiVictory());
+            qi.setNewDialogue(new Dialogue(qi, null, I18n.Merchant_QiVictory()));
         }
 
         public static void SpawnQi(MineShaft mine)
