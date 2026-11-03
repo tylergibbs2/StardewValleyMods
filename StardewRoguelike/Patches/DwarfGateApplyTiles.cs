@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using StardewRoguelike.Extensions;
 using StardewValley;
 using StardewValley.Locations;
 
@@ -7,7 +8,7 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(DwarfGate), "ApplyTiles")]
     internal class DwarfGateApplyTiles
     {
-        private const string DungeonTileSheetId = "volcano_dungeon";
+        private const string DungeonTileSheetId = MineShaftExtensions.DungeonTileSheetId;
 
         private static int GetTileIndex(xTile.Map map, int x, int y)
         {

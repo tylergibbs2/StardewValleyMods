@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
+using xTile.Tiles;
 using StardewValley.Locations;
 using StardewValley.Monsters;
 using System.Collections.Generic;
@@ -47,12 +48,34 @@ namespace StardewRoguelike.Extensions
                 mine.setMapTile(x, y, tileIndex, layer, tileSheetId);
         }
 
+        /// <summary>The tilesheet ID 1.6's dwarf-gate code expects.</summary>
+        public const string DungeonTileSheetId = "dungeon";
+
+        /// <summary>
+        /// Makes sure the map has a tilesheet named <see cref="DungeonTileSheetId"/>,
+        /// renaming the mod's "volcano_dungeon" sheet if that is what it has. Maps
+        /// that already carry both are left alone.
+        /// </summary>
+        private static void EnsureDungeonTileSheetId(MineShaft mine)
+        {
+            if (mine.map is null || mine.map.GetTileSheet(DungeonTileSheetId) is not null)
+                return;
+
+            if (mine.map.GetTileSheet("volcano_dungeon") is TileSheet volcanoSheet)
+                volcanoSheet.Id = DungeonTileSheetId;
+        }
+
         public static DwarfGate CreateDwarfGate(this MineShaft mine, int index, Point gatePosition, Point switchPosition)
         {
             // DwarfGate's constructor ends by calling ApplyTiles, which writes tiles
             // through locationRef - still the throwaway dungeon at that point. Its map
             // is never loaded, so give it the mine's; the tiles then land where the
             // caller is about to point the gate anyway.
+            // 1.6's DwarfGate.ApplyTiles addresses its tilesheet by the ID "dungeon".
+            // 1.5.6 addressed tilesheets by index, so the mod's maps were free to call
+            // theirs "volcano_dungeon"; alias it so the vanilla gate code can find it.
+            EnsureDungeonTileSheetId(mine);
+
             VolcanoDungeon fake = new(index);
             fake.possibleSwitchPositions[1] = new() { switchPosition };
             fake.mapPath.Value = mine.mapPath.Value;
