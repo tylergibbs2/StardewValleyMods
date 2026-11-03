@@ -128,7 +128,7 @@ namespace StardewRoguelike.Bosses
 
         public void BurnAOE(int radius)
         {
-            Vector2 tileLocation = getTileLocation();
+            Vector2 tileLocation = Tile;
             Vector2 currentTile = new(Math.Min(currentLocation.map.Layers[0].LayerWidth - 1, Math.Max(0f, tileLocation.X - radius)), Math.Min(currentLocation.map.Layers[0].LayerHeight - 1, Math.Max(0f, tileLocation.Y - radius)));
 
             Rectangle areaOfEffect = new((int)(tileLocation.X - radius) * 64, (int)(tileLocation.Y - radius) * 64, (radius * 2 + 1) * 64, (radius * 2 + 1) * 64);
@@ -137,7 +137,7 @@ namespace StardewRoguelike.Bosses
             {
                 new TemporaryAnimatedSprite(35, 9999f, 6, 1, new Vector2(currentTile.X * 64f, currentTile.Y * 64f), flicker: false, (Game1.random.NextDouble() < 0.5))
                 {
-                    light = true,
+                    lightId = $"{ModEntry.ModId}_ThunderKid_{Game1.random.Next()}",
                     lightRadius = radius,
                     lightcolor = Color.Black,
                     alphaFade = 0.03f - radius * 0.003f,
@@ -314,7 +314,7 @@ namespace StardewRoguelike.Bosses
 
             Game1.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("TileSheets\\Projectiles", lightningSourceRect, 9999f, 1, 999, drawPosition, false, Game1.random.NextDouble() < 0.5, (position.Y + 32f) / 10000f + 0.001f, 0.025f, Color.White, markerScale, 0f, 0f, 0f, false)
             {
-                light = true,
+                lightId = $"{ModEntry.ModId}_ThunderKid_{Game1.random.Next()}",
                 lightRadius = 2f,
                 delayBeforeAnimationStart = 200,
                 lightcolor = Color.Black
@@ -329,8 +329,8 @@ namespace StardewRoguelike.Bosses
         }
         public override void drawAboveAllLayers(SpriteBatch b)
         {
-            b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (float)(21 + yOffset)), new Rectangle?(Sprite.SourceRect), Color.White, 0f, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : (getStandingY() / 10000f)));
-            b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, Sprite.SpriteHeight * 4), new Rectangle?(Game1.shadowTexture.Bounds), Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 3f + yOffset / 20f, SpriteEffects.None, (getStandingY() - 1) / 10000f);
+            b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (float)(21 + yOffset)), new Rectangle?(Sprite.SourceRect), Color.White, 0f, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : (StandingPixel.Y / 10000f)));
+            b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, Sprite.SpriteHeight * 4), new Rectangle?(Game1.shadowTexture.Bounds), Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 3f + yOffset / 20f, SpriteEffects.None, (StandingPixel.Y - 1) / 10000f);
         }
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)

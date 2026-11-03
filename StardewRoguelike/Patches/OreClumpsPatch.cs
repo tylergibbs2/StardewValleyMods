@@ -20,7 +20,7 @@ namespace StardewRoguelike.Patches
 			Vector2 endPoint = __instance.getRandomTile();
 			for (int tries = 0; tries < 1 || mineRandom.NextDouble() < 0.25; tries++)
 			{
-				if (__instance.isTileLocationTotallyClearAndPlaceable(endPoint) && __instance.isTileOnClearAndSolidGround(endPoint) && __instance.doesTileHaveProperty((int)endPoint.X, (int)endPoint.Y, "Diggable", "Back") is null)
+				if (__instance.CanItemBePlacedHere(endPoint) && __instance.isTileOnClearAndSolidGround(endPoint) && __instance.doesTileHaveProperty((int)endPoint.X, (int)endPoint.Y, "Diggable", "Back") is null)
 				{
                     SObject ore = new(endPoint, 764, "Stone", canBeSetDown: true, canBeGrabbed: false, isHoedirt: false, isSpawnedObject: false);
 					ore.MinutesUntilReady = 8;

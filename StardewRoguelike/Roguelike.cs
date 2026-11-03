@@ -171,7 +171,7 @@ namespace StardewRoguelike
             }
             else if (!HardMode && DidHardModeDowngrade)
             {
-                Game1.player.addItemToInventory(new SObject(194, 1));
+                Game1.player.addItemToInventory(new SObject("194", 1));
                 DelayedAction.playSoundAfterDelay("clank", 250);
                 DidHardModeDowngrade = false;
             }
@@ -579,10 +579,10 @@ namespace StardewRoguelike
                 UpgradeLevel = 4
             };
             Game1.player.addItemToInventory(pick);                // Copper Pickaxe
-            Game1.player.addItemToInventory(new MeleeWeapon(0));  // Rusty Sword
+            Game1.player.addItemToInventory(new MeleeWeapon("0"));  // Rusty Sword
 
             int eggStack = HardMode ? 2 : 3;
-            Game1.player.addItemToInventory(new SObject(194, eggStack));  // Fried Egg
+            Game1.player.addItemToInventory(new SObject("194", eggStack));  // Fried Egg
         }
 
         /// <summary>

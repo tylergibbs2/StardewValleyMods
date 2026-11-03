@@ -185,10 +185,10 @@ namespace StardewRoguelike.Bosses
 
                 List<Item> chestItems = new()
                 {
-                    new SObject(384, 20 + additionalGold),
+                    new SObject("384", 20 + additionalGold),
                 };
                 if (allFarmersNoHit)
-                    chestItems.Add(new SObject(896, 1));
+                    chestItems.Add(new SObject("896", 1));
 
                 mine.SpawnLocalChest(chestLocation.Value, chestItems);
             }

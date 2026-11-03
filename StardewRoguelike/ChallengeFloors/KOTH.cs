@@ -269,7 +269,7 @@ namespace StardewRoguelike.ChallengeFloors
                     Game1.random.Next(spawnRect.X, spawnRect.X + spawnRect.Width),
                     Game1.random.Next(spawnRect.Y, spawnRect.Y + spawnRect.Height)
                 );
-                if (!mine.isTileLocationTotallyClearAndPlaceable((int)randomTile.X, (int)randomTile.Y) || kothBox.Value.Contains(randomTile * 64f))
+                if (!mine.CanItemBePlacedHere(new Vector2((int)randomTile.X, (int)randomTile.Y)) || kothBox.Value.Contains(randomTile * 64f))
                     continue;
 
                 // spawn enemy

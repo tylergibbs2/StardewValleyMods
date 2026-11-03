@@ -276,8 +276,8 @@ namespace StardewRoguelike
 
                         if (Following.currentLocation != myLocation)
                         {
-                            Game1.xLocationAfterWarp = Following.getTileX();
-                            Game1.yLocationAfterWarp = Following.getTileY();
+                            Game1.xLocationAfterWarp = Following.TilePoint.X;
+                            Game1.yLocationAfterWarp = Following.TilePoint.Y;
                             SendToLocation(Following.currentLocation);
                         }
                         else

@@ -531,9 +531,9 @@ namespace StardewRoguelike.Bosses
 
         protected override void sharedDeathAnimation()
         {
-            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X, Sprite.SourceRect.Y, 16, 5), 16, getStandingX(), getStandingY() - 32, 1, getStandingY() / 64, Color.White);
-            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X + 2, Sprite.SourceRect.Y + 5, 16, 5), 10, getStandingX(), getStandingY() - 32, 1, getStandingY() / 64, Color.White);
-            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(0, 10, 16, 5), 16, getStandingX(), getStandingY() - 32, 1, getStandingY() / 64, Color.White);
+            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X, Sprite.SourceRect.Y, 16, 5), 16, StandingPixel.X, StandingPixel.Y - 32, 1, StandingPixel.Y / 64, Color.White);
+            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X + 2, Sprite.SourceRect.Y + 5, 16, 5), 10, StandingPixel.X, StandingPixel.Y - 32, 1, StandingPixel.Y / 64, Color.White);
+            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(0, 10, 16, 5), 16, StandingPixel.X, StandingPixel.Y - 32, 1, StandingPixel.Y / 64, Color.White);
         }
 
         protected override void localDeathAnimation()

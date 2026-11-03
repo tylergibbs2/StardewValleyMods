@@ -5,7 +5,6 @@ using System;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using StardewRoguelike.Patches;
 
 namespace StardewRoguelike.UI
 {
@@ -17,7 +16,7 @@ namespace StardewRoguelike.UI
 
         private ClickableTextureComponent refreshButton;
 
-        public RefreshableShopMenu(Dictionary<ISalable, int[]> itemPriceAndStock, bool hasRefreshed, int currency = 0, string? who = null, Func<ISalable, Farmer, int, bool>? on_purchase = null, Func<ISalable, bool>? on_sell = null, string? context = null) : base(itemPriceAndStock, currency, who, on_purchase, on_sell, context)
+        public RefreshableShopMenu(Dictionary<ISalable, ItemStockInformation> itemPriceAndStock, bool hasRefreshed, int currency = 0, string? who = null, OnPurchaseDelegate? on_purchase = null, Func<ISalable, bool>? on_sell = null) : base(Merchant.MerchantShopId, itemPriceAndStock, currency, who, on_purchase, on_sell, playOpenSound: false)
         {
             refreshButton = new(new(xPositionOnScreen + 174, yPositionOnScreen + height - 150, 64, 64), Game1.mouseCursors, refreshSourceRect, 4f)
             {
@@ -46,7 +45,7 @@ namespace StardewRoguelike.UI
 
         public void DoRefresh()
         {
-            Merchant.CurrentShop = new RefreshableShopMenu(Merchant.GetMerchantStock(), true, context: "Blacksmith", on_purchase: OpenShopPatch.OnPurchase);
+            Merchant.CurrentShop = new RefreshableShopMenu(Merchant.GetMerchantStock(), true, on_purchase: Merchant.OnPurchase);
             Game1.activeClickableMenu = Merchant.CurrentShop;
             Game1.playSound("sell");
         }

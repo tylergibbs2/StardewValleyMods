@@ -15,25 +15,25 @@ namespace StardewRoguelike.Patches
         {
             if (base_item == null || (base_item is MeleeWeapon && !((MeleeWeapon)base_item).isScythe()))
             {
-                if (base_item != null && base_item is MeleeWeapon && ((MeleeWeapon)base_item).isGalaxyWeapon() && Utility.IsNormalObjectAtParentSheetIndex(item, 896))
+                if (base_item != null && base_item is MeleeWeapon && ((MeleeWeapon)base_item).isGalaxyWeapon() && Utility.IsNormalObjectAtParentSheetIndex(item, "896"))
                     __result = new GalaxySoulEnchantment();
-                else if (Utility.IsNormalObjectAtParentSheetIndex(item, 60))
+                else if (Utility.IsNormalObjectAtParentSheetIndex(item, "60"))
                     __result = new EmeraldEnchantment();
-                else if (Utility.IsNormalObjectAtParentSheetIndex(item, 62))
+                else if (Utility.IsNormalObjectAtParentSheetIndex(item, "62"))
                     __result = new AquamarineEnchantment();
-                else if (Utility.IsNormalObjectAtParentSheetIndex(item, 64))
+                else if (Utility.IsNormalObjectAtParentSheetIndex(item, "64"))
                     __result = new RubyEnchantment();
-                else if (Utility.IsNormalObjectAtParentSheetIndex(item, 66))
+                else if (Utility.IsNormalObjectAtParentSheetIndex(item, "66"))
                     __result = new AmethystEnchantment();
-                else if (Utility.IsNormalObjectAtParentSheetIndex(item, 68))
+                else if (Utility.IsNormalObjectAtParentSheetIndex(item, "68"))
                     __result = new TopazEnchantment();
-                else if (Utility.IsNormalObjectAtParentSheetIndex(item, 70))
+                else if (Utility.IsNormalObjectAtParentSheetIndex(item, "70"))
                     __result = new JadeEnchantment();
-                else if (Utility.IsNormalObjectAtParentSheetIndex(item, 72))
+                else if (Utility.IsNormalObjectAtParentSheetIndex(item, "72"))
                     __result = new DiamondEnchantment();
             }
 
-            if (Utility.IsNormalObjectAtParentSheetIndex(item, 74))
+            if (Utility.IsNormalObjectAtParentSheetIndex(item, "74"))
                 __result = Utility.GetRandom(BaseEnchantment.GetAvailableEnchantmentsForItem(base_item as Tool), Game1.random);
 
             return false;

@@ -80,7 +80,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             if (!Started)
             {
-                if (Game1.player.getTileX() >= XTileStart)
+                if (Game1.player.TilePoint.X >= XTileStart)
                     Started = true;
                 else
                     return;
@@ -96,7 +96,7 @@ namespace StardewRoguelike.ChallengeFloors
             }
             msCounter += time.ElapsedGameTime.TotalMilliseconds;
 
-            if (Game1.player.getTileX() >= XTileEnd)
+            if (Game1.player.TilePoint.X >= XTileEnd)
                 GameOver(mine);
         }
 
@@ -134,7 +134,7 @@ namespace StardewRoguelike.ChallengeFloors
             List<Item> chestItems = new()
             {
                 new SObject(gemReward, 1),
-                new SObject(384, goldAmount)
+                new SObject("384", goldAmount)
             };
             Chest chest = new(0, chestItems, chestSpot)
             {

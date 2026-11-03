@@ -293,7 +293,7 @@ namespace StardewRoguelike.Bosses
             Game1.currentLocation.TemporarySprites.Add(new("TileSheets\\Projectiles", spriteSourceRect, 9999f, 1, 999, drawPosition, false, Game1.random.NextDouble() < 0.5, (position.Y + 32f) / 10000f + 0.001f, 0.0075f, Color.White, markerScale, 0f, 0f, 0f, false)
             {
                 delayBeforeAnimationStart = delay,
-                light = true,
+                lightId = $"{ModEntry.ModId}_Modulosaurus_{Game1.random.Next()}",
                 lightRadius = 1f,
                 lightcolor = Color.White,
                 endFunction = (_) =>

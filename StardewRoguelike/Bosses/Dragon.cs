@@ -283,10 +283,10 @@ namespace StardewRoguelike.Bosses
 
         public override void drawAboveAllLayers(SpriteBatch b)
         {
-            b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(64f, GetBoundingBox().Height), new Rectangle?(Game1.shadowTexture.Bounds), Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (getStandingY() - 1) / 10000f);
-            b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), Color.White, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((getStandingY() + 8) / 10000f)));
+            b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(64f, GetBoundingBox().Height), new Rectangle?(Game1.shadowTexture.Bounds), Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (StandingPixel.Y - 1) / 10000f);
+            b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), Color.White, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((StandingPixel.Y + 8) / 10000f)));
             if (isGlowing)
-                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), glowingColor * glowingTransparency, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((getStandingY() + 8) / 10000f + 0.0001f)));
+                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), glowingColor * glowingTransparency, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((StandingPixel.Y + 8) / 10000f + 0.0001f)));
         }
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)

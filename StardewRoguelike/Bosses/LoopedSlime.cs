@@ -97,7 +97,7 @@ namespace StardewRoguelike.Bosses
                 else if (roll <= 0.45)
                 {
                     MineShaft mine = (MineShaft)currentLocation;
-                    Monster slime = mine.BuffMonsterIfNecessary(new GreenSlime(getTileLocation() * 64f, 80));
+                    Monster slime = mine.BuffMonsterIfNecessary(new GreenSlime(Tile * 64f, 80));
                     slime.isHardModeMonster.Value = true;
                     slime.moveTowardPlayerThreshold.Value = 25;
                     if (!slime.Sprite.textureName.Value.EndsWith("_dangerous"))
@@ -219,7 +219,7 @@ namespace StardewRoguelike.Bosses
                 int readyToJump = (int)GetType().BaseType!.GetField("readyToJump", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
                 NetVector2 facePosition = (NetVector2)GetType().BaseType!.GetField("facePosition", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
 
-                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset) + stack_adjustment, Sprite.SourceRect, prismatic ? Utility.GetPrismaticColor(348 + specialNumber.Value, 5f) : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * ((float)ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((float)(getStandingY() + i * 2) / 10000f)));
+                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset) + stack_adjustment, Sprite.SourceRect, prismatic ? Utility.GetPrismaticColor(348 + specialNumber.Value, 5f) : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * ((float)ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((float)(StandingPixel.Y + i * 2) / 10000f)));
                 if (top_slime)
                 {
                     int xDongleSource = ((isMoving() || wagTimer > 0) ? (16 * Math.Min(7, Math.Abs(((wagTimer > 0) ? (992 - wagTimer) : (Game1.currentGameTime.TotalGameTime.Milliseconds % 992)) - 496) / 62) % 64) : 48);
@@ -227,13 +227,13 @@ namespace StardewRoguelike.Bosses
                     if (hasSpecialItem.Value)
                         yDongleSource += 48;
 
-                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f, GetBoundingBox().Height - 24 * Scale + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 + 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) * Scale, new Microsoft.Xna.Framework.Rectangle(xDongleSource, 168 + yDongleSource, 16, 24), hasSpecialItem ? Color.White : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : (getStandingY() / 10000f + 0.0001f)));
+                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f, GetBoundingBox().Height - 24 * Scale + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 + 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) * Scale, new Microsoft.Xna.Framework.Rectangle(xDongleSource, 168 + yDongleSource, 16, 24), hasSpecialItem ? Color.White : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : (StandingPixel.Y / 10000f + 0.0001f)));
                 }
 
-                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + (new Vector2(32f, GetBoundingBox().Height / 2 + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 - 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) + facePosition) * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), new Microsoft.Xna.Framework.Rectangle(32 + ((readyToJump > 0 || focusedOnFarmers) ? 16 : 0), 120 + ((readyToJump < 0 && (focusedOnFarmers || invincibleCountdown > 0)) ? 24 : 0), 16, 24), Color.White * ((FacingDirection == 0) ? 0.5f : 1f), 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((getStandingY() + i * 2) / 10000f + 0.0001f)));
+                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + (new Vector2(32f, GetBoundingBox().Height / 2 + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 - 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) + facePosition) * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), new Microsoft.Xna.Framework.Rectangle(32 + ((readyToJump > 0 || focusedOnFarmers) ? 16 : 0), 120 + ((readyToJump < 0 && (focusedOnFarmers || invincibleCountdown > 0)) ? 24 : 0), 16, 24), Color.White * ((FacingDirection == 0) ? 0.5f : 1f), 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((StandingPixel.Y + i * 2) / 10000f + 0.0001f)));
 
                 if (isGlowing)
-                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset), Sprite.SourceRect, glowingColor * glowingTransparency, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, Scale), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.99f : (getStandingY() / 10000f + 0.001f)));
+                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset), Sprite.SourceRect, glowingColor * glowingTransparency, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, Scale), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.99f : (StandingPixel.Y / 10000f + 0.001f)));
             }
         }
     }

@@ -255,8 +255,8 @@ namespace StardewRoguelike.Bosses
                                 int spreadY = Game1.random.Next(-5, 6);
 
                                 Vector2 targetTile = new(
-                                    targettedFarmer.getTileLocation().X + spreadX,
-                                    targettedFarmer.getTileLocation().Y + spreadY
+                                    targettedFarmer.Tile.X + spreadX,
+                                    targettedFarmer.Tile.Y + spreadY
                                 );
 
                                 Vector2 shot_origin = Position + new Vector2(0f, -32f);

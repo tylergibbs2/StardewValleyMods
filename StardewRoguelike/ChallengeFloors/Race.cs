@@ -60,7 +60,7 @@ namespace StardewRoguelike.ChallengeFloors
                     if (i == 0 && j == 0)
                         continue;
 
-                    if (mine.isTileLocationTotallyClearAndPlaceable((int)spawnLocation.X + i, (int)spawnLocation.Y + j))
+                    if (mine.CanItemBePlacedHere(new Vector2((int)spawnLocation.X + i, (int)spawnLocation.Y + j)))
                     {
                         chestSpot = new((int)spawnLocation.X + i, (int)spawnLocation.Y + j);
                         break;
@@ -89,7 +89,7 @@ namespace StardewRoguelike.ChallengeFloors
             List<Item> chestItems = new()
             {
                 new SObject(gemReward, 1),
-                new SObject(384, goldAmount)
+                new SObject("384", goldAmount)
             };
 
             mine.SpawnLocalChest(chestSpot, chestItems);

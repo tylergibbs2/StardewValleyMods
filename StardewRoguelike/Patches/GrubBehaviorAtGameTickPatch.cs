@@ -24,8 +24,8 @@ namespace StardewRoguelike.Patches
                 if (metamorphCounter <= 0)
                 {
                     __instance.Health = -500;
-                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 4, __instance.getStandingX(), __instance.getStandingY(), 25, (int)__instance.getTileLocation().Y);
-                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 8, __instance.getStandingX(), __instance.getStandingY(), 15, (int)__instance.getTileLocation().Y);
+                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 4, __instance.StandingPixel.X, __instance.StandingPixel.Y, 25, (int)__instance.Tile.Y);
+                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 8, __instance.StandingPixel.X, __instance.StandingPixel.Y, 15, (int)__instance.Tile.Y);
                     if (__instance.currentLocation is MineShaft)
                     {
                         Monster toSpawn = ((MineShaft)__instance.currentLocation).BuffMonsterIfNecessary(new Fly(__instance.Position, __instance.hard.Value)

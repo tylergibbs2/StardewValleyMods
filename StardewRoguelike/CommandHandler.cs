@@ -123,7 +123,7 @@ namespace StardewRoguelike
             {
                 if (character is Monster monster)
                 {
-                    Vector2 tileLoc = monster.getTileLocation();
+                    Vector2 tileLoc = monster.Tile;
                     Point tilePoint = new((int)tileLoc.X, (int)tileLoc.Y);
                     int backTile = mine.getTileIndexAt(tilePoint, "Back");
                     int backbackTile = mine.getTileIndexAt(tilePoint, "BackBack");
@@ -171,7 +171,7 @@ namespace StardewRoguelike
                         Stack<Point> path;
                         try
                         {
-                            path = PathFindController.findPath(monster.getTileLocationPoint(), Game1.player.getTileLocationPoint(), PathFindController.isAtEndPoint, mine, monster, 10_000);
+                            path = PathFindController.findPath(monster.TilePoint, Game1.player.TilePoint, PathFindController.isAtEndPoint, mine, monster, 10_000);
                         }
                         catch (Exception)  // interlock
                         {

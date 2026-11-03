@@ -120,7 +120,7 @@ namespace StardewRoguelike.Patches
                         if (__instance.isTileClearForMineObjects(p.X, p.Y))
                         {
                             Vector2 objectPos5 = new(p.X, p.Y);
-                            __instance.objects.Add(objectPos5, new BreakableContainer(objectPos5, 118, __instance));
+                            __instance.objects.Add(objectPos5, new BreakableContainer(objectPos5, "118", __instance));
                             break;
                         }
                     }
@@ -258,10 +258,10 @@ namespace StardewRoguelike.Patches
 
                     // BREAKABLES SPAWNING (barrels, crates, etc)
 
-                    else if (__instance.isContainerPlatform(j, l) && __instance.isTileLocationTotallyClearAndPlaceable(j, l) && mineRandom.NextDouble() < 0.4 && (firstTime || (bool)canAdd.Invoke(__instance, new object[] { 0, barrelsAdded })!))
+                    else if (__instance.isContainerPlatform(j, l) && __instance.CanItemBePlacedHere(new Vector2(j, l)) && mineRandom.NextDouble() < 0.4 && (firstTime || (bool)canAdd.Invoke(__instance, new object[] { 0, barrelsAdded })!))
                     {
                         Vector2 objectPos = new(j, l);
-                        __instance.objects.Add(objectPos, new BreakableContainer(objectPos, 118, __instance));
+                        __instance.objects.Add(objectPos, new BreakableContainer(objectPos, "118", __instance));
                         barrelsAdded++;
                         if (firstTime)
                             __instance.updateMineLevelData(0);

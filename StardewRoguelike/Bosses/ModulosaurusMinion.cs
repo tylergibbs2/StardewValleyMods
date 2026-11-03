@@ -105,19 +105,19 @@ namespace StardewRoguelike.Bosses
 			}
 			if (targettedFarmer is not null && approachFarmer)
 			{
-				if (getTileX() > targettedFarmer.getTileX())
+				if (TilePoint.X > targettedFarmer.TilePoint.X)
 				{
 					velocity.X = -1f;
 				}
-				else if (getTileX() < targettedFarmer.getTileX())
+				else if (TilePoint.X < targettedFarmer.TilePoint.X)
 				{
 					velocity.X = 1f;
 				}
-				if (getTileY() > targettedFarmer.getTileY())
+				if (TilePoint.Y > targettedFarmer.TilePoint.Y)
 				{
 					velocity.Y = -1f;
 				}
-				else if (getTileY() < targettedFarmer.getTileY())
+				else if (TilePoint.Y < targettedFarmer.TilePoint.Y)
 				{
 					velocity.Y = 1f;
 				}

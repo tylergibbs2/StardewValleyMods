@@ -113,8 +113,7 @@ namespace StardewRoguelike.ChallengeFloors
             Location = mine;
 
             CurseToAdd = Curse.GetRandomUniqueCurse(Roguelike.FloorRng);
-            CurrentShop = new(Merchant.GetMerchantStock(0.5f, Roguelike.FloorRng), context: "Blacksmith", on_purchase: OpenShopPatch.OnPurchase);
-            CurrentShop.setUpStoreForContext();
+            CurrentShop = new(Merchant.MerchantShopId, Merchant.GetMerchantStock(0.5f, Roguelike.FloorRng), on_purchase: Merchant.OnPurchase, playOpenSound: false);
         }
 
         private void SpawnRoomType(RoomType roomType, MineShaft mine, Point originPoint)

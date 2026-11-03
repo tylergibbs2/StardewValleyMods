@@ -16,7 +16,7 @@ namespace StardewRoguelike.Patches
             {
                 int amount = Math.Max(1, (int)Math.Min((monster.MaxHealth + Game1.random.Next(-monster.MaxHealth / 10, monster.MaxHealth / 15 + 1)) * 0.1f, 30));
                 who.health = Math.Min(who.maxHealth, Game1.player.health + amount);
-                location.debris.Add(new Debris(amount, new Vector2(Game1.player.getStandingX(), Game1.player.getStandingY()), Color.Lime, 1f, who));
+                location.debris.Add(new Debris(amount, new Vector2(Game1.player.StandingPixel.X, Game1.player.StandingPixel.Y), Color.Lime, 1f, who));
                 Game1.playSound("healSound");
             }
 

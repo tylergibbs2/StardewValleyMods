@@ -175,7 +175,7 @@ namespace StardewRoguelike
             int spawnPadding = 3;
             while (bombsToSpawn > 0)
             {
-                Vector2 playerPosition = Game1.player.getTileLocation();
+                Vector2 playerPosition = Game1.player.Tile;
                 Vector2 tileToSpawn = new(
                     playerPosition.X + Game1.random.Next(-spawnPadding, spawnPadding),
                     playerPosition.Y + Game1.random.Next(-spawnPadding, spawnPadding)
@@ -242,7 +242,7 @@ namespace StardewRoguelike
                 if (Game1.player.get_FarmerActiveHatQuest() is not null)
                     Game1.player.get_FarmerActiveHatQuest()!.DamageTaken += toRemove;
 
-                if (Game1.player.health <= 0 && Game1.player.GetEffectsOfRingMultiplier(863) > 0 && !Game1.player.hasUsedDailyRevive.Value)
+                if (Game1.player.health <= 0 && Game1.player.GetEffectsOfRingMultiplier("863") > 0 && !Game1.player.hasUsedDailyRevive.Value)
                 {
                     Game1.player.startGlowing(new Color(255, 255, 0), border: false, 0.25f);
                     DelayedAction.functionAfterDelay(delegate
@@ -271,7 +271,7 @@ namespace StardewRoguelike
                         alphaFade = -0.01f,
                         alphaFadeFade = -0.00025f
                     });
-                    Game1.player.health = (int)Math.Min(Game1.player.maxHealth, Game1.player.maxHealth * 0.5f + Game1.player.GetEffectsOfRingMultiplier(863));
+                    Game1.player.health = (int)Math.Min(Game1.player.maxHealth, Game1.player.maxHealth * 0.5f + Game1.player.GetEffectsOfRingMultiplier("863"));
                     Game1.player.hasUsedDailyRevive.Value = true;
                     DOTDamageToTick = 0;
                 }

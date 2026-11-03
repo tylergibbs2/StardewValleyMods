@@ -52,7 +52,10 @@ namespace StardewRoguelike.Patches
                             __instance.waterTiles[x, y] = true;
 
                             if (__instance.getMineArea() == 80 && Game1.random.NextDouble() < 0.1)
-                                __instance.sharedLights[x + y * 1000] = new LightSource(4, new Vector2(x, y) * 64f, 2f, new Color(0, 220, 220), x + y * 1000, LightSource.LightContext.None, 0L);
+                            {
+                                string lightId = $"{ModEntry.ModId}_SpaWater_{x}_{y}";
+                                __instance.sharedLights[lightId] = new LightSource(lightId, 4, new Vector2(x, y) * 64f, 2f, new Color(0, 220, 220), LightSource.LightContext.None, 0L);
+                            }
                         }
                     }
                 }
@@ -128,7 +131,7 @@ namespace StardewRoguelike.Patches
                     Game1.player.position.Y += 16f;
                     Game1.player.yVelocity = -8f;
                     __instance.playSound("pullItemFromWater");
-                    multiplayer.broadcastSprites(__instance, new TemporaryAnimatedSprite(27, 100f, 4, 0, new Vector2(Game1.player.Position.X, Game1.player.getStandingY() - 40), flicker: false, flipped: false)
+                    multiplayer.broadcastSprites(__instance, new TemporaryAnimatedSprite(27, 100f, 4, 0, new Vector2(Game1.player.Position.X, Game1.player.StandingPixel.Y - 40), flicker: false, flipped: false)
                     {
                         layerDepth = 1f,
                         motion = new Vector2(0f, 2f)

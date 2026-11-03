@@ -42,7 +42,7 @@ namespace StardewRoguelike.Projectiles
                         tilePosition.X + Game1.random.Next(-spread, spread + 1),
                         tilePosition.Y + Game1.random.Next(-spread, spread + 1)
                     );
-                    if (!location.isTileLocationTotallyClearAndPlaceable(randomTile))
+                    if (!location.CanItemBePlacedHere(randomTile))
                         continue;
 
                     MineShaft mine = (MineShaft)location;

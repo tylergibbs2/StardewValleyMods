@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
+using StardewRoguelike.ChallengeFloors;
 using StardewRoguelike.Extensions;
 using StardewRoguelike.Patches;
 using StardewRoguelike.UI;
@@ -13,6 +14,7 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using xTile.Dimensions;
 using xTile.Tiles;
 
@@ -75,7 +77,7 @@ namespace StardewRoguelike
             {
                 Vector2 signTile = new(17, 16);
                 Sign sign = new(signTile, 38);
-                sign.displayItem.Value = new SObject(773, 1);
+                sign.displayItem.Value = new SObject("773", 1);
                 sign.displayType.Value = 1;
                 mine.Objects.Add(signTile, sign);
             }
@@ -87,7 +89,7 @@ namespace StardewRoguelike
                 gardenPot.showNextIndex.Value = true;
                 mine.Objects.Add(potTile, gardenPot);
                 Vector2 sprinklerTile = new(potTile.X - 1, potTile.Y);
-                var sprinkler = new SObject(599, 1)
+                var sprinkler = new SObject("599", 1)
                 {
                     TileLocation = sprinklerTile
                 };
@@ -184,12 +186,12 @@ namespace StardewRoguelike
 
                 ShopMenu menu;
                 if (Perks.HasPerk(Perks.PerkType.Indecisive))
-                    menu = new RefreshableShopMenu(GetMerchantStock(random: Roguelike.FloorRng), false, context: "Blacksmith", on_purchase: OpenShopPatch.OnPurchase);
+                    menu = new RefreshableShopMenu(GetMerchantStock(random: Roguelike.FloorRng), false, on_purchase: OnPurchase);
                 else
-                    menu = new(GetMerchantStock(random: Roguelike.FloorRng), context: "Blacksmith", on_purchase: OpenShopPatch.OnPurchase);
-                menu.setUpStoreForContext();
+                    menu = new(MerchantShopId, GetMerchantStock(random: Roguelike.FloorRng), on_purchase: OnPurchase, playOpenSound: false);
+                ApplySellableCategories(menu);
                 CurrentShop = menu;
-                CurrentSeedShop = new(GetSeedStock(), context: "SeedShop");
+                CurrentSeedShop = new(SeedShopId, GetSeedStock(), playOpenSound: false);
                 CurrentHatBoard = new();
 
                 foreach (Vector2 potTile in GardenPotTiles)
@@ -201,7 +203,7 @@ namespace StardewRoguelike
                 if (Perks.HasPerk(Perks.PerkType.Deconstructor))
                 {
                     Vector2 deconstructorTile = new(26, 7);
-                    mine.Objects[deconstructorTile] = new SObject(deconstructorTile, 265);
+                    mine.Objects[deconstructorTile] = new SObject(deconstructorTile, "265");
                 }
 
                 int level = Roguelike.GetLevelFromMineshaft(mine);
@@ -462,24 +464,139 @@ namespace StardewRoguelike
                 b.Draw(Game1.mouseCursors, Game1.GlobalToLocal(new Vector2(1224, 320)), new Microsoft.Xna.Framework.Rectangle(255, 1436, 12, 14), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.01232f);
         }
 
-        public static Dictionary<ISalable, int[]> GetSeedStock()
-        {
-            Dictionary<ISalable, int[]> stock = new();
+        /// <summary>
+        /// The shop IDs the roguelike's own menus are registered under. 1.6 requires
+        /// every <see cref="ShopMenu"/> to carry one.
+        /// </summary>
+        public const string MerchantShopId = $"{ModEntry.ModId}_Merchant";
 
-            Utility.AddStock(stock, new SObject(472, 5), 50, 5);   // Parsnip Seeds
-            Utility.AddStock(stock, new SObject(479, 5), 100, 5);  // Melon Seeds
-            Utility.AddStock(stock, new SObject(490, 5), 150, 5);  // Pumpkin Seeds
-            Utility.AddStock(stock, new SObject(486, 5), 200, 5);  // Starfruit Seeds
-            Utility.AddStock(stock, new SObject(347, 5), 250, 5);  // Rare Seeds
+        public const string SeedShopId = $"{ModEntry.ModId}_SeedShop";
+
+        /// <summary>
+        /// Lets the player sell minerals, gems and metals at the merchant.
+        ///
+        /// 1.5.6 got this from passing a "Blacksmith" store context; in 1.6 the
+        /// sellable categories come from <c>Data/Shops</c>, so a mod-owned shop has
+        /// to set them itself.
+        /// </summary>
+        private static void ApplySellableCategories(ShopMenu menu)
+        {
+            menu.categoriesToSellHere.AddRange(new[]
+            {
+                SObject.mineralsCategory,
+                SObject.GemCategory,
+                SObject.metalResources
+            });
+        }
+
+        /// <summary>
+        /// Adds an item to a shop's stock at a fixed price, with unlimited stock
+        /// unless a quantity is given.
+        ///
+        /// Replaces <c>Utility.AddStock</c>, which 1.6 removed along with the rest of
+        /// the pre-<c>Data/Shops</c> stock helpers. The roguelike already overrode its
+        /// behaviour with a Harmony patch, so this keeps that logic directly.
+        /// </summary>
+        public static void AddStock(Dictionary<ISalable, ItemStockInformation> stock, Item obj, int buyPrice = -1, int limitedQuantity = -1)
+        {
+            int price = buyPrice == -1 ? obj.salePrice() : buyPrice;
+
+            int stackCount = ShopMenu.infiniteStock;
+            if (obj is SObject sobj && sobj.IsRecipe)
+                stackCount = 1;
+            else if (limitedQuantity != -1)
+                stackCount = limitedQuantity;
+
+            stock[obj] = new ItemStockInformation(price, stackCount);
+        }
+
+        /// <summary>
+        /// Tracks iridium milk purchases, which are capped per run.
+        /// </summary>
+        public static bool OnPurchase(ISalable item, Farmer who, int numberToBuy, ItemStockInformation stock)
+        {
+            if (item is SObject boughtItem && boughtItem.QualifiedItemId == "(O)803")
+                Roguelike.MilksBought += numberToBuy;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Opens one of the roguelike's menus for a "Buy &lt;name&gt;" map action.
+        ///
+        /// 1.5.6 hooked <c>GameLocation.openShopMenu</c>, which 1.6 removed in favour
+        /// of data-driven shops, so the mod's own shop names are dispatched here
+        /// instead of through a Harmony patch.
+        /// </summary>
+        public static bool TryOpenShop(GameLocation location, string which)
+        {
+            if (location is not MineShaft mine)
+                return false;
+
+            switch (which)
+            {
+                case "Roguelike":
+                    if (CurrentShop is null)
+                        return false;
+
+                    if (CurrentShop is not RefreshableShopMenu && Perks.HasPerk(Perks.PerkType.Indecisive))
+                    {
+                        CurrentShop = new RefreshableShopMenu(CurrentShop.itemPriceAndStock, false, on_purchase: OnPurchase);
+                        ApplySellableCategories(CurrentShop);
+                    }
+
+                    foreach (ISalable buybackItem in CurrentShop.buyBackItems)
+                        CurrentShop.itemPriceAndStock.Remove(buybackItem);
+
+                    CurrentShop.forSale = CurrentShop.itemPriceAndStock.Keys.ToList();
+
+                    CurrentShop.currentItemIndex = 0;
+                    CurrentShop.buyBackItems.Clear();
+                    CurrentShop.buyBackItemsToResellTomorrow.Clear();
+                    Game1.activeClickableMenu = CurrentShop;
+                    return true;
+
+                case "RoguelikeDiscounted":
+                    if (!ChallengeFloor.IsChallengeFloor(mine))
+                        return false;
+
+                    PickAPath pickAPath = (PickAPath)mine.get_MineShaftChallengeFloor().Value;
+                    Game1.activeClickableMenu = pickAPath.CurrentShop;
+                    return true;
+
+                case "Perks":
+                    Perks.CurrentMenu.isActive = true;
+                    Perks.CurrentMenu.informationUp = true;
+                    Game1.activeClickableMenu = Perks.CurrentMenu;
+                    return true;
+
+                case "Seeds":
+                    Game1.activeClickableMenu = CurrentSeedShop;
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        public static Dictionary<ISalable, ItemStockInformation> GetSeedStock()
+        {
+            Dictionary<ISalable, ItemStockInformation> stock = new();
+
+            AddStock(stock, new SObject("472", 5), 50, 5);   // Parsnip Seeds
+            AddStock(stock, new SObject("479", 5), 100, 5);  // Melon Seeds
+            AddStock(stock, new SObject("490", 5), 150, 5);  // Pumpkin Seeds
+            AddStock(stock, new SObject("486", 5), 200, 5);  // Starfruit Seeds
+            AddStock(stock, new SObject("347", 5), 250, 5);  // Rare Seeds
 
             return stock;
         }
 
-        public static Dictionary<ISalable, int[]> GetMerchantStock(float priceAdjustment = 1f, Random? random = null)
+        public static Dictionary<ISalable, ItemStockInformation> GetMerchantStock(float priceAdjustment = 1f, Random? random = null)
         {
             random ??= Game1.random;
 
-            Dictionary<ISalable, int[]> stock = new();
+            Dictionary<ISalable, ItemStockInformation> stock = new();
 
             if (Perks.HasPerk(Perks.PerkType.Discount))
                 priceAdjustment *= 0.9f;
@@ -506,14 +623,14 @@ namespace StardewRoguelike
             int foodQuantity = Curse.HasCurse(CurseType.CheaperMerchant) ? 1 : 3;
             int foodPriceOffset = Curse.HasCurse(CurseType.CheaperMerchant) ? -100 : 0;
 
-            Utility.AddStock(stock, new SObject(194, foodQuantity), buyPrice: (int)((200 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Fried Egg
-            Utility.AddStock(stock, new SObject(196, foodQuantity), buyPrice: (int)((300 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Salad
-            Utility.AddStock(stock, new SObject(773, foodQuantity), buyPrice: (int)((500 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Life Elixir
+            AddStock(stock, new SObject("194", foodQuantity), buyPrice: (int)((200 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Fried Egg
+            AddStock(stock, new SObject("196", foodQuantity), buyPrice: (int)((300 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Salad
+            AddStock(stock, new SObject("773", foodQuantity), buyPrice: (int)((500 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Life Elixir
 
             int totalMilksInGame = (Roguelike.MaxHP - Roguelike.StartingHP) / 25;
             int milkQuantity = totalMilksInGame - Roguelike.MilksBought;
             if (milkQuantity > 0)
-                Utility.AddStock(stock, new SObject(803, milkQuantity), buyPrice: (int)(500 * priceAdjustment), limitedQuantity: milkQuantity);  // Iridium Milk
+                AddStock(stock, new SObject("803", milkQuantity), buyPrice: (int)(500 * priceAdjustment), limitedQuantity: milkQuantity);  // Iridium Milk
 
             return stock;
         }
@@ -531,260 +648,260 @@ namespace StardewRoguelike
                 {
                     floor = new(3, 0, 0, 0, 0);
 
-                    floor.AddSword(12, 50, 50, 1);              // Wooden Blade
-                    floor.AddSword(11, 50, 50, 1);              // Steel Smallsword
-                    floor.AddSword(21, 50, 50, 1);              // Crystal Dagger
+                    floor.AddSword("12", 50, 50, 1);              // Wooden Blade
+                    floor.AddSword("11", 50, 50, 1);              // Steel Smallsword
+                    floor.AddSword("21", 50, 50, 1);              // Crystal Dagger
                 }
                 else if (currentIndex == 1)                     // Floor 10 Shop
                 {
                     floor = new(3, 2, 0, 1, 0);
 
-                    floor.AddSword(43, 400, 525, 1);            // Pirate's Sword
-                    floor.AddSword(1, 400, 525, 1);             // Silver Saber
-                    floor.AddSword(15, 650, 800, 1);            // Forest Sword
-                    floor.AddSword(6, 700, 750, 1);             // Iron Edge
-                    floor.AddSword(19, 325, 450, 1);            // Shadow Dagger
-                    floor.AddSword(51, 325, 500, 1);            // Broken Trident
+                    floor.AddSword("43", 400, 525, 1);            // Pirate's Sword
+                    floor.AddSword("1", 400, 525, 1);             // Silver Saber
+                    floor.AddSword("15", 650, 800, 1);            // Forest Sword
+                    floor.AddSword("6", 700, 750, 1);             // Iron Edge
+                    floor.AddSword("19", 325, 450, 1);            // Shadow Dagger
+                    floor.AddSword("51", 325, 500, 1);            // Broken Trident
 
-                    floor.AddRing(522, 700, 800, 1);            // Vampire Ring
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("522", 700, 800, 1);            // Vampire Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
 
-                    floor.AddBoots(515, 500, 600, 1);           // Cowboy Boots
-                    floor.AddBoots(513, 600, 700, 1);           // Genie Shoes
-                    floor.AddBoots(508, 500, 600, 1);           // Combat Boots
+                    floor.AddBoots("515", 500, 600, 1);           // Cowboy Boots
+                    floor.AddBoots("513", 600, 700, 1);           // Genie Shoes
+                    floor.AddBoots("508", 500, 600, 1);           // Combat Boots
                 }
                 else if (currentIndex == 2)                     // Floor 20 Shop
                 {
                     floor = new(3, 2, 1, 2, 0);
 
-                    floor.AddSword(5, 700, 850, 1);             // Bone Sword
-                    floor.AddSword(14, 700, 850, 1);            // Neptune's Glaive
-                    floor.AddSword(8, 825, 1025, 1);             // Obsidian Edge
-                    floor.AddSword(60, 825, 1025, 1);            // Ossified Blade
-                    floor.AddSword(45, 600, 775, 1);            // Wicked Kris
-                    floor.AddSword(24, 750, 900, 1);            // Wood Club
+                    floor.AddSword("5", 700, 850, 1);             // Bone Sword
+                    floor.AddSword("14", 700, 850, 1);            // Neptune's Glaive
+                    floor.AddSword("8", 825, 1025, 1);             // Obsidian Edge
+                    floor.AddSword("60", 825, 1025, 1);            // Ossified Blade
+                    floor.AddSword("45", 600, 775, 1);            // Wicked Kris
+                    floor.AddSword("24", 750, 900, 1);            // Wood Club
 
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
-                    floor.AddRing(534, 700, 800, 1);            // Ruby Ring
-                    floor.AddRing(533, 500, 600, 1);            // Emerald Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("534", 700, 800, 1);            // Ruby Ring
+                    floor.AddRing("533", 500, 600, 1);            // Emerald Ring
 
-                    floor.AddSpecialRing(522, 700, 800, 1);     // Vampire Ring
-                    floor.AddSpecialRing(523, 600, 700, 1);     // Savage Ring
-                    floor.AddSpecialRing(861, 600, 700, 1);     // Protection Ring
+                    floor.AddSpecialRing("522", 700, 800, 1);     // Vampire Ring
+                    floor.AddSpecialRing("523", 600, 700, 1);     // Savage Ring
+                    floor.AddSpecialRing("861", 600, 700, 1);     // Protection Ring
 
-                    floor.AddBoots(513, 600, 700, 1);           // Genie Shoes
-                    floor.AddBoots(511, 600, 700, 1);           // Dark Boots
-                    floor.AddBoots(512, 600, 700, 1);           // Fire Walker Boots
-                    floor.AddBoots(878, 800, 900, 1);           // Crystal Shoes
+                    floor.AddBoots("513", 600, 700, 1);           // Genie Shoes
+                    floor.AddBoots("511", 600, 700, 1);           // Dark Boots
+                    floor.AddBoots("512", 600, 700, 1);           // Fire Walker Boots
+                    floor.AddBoots("878", 800, 900, 1);           // Crystal Shoes
                 }
                 else if (currentIndex == 3)                     // Floor 30 Shop
                 {
                     floor = new(3, 2, 2, 2, 0);
 
-                    floor.AddSword(48, 800, 950, 1);            // Yeti Tooth
-                    floor.AddSword(50, 825, 975, 1);            // Steel Falchion
-                    floor.AddSword(2, 1000, 1225, 1);            // Dark Sword
-                    floor.AddSword(9, 950, 1225, 1);            // Lava Katana
-                    floor.AddSword(23, 600, 750, 1);            // Galaxy Dagger
-                    floor.AddSword(56, 700, 800, 1);            // Dwarf Dagger
-                    floor.AddSword(27, 825, 1000, 1);            // Wood Mallet
+                    floor.AddSword("48", 800, 950, 1);            // Yeti Tooth
+                    floor.AddSword("50", 825, 975, 1);            // Steel Falchion
+                    floor.AddSword("2", 1000, 1225, 1);            // Dark Sword
+                    floor.AddSword("9", 950, 1225, 1);            // Lava Katana
+                    floor.AddSword("23", 600, 750, 1);            // Galaxy Dagger
+                    floor.AddSword("56", 700, 800, 1);            // Dwarf Dagger
+                    floor.AddSword("27", 825, 1000, 1);            // Wood Mallet
 
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
-                    floor.AddRing(534, 700, 800, 1);            // Ruby Ring
-                    floor.AddRing(533, 500, 600, 1);            // Emerald Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("534", 700, 800, 1);            // Ruby Ring
+                    floor.AddRing("533", 500, 600, 1);            // Emerald Ring
 
-                    floor.AddSpecialRing(522, 700, 800, 1);     // Vampire Ring
-                    floor.AddSpecialRing(523, 600, 700, 1);     // Savage Ring
-                    floor.AddSpecialRing(861, 600, 700, 1);     // Protection Ring
-                    floor.AddSpecialRing(811, 600, 700, 1);     // Napalm Ring
-                    floor.AddSpecialRing(810, 600, 700, 1);     // Crabshell Ring
-                    floor.AddSpecialRing(839, 400, 500, 1);     // Thorns Ring
-                    floor.AddSpecialRing(521, 600, 700, 1);     // Warrior Ring
+                    floor.AddSpecialRing("522", 700, 800, 1);     // Vampire Ring
+                    floor.AddSpecialRing("523", 600, 700, 1);     // Savage Ring
+                    floor.AddSpecialRing("861", 600, 700, 1);     // Protection Ring
+                    floor.AddSpecialRing("811", 600, 700, 1);     // Napalm Ring
+                    floor.AddSpecialRing("810", 600, 700, 1);     // Crabshell Ring
+                    floor.AddSpecialRing("839", 400, 500, 1);     // Thorns Ring
+                    floor.AddSpecialRing("521", 600, 700, 1);     // Warrior Ring
 
-                    floor.AddBoots(514, 600, 700, 1);           // Space Boots
-                    floor.AddBoots(855, 600, 700, 1);           // Dragon Scale Boots
-                    floor.AddBoots(878, 600, 700, 1);           // Crystal Shoes
+                    floor.AddBoots("514", 600, 700, 1);           // Space Boots
+                    floor.AddBoots("855", 600, 700, 1);           // Dragon Scale Boots
+                    floor.AddBoots("878", 600, 700, 1);           // Crystal Shoes
                 }
                 else if (currentIndex == 4)                     // Floor 40 Shop
                 {
                     floor = new(3, 2, 2, 2, 0);
 
-                    floor.AddSword(2, 800, 1025, 1);             // Dark Sword
-                    floor.AddSword(9, 750, 1025, 1);             // Lava Katana
-                    floor.AddSword(4, 1000, 1200, 1);            // Galaxy Sword
-                    floor.AddSword(54, 1000, 1200, 1);           // Dwarf Sword
-                    floor.AddSword(59, 850, 1075, 1);            // Dragontooth Shiv
-                    floor.AddSword(61, 925, 1075, 1);            // Iridium Needle
-                    floor.AddSword(46, 825, 1100, 1);           // Kudgel
+                    floor.AddSword("2", 800, 1025, 1);             // Dark Sword
+                    floor.AddSword("9", 750, 1025, 1);             // Lava Katana
+                    floor.AddSword("4", 1000, 1200, 1);            // Galaxy Sword
+                    floor.AddSword("54", 1000, 1200, 1);           // Dwarf Sword
+                    floor.AddSword("59", 850, 1075, 1);            // Dragontooth Shiv
+                    floor.AddSword("61", 925, 1075, 1);            // Iridium Needle
+                    floor.AddSword("46", 825, 1100, 1);           // Kudgel
 
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
-                    floor.AddRing(534, 700, 800, 1);            // Ruby Ring
-                    floor.AddRing(533, 500, 600, 1);            // Emerald Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("534", 700, 800, 1);            // Ruby Ring
+                    floor.AddRing("533", 500, 600, 1);            // Emerald Ring
 
-                    floor.AddSpecialRing(523, 600, 700, 1);     // Savage Ring
-                    floor.AddSpecialRing(861, 600, 700, 1);     // Protection Ring
-                    floor.AddSpecialRing(811, 600, 700, 1);     // Napalm Ring
-                    floor.AddSpecialRing(810, 600, 700, 1);     // Crabshell Ring
-                    floor.AddSpecialRing(863, 600, 700, 1);     // Phoenix Ring
-                    floor.AddSpecialRing(524, 800, 900, 1);     // Ring of Yoba
+                    floor.AddSpecialRing("523", 600, 700, 1);     // Savage Ring
+                    floor.AddSpecialRing("861", 600, 700, 1);     // Protection Ring
+                    floor.AddSpecialRing("811", 600, 700, 1);     // Napalm Ring
+                    floor.AddSpecialRing("810", 600, 700, 1);     // Crabshell Ring
+                    floor.AddSpecialRing("863", 600, 700, 1);     // Phoenix Ring
+                    floor.AddSpecialRing("524", 800, 900, 1);     // Ring of Yoba
 
-                    floor.AddBoots(514, 600, 700, 1);           // Space Boots
-                    floor.AddBoots(855, 600, 700, 1);           // Dragon Scale Boots
-                    floor.AddBoots(878, 600, 700, 1);           // Crystal Shoes
-                    floor.AddBoots(854, 800, 1100, 1);          // Mermaid Boots
-                    floor.AddBoots(853, 800, 1100, 1);          // Cinderclown Shoes
+                    floor.AddBoots("514", 600, 700, 1);           // Space Boots
+                    floor.AddBoots("855", 600, 700, 1);           // Dragon Scale Boots
+                    floor.AddBoots("878", 600, 700, 1);           // Crystal Shoes
+                    floor.AddBoots("854", 800, 1100, 1);          // Mermaid Boots
+                    floor.AddBoots("853", 800, 1100, 1);          // Cinderclown Shoes
                 }
                 else if (currentIndex == 5)                     // Floor 50 Shop
                 {
                     floor = new(3, 2, 2, 2, 1);
 
-                    floor.AddSword(2, 800, 1025, 1);             // Dark Sword
-                    floor.AddSword(4, 1100, 1225, 1);           // Galaxy Sword
-                    floor.AddSword(54, 1150, 1275, 1);          // Dwarf Sword
-                    floor.AddSword(59, 1000, 1175, 1);           // Dragontooth Shiv
-                    floor.AddSword(28, 1275, 1350, 1);          // Slammer
+                    floor.AddSword("2", 800, 1025, 1);             // Dark Sword
+                    floor.AddSword("4", 1100, 1225, 1);           // Galaxy Sword
+                    floor.AddSword("54", 1150, 1275, 1);          // Dwarf Sword
+                    floor.AddSword("59", 1000, 1175, 1);           // Dragontooth Shiv
+                    floor.AddSword("28", 1275, 1350, 1);          // Slammer
 
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
-                    floor.AddRing(534, 700, 800, 1);            // Ruby Ring
-                    floor.AddRing(533, 500, 600, 1);            // Emerald Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("534", 700, 800, 1);            // Ruby Ring
+                    floor.AddRing("533", 500, 600, 1);            // Emerald Ring
 
-                    floor.AddSpecialRing(523, 600, 700, 1);     // Savage Ring
-                    floor.AddSpecialRing(861, 600, 700, 1);     // Protection Ring
-                    floor.AddSpecialRing(811, 600, 700, 1);     // Napalm Ring
-                    floor.AddSpecialRing(810, 600, 700, 1);     // Crabshell Ring
-                    floor.AddSpecialRing(863, 600, 700, 1);     // Phoenix Ring
-                    floor.AddSpecialRing(524, 800, 900, 1);     // Ring of Yoba
-                    floor.AddSpecialRing(839, 600, 700, 1);     // Thorns Ring
-                    floor.AddSpecialRing(521, 600, 700, 1);     // Warrior Ring
-                    floor.AddSpecialRing(887, 600, 700, 1);     // Immunity Band
+                    floor.AddSpecialRing("523", 600, 700, 1);     // Savage Ring
+                    floor.AddSpecialRing("861", 600, 700, 1);     // Protection Ring
+                    floor.AddSpecialRing("811", 600, 700, 1);     // Napalm Ring
+                    floor.AddSpecialRing("810", 600, 700, 1);     // Crabshell Ring
+                    floor.AddSpecialRing("863", 600, 700, 1);     // Phoenix Ring
+                    floor.AddSpecialRing("524", 800, 900, 1);     // Ring of Yoba
+                    floor.AddSpecialRing("839", 600, 700, 1);     // Thorns Ring
+                    floor.AddSpecialRing("521", 600, 700, 1);     // Warrior Ring
+                    floor.AddSpecialRing("887", 600, 700, 1);     // Immunity Band
 
-                    floor.AddBoots(514, 600, 700, 1);           // Space Boots
-                    floor.AddBoots(855, 600, 700, 1);           // Dragon Scale Boots
-                    floor.AddBoots(878, 600, 700, 1);           // Crystal Shoes
-                    floor.AddBoots(854, 800, 1100, 1);          // Mermaid Boots
-                    floor.AddBoots(853, 800, 1100, 1);          // Cinderclown Shoes
+                    floor.AddBoots("514", 600, 700, 1);           // Space Boots
+                    floor.AddBoots("855", 600, 700, 1);           // Dragon Scale Boots
+                    floor.AddBoots("878", 600, 700, 1);           // Crystal Shoes
+                    floor.AddBoots("854", 800, 1100, 1);          // Mermaid Boots
+                    floor.AddBoots("853", 800, 1100, 1);          // Cinderclown Shoes
 
-                    floor.AddSpecialFood(244, 1850, 2100, 1);   // Root Platter
-                    floor.AddSpecialFood(253, 2100, 2350, 1);   // Triple Shot Espresso
-                    floor.AddSpecialFood(231, 2100, 2600, 1);   // Eggplant Parmesan
-                    floor.AddSpecialFood(204, 1850, 2100, 1);   // Lucky Lunch
+                    floor.AddSpecialFood("244", 1850, 2100, 1);   // Root Platter
+                    floor.AddSpecialFood("253", 2100, 2350, 1);   // Triple Shot Espresso
+                    floor.AddSpecialFood("231", 2100, 2600, 1);   // Eggplant Parmesan
+                    floor.AddSpecialFood("204", 1850, 2100, 1);   // Lucky Lunch
                 }
                 else if (currentIndex == 6)                     // Floor 60 Shop
                 {
                     floor = new(3, 2, 2, 2, 1);
 
-                    floor.AddSword(4, 1100, 1225, 1);           // Galaxy Sword
-                    floor.AddSword(54, 1150, 1275, 1);          // Dwarf Sword
-                    floor.AddSword(57, 1350, 1475, 1);          // Dragontooth Cutlass
-                    floor.AddSword(59, 1000, 1175, 1);           // Dragontooth Shiv
-                    floor.AddSword(61, 1100, 1225, 1);          // Iridium Needle
-                    floor.AddSword(28, 1275, 1350, 1);          // Slammer
+                    floor.AddSword("4", 1100, 1225, 1);           // Galaxy Sword
+                    floor.AddSword("54", 1150, 1275, 1);          // Dwarf Sword
+                    floor.AddSword("57", 1350, 1475, 1);          // Dragontooth Cutlass
+                    floor.AddSword("59", 1000, 1175, 1);           // Dragontooth Shiv
+                    floor.AddSword("61", 1100, 1225, 1);          // Iridium Needle
+                    floor.AddSword("28", 1275, 1350, 1);          // Slammer
 
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
-                    floor.AddRing(534, 700, 800, 1);            // Ruby Ring
-                    floor.AddRing(533, 500, 700, 1);            // Emerald Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("534", 700, 800, 1);            // Ruby Ring
+                    floor.AddRing("533", 500, 700, 1);            // Emerald Ring
 
-                    floor.AddSpecialRing(523, 600, 700, 1);     // Savage Ring
-                    floor.AddSpecialRing(861, 600, 700, 1);     // Protection Ring
-                    floor.AddSpecialRing(811, 600, 700, 1);     // Napalm Ring
-                    floor.AddSpecialRing(810, 600, 700, 1);     // Crabshell Ring
-                    floor.AddSpecialRing(863, 600, 700, 1);     // Phoenix Ring
-                    floor.AddSpecialRing(524, 800, 900, 1);     // Ring of Yoba
-                    floor.AddSpecialRing(839, 600, 700, 1);     // Thorns Ring
-                    floor.AddSpecialRing(521, 600, 700, 1);     // Warrior Ring
-                    floor.AddSpecialRing(887, 600, 700, 1);     // Immunity Band
+                    floor.AddSpecialRing("523", 600, 700, 1);     // Savage Ring
+                    floor.AddSpecialRing("861", 600, 700, 1);     // Protection Ring
+                    floor.AddSpecialRing("811", 600, 700, 1);     // Napalm Ring
+                    floor.AddSpecialRing("810", 600, 700, 1);     // Crabshell Ring
+                    floor.AddSpecialRing("863", 600, 700, 1);     // Phoenix Ring
+                    floor.AddSpecialRing("524", 800, 900, 1);     // Ring of Yoba
+                    floor.AddSpecialRing("839", 600, 700, 1);     // Thorns Ring
+                    floor.AddSpecialRing("521", 600, 700, 1);     // Warrior Ring
+                    floor.AddSpecialRing("887", 600, 700, 1);     // Immunity Band
 
-                    floor.AddBoots(514, 600, 700, 1);           // Space Boots
-                    floor.AddBoots(855, 600, 700, 1);           // Dragon Scale Boots
-                    floor.AddBoots(878, 600, 700, 1);           // Crystal Shoes
-                    floor.AddBoots(854, 800, 1100, 1);          // Mermaid Boots
-                    floor.AddBoots(853, 800, 1100, 1);          // Cinderclown Shoes
+                    floor.AddBoots("514", 600, 700, 1);           // Space Boots
+                    floor.AddBoots("855", 600, 700, 1);           // Dragon Scale Boots
+                    floor.AddBoots("878", 600, 700, 1);           // Crystal Shoes
+                    floor.AddBoots("854", 800, 1100, 1);          // Mermaid Boots
+                    floor.AddBoots("853", 800, 1100, 1);          // Cinderclown Shoes
 
-                    floor.AddSpecialFood(244, 1850, 2100, 1);   // Root Platter
-                    floor.AddSpecialFood(253, 2100, 2350, 1);   // Triple Shot Espresso
-                    floor.AddSpecialFood(231, 2100, 2600, 1);   // Eggplant Parmesan
-                    floor.AddSpecialFood(204, 1850, 2100, 1);   // Lucky Lunch
+                    floor.AddSpecialFood("244", 1850, 2100, 1);   // Root Platter
+                    floor.AddSpecialFood("253", 2100, 2350, 1);   // Triple Shot Espresso
+                    floor.AddSpecialFood("231", 2100, 2600, 1);   // Eggplant Parmesan
+                    floor.AddSpecialFood("204", 1850, 2100, 1);   // Lucky Lunch
                 }
                 else if (currentIndex == 7)                     // Floor 70 Shop
                 {
                     floor = new(3, 2, 2, 2, 1);
 
-                    floor.AddSword(4, 1100, 1225, 1);           // Galaxy Sword
-                    floor.AddSword(54, 1150, 1275, 1);          // Dwarf Sword
-                    floor.AddSword(57, 1350, 1475, 1);          // Dragontooth Cutlass
-                    floor.AddSword(59, 1000, 1175, 1);           // Dragontooth Shiv
-                    floor.AddSword(61, 1100, 1225, 1);          // Iridium Needle
-                    floor.AddSword(29, 1975, 2100, 1);          // Galaxy Hammer
+                    floor.AddSword("4", 1100, 1225, 1);           // Galaxy Sword
+                    floor.AddSword("54", 1150, 1275, 1);          // Dwarf Sword
+                    floor.AddSword("57", 1350, 1475, 1);          // Dragontooth Cutlass
+                    floor.AddSword("59", 1000, 1175, 1);           // Dragontooth Shiv
+                    floor.AddSword("61", 1100, 1225, 1);          // Iridium Needle
+                    floor.AddSword("29", 1975, 2100, 1);          // Galaxy Hammer
 
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
-                    floor.AddRing(534, 700, 800, 1);            // Ruby Ring
-                    floor.AddRing(533, 500, 600, 1);            // Emerald Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("534", 700, 800, 1);            // Ruby Ring
+                    floor.AddRing("533", 500, 600, 1);            // Emerald Ring
 
-                    floor.AddSpecialRing(523, 600, 700, 1);     // Savage Ring
-                    floor.AddSpecialRing(861, 600, 700, 1);     // Protection Ring
-                    floor.AddSpecialRing(811, 600, 700, 1);     // Napalm Ring
-                    floor.AddSpecialRing(810, 600, 700, 1);     // Crabshell Ring
-                    floor.AddSpecialRing(863, 600, 700, 1);     // Phoenix Ring
-                    floor.AddSpecialRing(524, 800, 900, 1);     // Ring of Yoba
-                    floor.AddSpecialRing(839, 600, 700, 1);     // Thorns Ring
-                    floor.AddSpecialRing(521, 600, 700, 1);     // Warrior Ring
-                    floor.AddSpecialRing(887, 600, 700, 1);     // Immunity Band
+                    floor.AddSpecialRing("523", 600, 700, 1);     // Savage Ring
+                    floor.AddSpecialRing("861", 600, 700, 1);     // Protection Ring
+                    floor.AddSpecialRing("811", 600, 700, 1);     // Napalm Ring
+                    floor.AddSpecialRing("810", 600, 700, 1);     // Crabshell Ring
+                    floor.AddSpecialRing("863", 600, 700, 1);     // Phoenix Ring
+                    floor.AddSpecialRing("524", 800, 900, 1);     // Ring of Yoba
+                    floor.AddSpecialRing("839", 600, 700, 1);     // Thorns Ring
+                    floor.AddSpecialRing("521", 600, 700, 1);     // Warrior Ring
+                    floor.AddSpecialRing("887", 600, 700, 1);     // Immunity Band
 
-                    floor.AddBoots(514, 600, 700, 1);           // Space Boots
-                    floor.AddBoots(855, 600, 700, 1);           // Dragon Scale Boots
-                    floor.AddBoots(878, 600, 700, 1);           // Crystal Shoes
-                    floor.AddBoots(854, 800, 1100, 1);          // Mermaid Boots
-                    floor.AddBoots(853, 800, 1100, 1);          // Cinderclown Shoes
+                    floor.AddBoots("514", 600, 700, 1);           // Space Boots
+                    floor.AddBoots("855", 600, 700, 1);           // Dragon Scale Boots
+                    floor.AddBoots("878", 600, 700, 1);           // Crystal Shoes
+                    floor.AddBoots("854", 800, 1100, 1);          // Mermaid Boots
+                    floor.AddBoots("853", 800, 1100, 1);          // Cinderclown Shoes
 
-                    floor.AddSpecialFood(244, 1850, 2100, 1);   // Root Platter
-                    floor.AddSpecialFood(253, 2100, 2350, 1);   // Triple Shot Espresso
-                    floor.AddSpecialFood(231, 2100, 2600, 1);   // Eggplant Parmesan
-                    floor.AddSpecialFood(204, 1850, 2100, 1);   // Lucky Lunch
+                    floor.AddSpecialFood("244", 1850, 2100, 1);   // Root Platter
+                    floor.AddSpecialFood("253", 2100, 2350, 1);   // Triple Shot Espresso
+                    floor.AddSpecialFood("231", 2100, 2600, 1);   // Eggplant Parmesan
+                    floor.AddSpecialFood("204", 1850, 2100, 1);   // Lucky Lunch
                 }
                 else if (currentIndex == 8)                     // Floor 80 Shop
                 {
                     floor = new(3, 2, 2, 2, 1);
 
-                    floor.AddSword(4, 1100, 1225, 1);           // Galaxy Sword
-                    floor.AddSword(23, 1150, 1275, 1);          // Galaxy Dagger
-                    floor.AddSword(57, 1350, 1475, 1);          // Dragontooth Cutlass
-                    floor.AddSword(59, 1000, 1175, 1);           // Dragontooth Shiv
-                    floor.AddSword(61, 1100, 1225, 1);          // Iridium Needle
-                    floor.AddSword(29, 1975, 2100, 1);          // Galaxy Hammer
-                    floor.AddSword(58, 2050, 2200, 1);          // Dragontooth Club
+                    floor.AddSword("4", 1100, 1225, 1);           // Galaxy Sword
+                    floor.AddSword("23", 1150, 1275, 1);          // Galaxy Dagger
+                    floor.AddSword("57", 1350, 1475, 1);          // Dragontooth Cutlass
+                    floor.AddSword("59", 1000, 1175, 1);           // Dragontooth Shiv
+                    floor.AddSword("61", 1100, 1225, 1);          // Iridium Needle
+                    floor.AddSword("29", 1975, 2100, 1);          // Galaxy Hammer
+                    floor.AddSword("58", 2050, 2200, 1);          // Dragontooth Club
 
-                    floor.AddRing(532, 500, 600, 1);            // Jade Ring
-                    floor.AddRing(531, 500, 600, 1);            // Aquamarine Ring
-                    floor.AddRing(534, 700, 800, 1);            // Ruby Ring
-                    floor.AddRing(533, 500, 600, 1);            // Emerald Ring
+                    floor.AddRing("532", 500, 600, 1);            // Jade Ring
+                    floor.AddRing("531", 500, 600, 1);            // Aquamarine Ring
+                    floor.AddRing("534", 700, 800, 1);            // Ruby Ring
+                    floor.AddRing("533", 500, 600, 1);            // Emerald Ring
 
-                    floor.AddSpecialRing(523, 600, 700, 1);     // Savage Ring
-                    floor.AddSpecialRing(861, 600, 700, 1);     // Protection Ring
-                    floor.AddSpecialRing(811, 600, 700, 1);     // Napalm Ring
-                    floor.AddSpecialRing(810, 600, 700, 1);     // Crabshell Ring
-                    floor.AddSpecialRing(863, 600, 700, 1);     // Phoenix Ring
-                    floor.AddSpecialRing(524, 800, 900, 1);     // Ring of Yoba
-                    floor.AddSpecialRing(839, 600, 700, 1);     // Thorns Ring
-                    floor.AddSpecialRing(521, 600, 700, 1);     // Warrior Ring
-                    floor.AddSpecialRing(887, 600, 700, 1);     // Immunity Band
+                    floor.AddSpecialRing("523", 600, 700, 1);     // Savage Ring
+                    floor.AddSpecialRing("861", 600, 700, 1);     // Protection Ring
+                    floor.AddSpecialRing("811", 600, 700, 1);     // Napalm Ring
+                    floor.AddSpecialRing("810", 600, 700, 1);     // Crabshell Ring
+                    floor.AddSpecialRing("863", 600, 700, 1);     // Phoenix Ring
+                    floor.AddSpecialRing("524", 800, 900, 1);     // Ring of Yoba
+                    floor.AddSpecialRing("839", 600, 700, 1);     // Thorns Ring
+                    floor.AddSpecialRing("521", 600, 700, 1);     // Warrior Ring
+                    floor.AddSpecialRing("887", 600, 700, 1);     // Immunity Band
 
-                    floor.AddBoots(514, 600, 700, 1);           // Space Boots
-                    floor.AddBoots(855, 600, 700, 1);           // Dragon Scale Boots
-                    floor.AddBoots(878, 600, 700, 1);           // Crystal Shoes
-                    floor.AddBoots(854, 800, 1100, 1);          // Mermaid Boots
-                    floor.AddBoots(853, 800, 1100, 1);          // Cinderclown Shoes
+                    floor.AddBoots("514", 600, 700, 1);           // Space Boots
+                    floor.AddBoots("855", 600, 700, 1);           // Dragon Scale Boots
+                    floor.AddBoots("878", 600, 700, 1);           // Crystal Shoes
+                    floor.AddBoots("854", 800, 1100, 1);          // Mermaid Boots
+                    floor.AddBoots("853", 800, 1100, 1);          // Cinderclown Shoes
 
-                    floor.AddSpecialFood(244, 1850, 2100, 1);   // Root Platter
-                    floor.AddSpecialFood(253, 2100, 2350, 1);   // Triple Shot Espresso
-                    floor.AddSpecialFood(231, 2100, 2600, 1);   // Eggplant Parmesan
-                    floor.AddSpecialFood(204, 1850, 2100, 1);   // Lucky Lunch
+                    floor.AddSpecialFood("244", 1850, 2100, 1);   // Root Platter
+                    floor.AddSpecialFood("253", 2100, 2350, 1);   // Triple Shot Espresso
+                    floor.AddSpecialFood("231", 2100, 2600, 1);   // Eggplant Parmesan
+                    floor.AddSpecialFood("204", 1850, 2100, 1);   // Lucky Lunch
                 }
                 else
                     break;
