@@ -1,12 +1,16 @@
 using HarmonyLib;
 using StardewValley;
 using StardewValley.Menus;
+using System;
 using System.IO;
 using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
-    [HarmonyPatch(typeof(LoadGameMenu), MethodType.Constructor)]
+    // 1.6 replaced LoadGameMenu() with LoadGameMenu(string filter = null). Harmony
+    // resolves a constructor patch with no argument types to the parameterless
+    // constructor, which no longer exists, so the types have to be named.
+    [HarmonyPatch(typeof(LoadGameMenu), MethodType.Constructor, new Type[] { typeof(string) })]
     internal class LoadGameMenuPatch
     {
         public static bool Prefix(LoadGameMenu __instance)

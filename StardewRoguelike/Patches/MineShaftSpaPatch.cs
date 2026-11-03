@@ -82,8 +82,11 @@ namespace StardewRoguelike.Patches
         [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.draw))]
         internal class Draw
         {
-            public static void Postfix(MineShaft __instance, SpriteBatch b)
+            public static void Postfix(GameLocation __instance, SpriteBatch b)
             {
+                if (__instance is not MineShaft)
+                    return;
+
                 foreach (Farmer f in __instance.farmers)
                 {
                     if (f.swimming.Value)
@@ -113,9 +116,9 @@ namespace StardewRoguelike.Patches
         [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performTouchAction), new Type[] { typeof(string[]), typeof(Vector2) })]
         internal class PerformTouchAction
         {
-            public static bool Prefix(MineShaft __instance, string[] action, Vector2 playerStandingPosition)
+            public static bool Prefix(GameLocation __instance, string[] action, Vector2 playerStandingPosition)
             {
-                if (action.Length == 0 || action[0] != "PoolEntrance")
+                if (__instance is not MineShaft || action.Length == 0 || action[0] != "PoolEntrance")
                     return true;
 
 
