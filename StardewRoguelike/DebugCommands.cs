@@ -1,4 +1,5 @@
 using System;
+using StardewRoguelike.VirtualProperties;
 using System.Text;
 using StardewModdingAPI;
 using StardewRoguelike.UI;
@@ -252,6 +253,27 @@ namespace StardewRoguelike
                         int toGen = int.Parse(args[1]);
                         for (int i = highestLevel + 1; i <= highestLevel + toGen; i++)
                             MineShaft.GetMine($"UndergroundMine1/{i}");
+                    }
+                    break;
+                case "buffs":
+                    {
+                        var applied = Game1.player.buffs.AppliedBuffs;
+                        ModEntry.ModMonitor.Log($"applied buffs ({applied.Count}):", LogLevel.Info);
+                        foreach (var (id, buff) in applied)
+                        {
+                            ModEntry.ModMonitor.Log(
+                                $"  {id}  visible={buff.visible} ms={buff.millisecondsDuration} " +
+                                $"luck={buff.effects.LuckLevel.Value} speed={buff.effects.Speed.Value} " +
+                                $"def={buff.effects.Defense.Value} imm={buff.effects.Immunity.Value}",
+                                LogLevel.Info);
+                        }
+                        ModEntry.ModMonitor.Log(
+                            $"aggregate: luck={Game1.player.buffs.LuckLevel} speed={Game1.player.buffs.Speed} " +
+                            $"def={Game1.player.buffs.Defense} imm={Game1.player.buffs.Immunity}",
+                            LogLevel.Info);
+                        ModEntry.ModMonitor.Log(
+                            $"perks={string.Join(",", Perks.GetActivePerks())} curses={Game1.player.get_FarmerCurses().Count}",
+                            LogLevel.Info);
                     }
                     break;
                 case "gamba":

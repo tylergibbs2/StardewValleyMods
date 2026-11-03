@@ -551,6 +551,13 @@ namespace StardewRoguelike
                     CurrentShop.forSale = CurrentShop.itemPriceAndStock.Keys.ToList();
 
                     CurrentShop.currentItemIndex = 0;
+
+                    // Still non-public in 1.6; without it the scroll thumb keeps its
+                    // old position while the list resets to the top.
+                    ModEntry.ReflectionHelper
+                        .GetMethod(CurrentShop, "setScrollBarToCurrentIndex")
+                        .Invoke();
+
                     CurrentShop.buyBackItems.Clear();
                     CurrentShop.buyBackItemsToResellTomorrow.Clear();
                     Game1.activeClickableMenu = CurrentShop;

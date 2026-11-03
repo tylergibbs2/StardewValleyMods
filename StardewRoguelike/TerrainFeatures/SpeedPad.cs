@@ -64,10 +64,15 @@ namespace StardewRoguelike.TerrainFeatures
             string soundEffect = IsSlowPad.Value ? "debuffHit" : "cowboy_powerup";
             int duration = IsSlowPad.Value ? 750 : 1500;
 
-            if (!Game1.player.hasBuff(buffId))
-                Game1.playSound(soundEffect);
+            // Refresh in place while the player stays on the pad; re-applying would
+            // rebuild the buff display on every collision tick.
+            if (Game1.player.buffs.AppliedBuffs.TryGetValue(buffId, out Buff? existing))
+            {
+                existing.millisecondsDuration = duration;
+                return;
+            }
 
-            // Re-applying a buff with the same ID replaces it, which refreshes the duration.
+            Game1.playSound(soundEffect);
             Game1.player.applyBuff(new Buff(
                 id: buffId,
                 source: "Roguelike",

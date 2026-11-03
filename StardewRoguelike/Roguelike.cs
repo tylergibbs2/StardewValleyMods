@@ -35,6 +35,12 @@ namespace StardewRoguelike
         private const string AdrenalineBuffId = $"{ModEntry.ModId}_Adrenaline";
 
         /// <summary>
+        /// How long the adrenaline buff lasts between refreshes. Short enough that it
+        /// lapses almost immediately once it stops being refreshed.
+        /// </summary>
+        private const int AdrenalineDurationMs = 50;
+
+        /// <summary>
         /// The buff that widens the player's item-pickup radius for the whole run.
         /// </summary>
         private const string MagnetismBuffId = $"{ModEntry.ModId}_Magnetism";
@@ -196,15 +202,26 @@ namespace StardewRoguelike
                     chest.Spawn(mine);
             }
 
-            // Re-applied every tick with a very short duration, so it lapses as soon
-            // as the player stops qualifying for it.
-            Game1.player.applyBuff(new Buff(
-                id: AdrenalineBuffId,
-                source: "Roguelike",
-                displaySource: I18n.Roguelike_Adrenaline(),
-                duration: 50,
-                effects: new BuffEffects() { Speed = { 1 } }
-            ));
+            // Kept alive by refreshing a very short duration each tick, so it lapses
+            // as soon as the player stops qualifying for it.
+            //
+            // The duration is refreshed in place rather than re-applied: applyBuff
+            // removes and re-adds, which would mark the buff display dirty and flag
+            // the icon as updated on every tick, rebuilding every icon each frame.
+            if (Game1.player.buffs.AppliedBuffs.TryGetValue(AdrenalineBuffId, out Buff? adrenaline))
+            {
+                adrenaline.millisecondsDuration = AdrenalineDurationMs;
+            }
+            else
+            {
+                Game1.player.applyBuff(new Buff(
+                    id: AdrenalineBuffId,
+                    source: "Roguelike",
+                    displaySource: I18n.Roguelike_Adrenaline(),
+                    duration: AdrenalineDurationMs,
+                    effects: new BuffEffects() { Speed = { 1 } }
+                ));
+            }
 
             if (Game1.player.Stamina < 0 && Game1.player.health > 0)
             {
@@ -436,9 +453,7 @@ namespace StardewRoguelike
 
             if (!Context.IsMultiplayer)
             {
-                LocalizedContentManager? mapContent = (LocalizedContentManager?)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(MineShaft.activeMines[0]);
-                mapContent?.Dispose();
-                MineShaft.activeMines.RemoveAt(0);
+                DiscardMine(MineShaft.activeMines[0]);
                 return;
             }
 
@@ -468,10 +483,22 @@ namespace StardewRoguelike
 
             while (amountToRemove > 0 && MineShaft.activeMines.Count >= instancesToKeep)
             {
-                LocalizedContentManager? mapContent = (LocalizedContentManager?)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(MineShaft.activeMines[0]);
-                mapContent?.Dispose();
-                MineShaft.activeMines.RemoveAt(0);
+                DiscardMine(MineShaft.activeMines[0]);
             }
+        }
+
+        /// <summary>
+        /// Drops a mine level the run no longer needs.
+        ///
+        /// 1.6 gives locations an OnRemoved lifecycle hook; MineShaft's override
+        /// disposes its map content and the base call tells every character in the
+        /// level it is going away. The mod used to reach for the private mapContent
+        /// field and dispose it directly, which skipped that character cleanup.
+        /// </summary>
+        private static void DiscardMine(MineShaft mine)
+        {
+            mine.OnRemoved();
+            MineShaft.activeMines.Remove(mine);
         }
 
         public static string GetRandomTrack(List<string> tracks)
