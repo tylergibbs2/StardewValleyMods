@@ -277,6 +277,12 @@ namespace StardewRoguelike
                         ModEntry.ModMonitor.Log($"loading save from {savePath}", LogLevel.Info);
                     }
                     break;
+                case "autofight":
+                    DebugAutoFight.Start(args.Length > 1 ? int.Parse(args[1]) : 30);
+                    break;
+                case "stopfight":
+                    DebugAutoFight.Stop("asked to stop");
+                    break;
                 case "where":
                     {
                         GameLocation here = Game1.player.currentLocation;
