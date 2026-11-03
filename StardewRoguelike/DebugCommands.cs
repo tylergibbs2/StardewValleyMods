@@ -255,6 +255,16 @@ namespace StardewRoguelike
                             MineShaft.GetMine($"UndergroundMine1/{i}");
                     }
                     break;
+                case "enter":
+                    {
+                        // Drives the same path the lobby ladder does, so floor entry
+                        // can be tested without the GUI.
+                        int target = args.Length > 1 ? int.Parse(args[1]) : Roguelike.CurrentLevel + 1;
+                        Roguelike.CurrentLevel = target - 1;
+                        Game1.enterMine(target);
+                        ModEntry.ModMonitor.Log($"entering mine level {target}", LogLevel.Info);
+                    }
+                    break;
                 case "buffs":
                     {
                         var applied = Game1.player.buffs.AppliedBuffs;

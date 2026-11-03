@@ -25,7 +25,14 @@ namespace StardewRoguelike.Patches
             __instance.get_MineShaftLoadedMap().Value = mapToLoad;
             __instance.updateMap();
 
-            if (__instance.getMineArea(level) < 40 && !BossFloor.IsBossFloor(__instance))
+            // 1.6 validates that the map has a tilesheet with the ID "mine" whenever
+            // mapImageSource changes, and throws KeyNotFoundException if it doesn't.
+            // A few of the mod's arenas ship their own tilesheet (bugLandTiles,
+            // mine_lava, 1_mine), so there is nothing for the mine retint to apply to
+            // and the level load used to blow up on them.
+            bool canRetintMineTiles = __instance.map?.GetTileSheet("mine") is not null;
+
+            if (canRetintMineTiles && __instance.getMineArea(level) < 40 && !BossFloor.IsBossFloor(__instance))
                 __instance.mapImageSource.Value = "Maps\\Mines\\mine";
             else if (__instance.getMineArea(level) == 40)
                 __instance.mapImageSource.Value = "Maps\\Mines\\mine_frost";
@@ -36,11 +43,12 @@ namespace StardewRoguelike.Patches
 
             if (__instance.get_MineShaftIsDarkArea())
             {
-                __instance.mapImageSource.Value += "_dark";
+                if (canRetintMineTiles)
+                    __instance.mapImageSource.Value += "_dark";
                 loadedDarkArea = true;
             }
 
-            if (__instance.GetAdditionalDifficulty() > 0 && !BossFloor.IsBossFloor(__instance))
+            if (canRetintMineTiles && __instance.GetAdditionalDifficulty() > 0 && !BossFloor.IsBossFloor(__instance))
             {
                 string map_image_source = "Maps\\Mines\\mine";
                 if (__instance.mapImageSource.Value is not null)
@@ -88,7 +96,8 @@ namespace StardewRoguelike.Patches
                 }
             }
 
-            __instance.ApplyDiggableTileFixes();
+            if (canRetintMineTiles)
+                __instance.ApplyDiggableTileFixes();
             if (!__instance.isSideBranch())
             {
                 MineShaft.lowestLevelReached = Math.Max(MineShaft.lowestLevelReached, level);

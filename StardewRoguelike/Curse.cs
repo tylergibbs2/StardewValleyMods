@@ -336,6 +336,26 @@ namespace StardewRoguelike
             }
         }
 
+        /// <summary>
+        /// Re-applies the buff for any curse the player is supposed to have.
+        ///
+        /// The synced curse list is the source of truth; the buff is derived from it
+        /// and <see cref="HasCurse"/> reads the buff, so a buff that went missing would
+        /// silently switch the curse off while it still showed as taken.
+        /// </summary>
+        public static void EnsureCurseBuffs()
+        {
+            if (Game1.player is null)
+                return;
+
+            foreach (int curseValue in Game1.player.get_FarmerCurses())
+            {
+                CurseType curseType = (CurseType)curseValue;
+                if (!Game1.player.hasBuff(GetBuffId(curseType)))
+                    Game1.player.applyBuff(new Curse(curseType));
+            }
+        }
+
         // Only works for Game1.player
         public static bool HasCurse(CurseType curseType)
         {

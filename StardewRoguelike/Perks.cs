@@ -316,6 +316,24 @@ namespace StardewRoguelike
         /// have to come from the buff manager. One invisible buff holds the lot so the
         /// perks don't each take up a slot in the buff bar.
         /// </summary>
+        /// <summary>
+        /// Re-asserts the perk buff if it has gone missing while perks are still
+        /// active. The buff is derived state: it should always match
+        /// <see cref="ActivePerks"/>, so it is cheaper to keep it true every tick
+        /// than to rely on every path that touches buffs leaving it alone.
+        /// </summary>
+        public static void EnsurePerkBuff()
+        {
+            if (Game1.player is null)
+                return;
+
+            bool shouldHaveBuff = HasPerk(PerkType.SpecialCharm) || HasPerk(PerkType.RabbitsFoot)
+                               || HasPerk(PerkType.Swift) || HasPerk(PerkType.Immunity);
+
+            if (shouldHaveBuff != Game1.player.hasBuff(PerkBuffId))
+                RefreshPerkBuff();
+        }
+
         private static void RefreshPerkBuff()
         {
             BuffEffects effects = new();

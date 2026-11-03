@@ -202,6 +202,9 @@ namespace StardewRoguelike
                     chest.Spawn(mine);
             }
 
+            Perks.EnsurePerkBuff();
+            Curse.EnsureCurseBuffs();
+
             // Kept alive by refreshing a very short duration each tick, so it lapses
             // as soon as the player stops qualifying for it.
             //
