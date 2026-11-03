@@ -17,7 +17,12 @@ namespace StardewRoguelike.Patches
 
         public static void Postfix(DwarfGate __instance)
         {
-            xTile.Map map = Game1.content.Load<xTile.Map>(__instance.locationRef.Value.mapPath.Value);
+            // Use the location's live map, not a fresh copy from content: the live one
+            // is where CreateDwarfGate aliased the dungeon tilesheet, and the tile is
+            // written back to it below.
+            xTile.Map map = __instance.locationRef.Value.map;
+            if (map is null)
+                return;
 
             if (__instance.localOpened)
                 __instance.locationRef.Value.removeTile(__instance.tilePosition.X, __instance.tilePosition.Y + 1, "Buildings");
