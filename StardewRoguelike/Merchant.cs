@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewValley.GameData.BigCraftables;
 using StardewValley.GameData.Characters;
 using StardewModdingAPI;
 using Microsoft.Xna.Framework.Graphics;
@@ -86,10 +87,7 @@ namespace StardewRoguelike
 
             foreach (Vector2 potTile in GardenPotTiles)
             {
-                var gardenPot = new IndoorPot(potTile);
-                gardenPot.hoeDirt.Value.state.Value = HoeDirt.watered;
-                gardenPot.showNextIndex.Value = true;
-                mine.Objects.Add(potTile, gardenPot);
+                mine.Objects.Add(potTile, CreateGardenPot(mine, potTile));
                 Vector2 sprinklerTile = new(potTile.X - 1, potTile.Y);
                 var sprinkler = new SObject("599", 1)
                 {
@@ -288,6 +286,50 @@ namespace StardewRoguelike
         /// dressing, so when they are missing they are built straight from
         /// Data/Characters instead.
         /// </summary>
+        /// <summary>
+        /// Builds a watered garden pot for a floor that is still being generated.
+        ///
+        /// 1.6's <c>IndoorPot(Vector2)</c> constructor reads
+        /// <see cref="Game1.currentLocation"/> to bind itself and its dirt, and
+        /// dereferences it unconditionally. During floor generation the warp is still
+        /// in progress and that is null, so the constructor throws; even when it
+        /// doesn't, the pot would be bound to wherever the player is standing instead
+        /// of the floor being built. This does the same setup against the mine.
+        /// </summary>
+        private static IndoorPot CreateGardenPot(MineShaft mine, Vector2 tile)
+        {
+            IndoorPot pot = new()
+            {
+                ItemId = GardenPotItemId,
+                Location = mine,
+                TileLocation = tile
+            };
+
+            pot.bigCraftable.Value = true;
+            pot.canBeSetDown.Value = true;
+
+            if (Game1.bigCraftableData.TryGetValue(GardenPotItemId, out BigCraftableData? data))
+            {
+                pot.Name = data.Name;
+                pot.price.Value = data.Price;
+                pot.type.Value = "Crafting";
+                pot.Category = -9;
+                pot.setOutdoors.Value = data.CanBePlacedOutdoors;
+                pot.setIndoors.Value = data.CanBePlacedIndoors;
+                pot.fragility.Value = data.Fragility;
+                pot.isLamp.Value = data.IsLamp;
+            }
+
+            pot.ResetParentSheetIndex();
+            pot.hoeDirt.Value = new HoeDirt(HoeDirt.watered, mine);
+            pot.showNextIndex.Value = true;
+
+            return pot;
+        }
+
+        /// <summary>The Garden Pot's big-craftable item ID.</summary>
+        private const string GardenPotItemId = "62";
+
         public static void SpawnVillager(MineShaft mine, string name, Vector2 tile, int facingDirection)
         {
             if (mine.getCharacterFromName(name) is not null)
