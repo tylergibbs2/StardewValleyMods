@@ -32,14 +32,17 @@ namespace StardewRoguelike.Patches
             // and the level load used to blow up on them.
             bool canRetintMineTiles = __instance.map?.GetTileSheet("mine") is not null;
 
-            if (canRetintMineTiles && __instance.getMineArea(level) < 40 && !BossFloor.IsBossFloor(__instance))
-                __instance.mapImageSource.Value = "Maps\\Mines\\mine";
-            else if (__instance.getMineArea(level) == 40)
-                __instance.mapImageSource.Value = "Maps\\Mines\\mine_frost";
-            else if (__instance.getMineArea(level) == 80)
-                __instance.mapImageSource.Value = "Maps\\Mines\\mine_lava";
-            else if (__instance.getMineArea(level) == 121)
-                __instance.mapImageSource.Value = "Maps\\Mines\\mine_desert";
+            if (canRetintMineTiles)
+            {
+                if (__instance.getMineArea(level) < 40 && !BossFloor.IsBossFloor(__instance))
+                    __instance.mapImageSource.Value = "Maps\\Mines\\mine";
+                else if (__instance.getMineArea(level) == 40)
+                    __instance.mapImageSource.Value = "Maps\\Mines\\mine_frost";
+                else if (__instance.getMineArea(level) == 80)
+                    __instance.mapImageSource.Value = "Maps\\Mines\\mine_lava";
+                else if (__instance.getMineArea(level) == 121)
+                    __instance.mapImageSource.Value = "Maps\\Mines\\mine_desert";
+            }
 
             if (__instance.get_MineShaftIsDarkArea())
             {

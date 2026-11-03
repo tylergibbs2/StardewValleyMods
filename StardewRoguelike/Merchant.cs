@@ -355,10 +355,15 @@ namespace StardewRoguelike
             try
             {
                 string textureName = NPC.getTextureNameForCharacter(name);
+                // Construct against the villager's real home map the way Game1 does;
+                // naming the mine here makes the constructor index data that does not
+                // exist for it. The caller moves them onto the floor afterwards.
+                string homeMap = data.Home?.FirstOrDefault()?.Location ?? "AdventureGuild";
+
                 return new NPC(
                     new AnimatedSprite($"Characters\\{textureName}", 0, data.Size.X, data.Size.Y),
                     tile * 64f,
-                    mine.Name,
+                    homeMap,
                     0,
                     name,
                     data.CanBeRomanced,
