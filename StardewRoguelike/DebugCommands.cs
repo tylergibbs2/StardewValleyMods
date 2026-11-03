@@ -265,6 +265,18 @@ namespace StardewRoguelike
                         ModEntry.ModMonitor.Log($"entering mine level {target}", LogLevel.Info);
                     }
                     break;
+                case "load":
+                    {
+                        // Same path LoadGameMenuPatch takes when the Load menu opens,
+                        // so the harness can get into the save without the GUI.
+                        string savePath = Path.Combine(
+                            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
+                            $@"assets/Saves/{Constants.SaveFile}/SaveGameInfo");
+                        SaveGame.Load(savePath);
+                        Game1.exitActiveMenu();
+                        ModEntry.ModMonitor.Log($"loading save from {savePath}", LogLevel.Info);
+                    }
+                    break;
                 case "where":
                     {
                         GameLocation here = Game1.player.currentLocation;
