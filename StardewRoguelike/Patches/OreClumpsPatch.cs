@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using System;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
@@ -12,7 +11,7 @@ namespace StardewRoguelike.Patches
     {
 		public static bool Prefix(MineShaft __instance)
         {
-			Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+			Random mineRandom = __instance.mineRandom;
 
 			if (!(mineRandom.NextDouble() < 0.55))
 				return false;

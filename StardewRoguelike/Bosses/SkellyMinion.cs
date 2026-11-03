@@ -32,12 +32,9 @@ namespace StardewRoguelike.Bosses
 
             controller = null;
 
-            bool spottedPlayer = (bool)typeof(Skeleton).GetField("spottedPlayer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(this)!;
-            NetBool throwing = (NetBool)typeof(Skeleton).GetField("throwing", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(this)!;
-
             if (!spottedPlayer && Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, Player.Tile, LineOfSightDistance))
             {
-                typeof(Skeleton).GetField("spottedPlayer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(this, true);
+                spottedPlayer = true;
                 Halt();
                 facePlayer(Player);
             }

@@ -5,7 +5,6 @@ using StardewValley.Monsters;
 using System;
 using Microsoft.Xna.Framework;
 using Netcode;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
@@ -14,13 +13,13 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(Grub __instance, GameTime time)
         {
-            NetBool pupating = (NetBool)__instance.GetType().GetField("pupating", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
-            int metamorphCounter = (int)__instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
+            NetBool pupating = __instance.pupating;
+            int metamorphCounter = __instance.metamorphCounter;
 
             if (pupating.Value)
             {
                 __instance.Scale = 1f + (float)Math.Sin(time.TotalGameTime.Milliseconds * ((float)Math.PI / 8f)) / 12f;
-                __instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, metamorphCounter - time.ElapsedGameTime.Milliseconds);
+                __instance.metamorphCounter = metamorphCounter - time.ElapsedGameTime.Milliseconds;
                 if (metamorphCounter <= 0)
                 {
                     __instance.Health = -500;

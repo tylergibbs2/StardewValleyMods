@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Locations;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
@@ -29,14 +28,14 @@ namespace StardewRoguelike.Patches
 
                 swimShadow = Game1.temporaryContent.Load<Texture2D>("LooseSprites\\swimShadow");
 
-                oldValue = (bool)__instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
-                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, false);
+                oldValue = __instance.isMonsterArea;
+                __instance.isMonsterArea = false;
                 return true;
             }
 
             public static void Postfix(MineShaft __instance)
             {
-                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, oldValue);
+                __instance.isMonsterArea = oldValue;
 
                 __instance.removeTile(new(0, 0), "Buildings");
 
@@ -119,7 +118,6 @@ namespace StardewRoguelike.Patches
                 if (action.Length == 0 || action[0] != "PoolEntrance")
                     return true;
 
-                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
                 if (!Game1.player.swimming.Value)
                 {
@@ -132,7 +130,7 @@ namespace StardewRoguelike.Patches
                     Game1.player.position.Y += 16f;
                     Game1.player.yVelocity = -8f;
                     __instance.playSound("pullItemFromWater");
-                    multiplayer.broadcastSprites(__instance, new TemporaryAnimatedSprite(27, 100f, 4, 0, new Vector2(Game1.player.Position.X, Game1.player.StandingPixel.Y - 40), flicker: false, flipped: false)
+                    RoguelikeUtility.MultiplayerInstance.broadcastSprites(__instance, new TemporaryAnimatedSprite(27, 100f, 4, 0, new Vector2(Game1.player.Position.X, Game1.player.StandingPixel.Y - 40), flicker: false, flipped: false)
                     {
                         layerDepth = 1f,
                         motion = new Vector2(0f, 2f)

@@ -21,9 +21,9 @@ namespace StardewRoguelike.Patches
             if (!__instance.IsNormalFloor())
                 return false;
 
-            Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+            Random mineRandom = __instance.mineRandom;
 
-            __instance.GetType().GetField("ghostAdded", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, false);
+            __instance.ghostAdded = false;
             int stonesLeftOnThisLevel = 0;
 
             __instance.objects.Clear();
@@ -282,12 +282,12 @@ namespace StardewRoguelike.Patches
             // SPAWN LADDER IF NO ENEMIES WERE SPAWNED
             if (__instance.mustKillAllMonstersToAdvance() && __instance.EnemyCount <= 1)
             {
-                Vector2 tileBeneathLadder = (Vector2)__instance.GetType().GetField("tileBeneathLadder", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+                Vector2 tileBeneathLadder = __instance.tileBeneathLadder;
                 __instance.characters.Add(new Bat(tileBeneathLadder * 64f + new Vector2(256f, 256f)));
             }
 
             __instance.tryToAddOreClumps();
-            __instance.GetType().GetProperty("stonesLeftOnThisLevel", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, stonesLeftOnThisLevel);
+            __instance.stonesLeftOnThisLevel = stonesLeftOnThisLevel;
 
             return false;
         }

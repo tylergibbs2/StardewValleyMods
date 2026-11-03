@@ -152,7 +152,6 @@ namespace StardewRoguelike.Bosses
             MethodInfo damagePlayers = currentLocation.GetType().BaseType!.GetMethod("damagePlayers", BindingFlags.Instance | BindingFlags.NonPublic)!;
             damagePlayers.Invoke(currentLocation, new object[] { areaOfEffect, DamageToFarmer });
 
-            Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
             int startingI = (int)(tileLocation.X - radius) * 64;
             int startingJ = (int)(tileLocation.Y - radius) * 64;
@@ -169,7 +168,7 @@ namespace StardewRoguelike.Bosses
                 }
             }
 
-            multiplayer.broadcastSprites(currentLocation, sprites);
+            RoguelikeUtility.MultiplayerInstance.broadcastSprites(currentLocation, sprites);
         }
 
         private void TeleportToRandomPosition()

@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework;
 using StardewRoguelike.ChallengeFloors;
 using System.Collections.Generic;
 using StardewModdingAPI.Events;
-using System.Reflection;
 using System.Linq;
 using xTile.Dimensions;
 using Microsoft.Xna.Framework.Graphics;
@@ -156,7 +155,7 @@ namespace StardewRoguelike
         /// <returns>The spawn tile location.</returns>
         public static Vector2 GetSpawnLocation(MineShaft mine)
         {
-            Vector2? tileBeneathLadder = (Vector2?)mine.GetType().GetProperty("tileBeneathLadder", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mine);
+            Vector2? tileBeneathLadder = mine.tileBeneathLadder;
 
             ChallengeBase challenge = mine.get_MineShaftChallengeFloor().Value;
             return challenge.GetSpawnLocation(mine) ?? tileBeneathLadder ?? new(0, 0);

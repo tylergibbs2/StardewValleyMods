@@ -47,9 +47,9 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(TitleMenu __instance)
         {
-            int buttonsToShow = (int)__instance.GetType().GetField("buttonsToShow", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+            int buttonsToShow = __instance.buttonsToShow;
             if (buttonsToShow == 3)
-                __instance.GetType().GetField("buttonsToShow", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, 4);
+                __instance.buttonsToShow = 4;
 
             return true;
         }

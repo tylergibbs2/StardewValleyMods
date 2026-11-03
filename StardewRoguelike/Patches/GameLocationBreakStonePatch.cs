@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewRoguelike.HatQuests;
@@ -23,10 +22,9 @@ namespace StardewRoguelike.Patches
             // Spawn extra gold for hard hat
             if (HatQuest.HasBuffFor(HatQuestType.HARD_HAT))
             {
-                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
                 Game1.createMultipleObjectDebris("384", x, y, 2, who.UniqueMultiplayerID, __instance);
-                multiplayer.broadcastSprites(__instance, Utility.sparkleWithinArea(new Rectangle(x * 64, (y - 1) * 64, 32, 96), 3, Color.Yellow * 0.5f, 175, 100));
+                RoguelikeUtility.MultiplayerInstance.broadcastSprites(__instance, Utility.sparkleWithinArea(new Rectangle(x * 64, (y - 1) * 64, 32, 96), 3, Color.Yellow * 0.5f, 175, 100));
             }
         }
     }

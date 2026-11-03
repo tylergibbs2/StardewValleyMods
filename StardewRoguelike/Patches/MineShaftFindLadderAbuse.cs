@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using System;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
