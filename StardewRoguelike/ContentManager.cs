@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.GameData.Objects;
+using StardewValley.GameData.Crops;
 
 namespace StardewRoguelike
 {
@@ -36,20 +38,34 @@ namespace StardewRoguelike
             { "OptionsPage.cs.11281", "Access Perks" }
         };
 
-        private static readonly Dictionary<int, string> ModifiedObjectInformation = new()
+        /// <summary>
+        /// Price, edibility and description overrides for the objects the roguelike
+        /// reuses. 1.6 replaced the slash-delimited Data/ObjectInformation asset with
+        /// Data/Objects and its ObjectData model, so these are applied field by field.
+        /// </summary>
+        private static readonly Dictionary<string, (int Price, int? Edibility, string Description)> ModifiedObjects = new()
         {
-            { 896, "Galaxy Soul/2000/-300/Crafting -2/Galaxy Soul/Forge 3 of these into a Galaxy weapon to unleash its final form." },
-            { 472, "Parsnip Seeds/50/-300/Seeds -74/Parsnip Seeds/Takes 6 floors to mature." },
-            { 479, "Melon Seeds/100/-300/Seeds -74/Melon Seeds/Takes 12 floors to mature." },
-            { 490, "Pumpkin Seeds/150/-300/Seeds -74/Pumpkin Seeds/Takes 18 floors to mature." },
-            { 486, "Starfruit Seeds/200/-300/Seeds -74/Starfruit Seeds/Takes 24 floors to mature." },
-            { 347, "Rare Seed/250/-300/Seeds -74/Rare Seed/Takes 36 floors to mature." },
-            { 24,  "Parsnip/100/10/Basic -75/Parsnip/A spring tuber closely related to the carrot. It has an earthy taste and is full of nutrients." },
-            { 254, "Melon/475/45/Basic -79/Melon/A cool, sweet summer treat." },
-            { 276, "Pumpkin/600/-300/Basic -75/Pumpkin/A fall favorite, grown for its crunchy seeds and delicately flavored flesh." },
-            { 268, "Starfruit/725/50/Basic -79/Starfruit/An extremely juicy fruit that grows in hot, humid weather. Slightly sweet with a sour undertone." },
-            { 417, "Sweet Gem Berry/850/-300/Basic -17/Sweet Gem Berry/It's by far the sweetest thing you've ever smelled." }
+            { "896", (2000, null, "Forge 3 of these into a Galaxy weapon to unleash its final form.") },
+            { "472", (50,   null, "Takes 6 floors to mature.") },
+            { "479", (100,  null, "Takes 12 floors to mature.") },
+            { "490", (150,  null, "Takes 18 floors to mature.") },
+            { "486", (200,  null, "Takes 24 floors to mature.") },
+            { "347", (250,  null, "Takes 36 floors to mature.") },
+            { "24",  (100,  10,   null) },
+            { "254", (475,  45,   null) },
+            { "276", (600,  -300, null) },
+            { "268", (725,  50,   null) },
+            { "417", (850,  -300, null) }
         };
+
+        /// <summary>
+        /// Crops are always base quality during a run.
+        ///
+        /// 1.5.6 needed a transpiler on Crop.harvest that zeroed a hardcoded local
+        /// slot. 1.6 clamps harvested quality to the crop's HarvestMaxQuality from
+        /// Data/Crops, so capping that is enough and the transpiler is gone.
+        /// </summary>
+        private const int ForcedCropQuality = 0;
 
         /// <summary>
         /// Custom audio files that get loaded into the game.
@@ -141,13 +157,33 @@ namespace StardewRoguelike
                         data[key] = value;
                 });
             }
-            else if (e.NameWithoutLocale.IsEquivalentTo("Data\\ObjectInformation"))
+            else if (e.NameWithoutLocale.IsEquivalentTo("Data\\Objects"))
             {
                 e.Edit(editor =>
                 {
-                    IDictionary<int, string> data = editor.AsDictionary<int, string>().Data;
-                    foreach (var (key, value) in ModifiedObjectInformation)
-                        data[key] = value;
+                    IDictionary<string, ObjectData> data = editor.AsDictionary<string, ObjectData>().Data;
+                    foreach (var (key, (price, edibility, description)) in ModifiedObjects)
+                    {
+                        if (!data.TryGetValue(key, out ObjectData? entry))
+                            continue;
+
+                        entry.Price = price;
+                        if (edibility.HasValue)
+                            entry.Edibility = edibility.Value;
+                        if (description is not null)
+                            entry.Description = description;
+                    }
+                });
+            }
+            else if (e.NameWithoutLocale.IsEquivalentTo("Data\\Crops"))
+            {
+                e.Edit(editor =>
+                {
+                    foreach (CropData crop in editor.AsDictionary<string, CropData>().Data.Values)
+                    {
+                        crop.HarvestMinQuality = ForcedCropQuality;
+                        crop.HarvestMaxQuality = ForcedCropQuality;
+                    }
                 });
             }
         }
