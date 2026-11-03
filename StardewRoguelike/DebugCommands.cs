@@ -265,6 +265,17 @@ namespace StardewRoguelike
                         ModEntry.ModMonitor.Log($"entering mine level {target}", LogLevel.Info);
                     }
                     break;
+                case "where":
+                    {
+                        GameLocation here = Game1.player.currentLocation;
+                        string ladder = here is MineShaft ms ? ms.tileBeneathLadder.ToString() : "n/a";
+                        bool onMap = here?.isTileOnMap(Game1.player.Tile) ?? false;
+                        ModEntry.ModMonitor.Log(
+                            $"location={here?.Name} tile={Game1.player.Tile} onMap={onMap} " +
+                            $"tileBeneathLadder={ladder} map={(here is MineShaft m2 ? m2.get_MineShaftLoadedMap().Value : "n/a")}",
+                            LogLevel.Info);
+                    }
+                    break;
                 case "buffs":
                     {
                         var applied = Game1.player.buffs.AppliedBuffs;

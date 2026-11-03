@@ -3,12 +3,16 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using System;
+using xTile.Layers;
 
 namespace StardewRoguelike.Patches
 {
     [HarmonyPatch(typeof(MineShaft), "findLadder")]
     internal class MineShaftFindLadderAbuse
     {
+        /// <summary>The Buildings-layer tile index the game treats as a ladder down.</summary>
+        private const int LadderTileIndex = 115;
+
         /// <summary>
         /// The (tile Y offset, radius) of each light making up the glow around the ladder.
         /// </summary>
@@ -67,6 +71,38 @@ namespace StardewRoguelike.Patches
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Falls back to finding the ladder the way 1.5.6 did.
+        ///
+        /// 1.6's findLadder only considers tiles drawn from the tilesheet named
+        /// "mine" (<c>GetTileIndexAt(x, y, "mine")</c>); 1.5.6 read the tile index
+        /// off the Buildings layer regardless of tilesheet. Every boss arena draws
+        /// its ladder from its own themed sheet, so none of them registered any more
+        /// and tileBeneathLadder stayed at Vector2.Zero — which is where the player
+        /// got warped, outside the map.
+        /// </summary>
+        public static void Postfix(MineShaft __instance)
+        {
+            if (__instance.tileBeneathLadder != Vector2.Zero)
+                return;
+
+            Layer? buildings = __instance.map?.GetLayer("Buildings");
+            if (buildings is null)
+                return;
+
+            for (int y = 0; y < buildings.LayerHeight; y++)
+            {
+                for (int x = 0; x < buildings.LayerWidth; x++)
+                {
+                    if (buildings.Tiles[x, y]?.TileIndex == LadderTileIndex)
+                    {
+                        __instance.tileBeneathLadder = new Vector2(x, y + 1);
+                        return;
+                    }
+                }
+            }
         }
     }
 }
