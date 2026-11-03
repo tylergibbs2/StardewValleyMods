@@ -49,9 +49,15 @@ namespace StardewRoguelike.Extensions
 
         public static DwarfGate CreateDwarfGate(this MineShaft mine, int index, Point gatePosition, Point switchPosition)
         {
+            // DwarfGate's constructor ends by calling ApplyTiles, which writes tiles
+            // through locationRef - still the throwaway dungeon at that point. Its map
+            // is never loaded, so give it the mine's; the tiles then land where the
+            // caller is about to point the gate anyway.
             VolcanoDungeon fake = new(index);
             fake.possibleSwitchPositions[1] = new() { switchPosition };
             fake.mapPath.Value = mine.mapPath.Value;
+            fake.map = mine.map;
+
             DwarfGate gate = new(fake, index, gatePosition.X, gatePosition.Y, 0);
             gate.locationRef.Value = mine;
 
