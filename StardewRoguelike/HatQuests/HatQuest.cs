@@ -39,7 +39,8 @@ namespace StardewRoguelike.HatQuests
 
         private bool GaveHat { get; set; } = false;
 
-        private static readonly Dictionary<int, string> HatData = Game1.content.Load<Dictionary<int, string>>("Data\\hats");
+        // Data/hats is keyed by string item ID in 1.6.
+        private static Dictionary<string, string> HatData => DataLoader.Hats(Game1.content);
 
         public HatQuestType Which { get; }
 
@@ -149,13 +150,13 @@ namespace StardewRoguelike.HatQuests
 
         public string GetHatName()
         {
-            string[] split = HatData[(int)Which].Split('/');
+            string[] split = HatData[((int)Which).ToString()].Split('/');
             return split[0];
         }
 
         public bool IsBigHat()
         {
-            string[] split = HatData[(int)Which].Split('/');
+            string[] split = HatData[((int)Which).ToString()].Split('/');
             return split[2] == "hide";
         }
 
