@@ -46,6 +46,7 @@ namespace StardewRoguelike.UI
         public void DoRefresh()
         {
             Merchant.CurrentShop = new RefreshableShopMenu(Merchant.GetMerchantStock(), true, on_purchase: Merchant.OnPurchase);
+            Merchant.ApplySellableCategories(Merchant.CurrentShop);
             Game1.activeClickableMenu = Merchant.CurrentShop;
             Game1.playSound("sell");
         }

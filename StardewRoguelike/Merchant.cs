@@ -569,9 +569,10 @@ namespace StardewRoguelike
         ///
         /// 1.5.6 got this from passing a "Blacksmith" store context; in 1.6 the
         /// sellable categories come from <c>Data/Shops</c>, so a mod-owned shop has
-        /// to set them itself.
+        /// to set them itself. Every menu that stocks merchant goods needs this, not
+        /// just the one on the merchant floor.
         /// </summary>
-        private static void ApplySellableCategories(ShopMenu menu)
+        public static void ApplySellableCategories(ShopMenu menu)
         {
             menu.categoriesToSellHere.AddRange(new[]
             {

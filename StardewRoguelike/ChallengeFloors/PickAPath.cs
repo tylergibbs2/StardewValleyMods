@@ -114,6 +114,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             CurseToAdd = Curse.GetRandomUniqueCurse(Roguelike.FloorRng);
             CurrentShop = new(Merchant.MerchantShopId, Merchant.GetMerchantStock(0.5f, Roguelike.FloorRng), on_purchase: Merchant.OnPurchase, playOpenSound: false);
+            Merchant.ApplySellableCategories(CurrentShop);
         }
 
         private void SpawnRoomType(RoomType roomType, MineShaft mine, Point originPoint)

@@ -17,6 +17,10 @@ using StardewRoguelike.Extensions;
 using StardewValley.TerrainFeatures;
 using System.Linq;
 using System.IO;
+using StardewValley.ItemTypeDefinitions;
+using System.Collections.Generic;
+using StardewValley.Tools;
+using StardewValley.Objects;
 
 namespace StardewRoguelike
 {
@@ -54,6 +58,103 @@ namespace StardewRoguelike
 
             switch (args[0])
             {
+                // Audits every item ID the shops can offer, not just the ones a
+                // given seed happens to pick. 1.6 resolves IDs through ItemRegistry,
+                // which hands back an Error Item for a stale ID instead of throwing,
+                // so a broken shop looks like a working one until you read the names.
+                case "shops":
+                    {
+                        int total = 0, bad = 0;
+
+                        void Check(string floor, string kind, string id, Func<Item> make)
+                        {
+                            total++;
+                            Item item;
+                            try
+                            {
+                                item = make();
+                            }
+                            catch (Exception ex)
+                            {
+                                bad++;
+                                ModEntry.ModMonitor.Log($"  [{floor}] {kind} {id}: THREW {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+                                return;
+                            }
+
+                            ParsedItemData? data = ItemRegistry.GetData(item.QualifiedItemId);
+                            if (data is null)
+                            {
+                                bad++;
+                                ModEntry.ModMonitor.Log($"  [{floor}] {kind} {id}: UNRESOLVED (qid={item.QualifiedItemId})", LogLevel.Error);
+                            }
+                            else if (data.IsErrorItem || item.Name == "Error Item")
+                            {
+                                bad++;
+                                ModEntry.ModMonitor.Log($"  [{floor}] {kind} {id}: ERROR ITEM (qid={item.QualifiedItemId})", LogLevel.Error);
+                            }
+                        }
+
+                        for (int i = 0; i < Merchant.MerchantFloors.Count; i++)
+                        {
+                            MerchantFloor f = Merchant.MerchantFloors[i];
+                            string name = $"floor{i}";
+                            foreach (string id in f.Swords.Keys)
+                                Check(name, "sword", id, () => new MeleeWeapon(id));
+                            foreach (string id in f.Rings.Keys)
+                                Check(name, "ring", id, () => new Ring(id));
+                            foreach (string id in f.SpecialRings.Keys)
+                                Check(name, "specialring", id, () => new Ring(id));
+                            foreach (string id in f.Boots.Keys)
+                                Check(name, "boots", id, () => new Boots(id));
+                            foreach (string id in f.SpecialFood.Keys)
+                                Check(name, "food", id, () => new SObject(id, 1));
+                        }
+
+                        foreach (string id in new[] { "194", "196", "773", "803", "599" })
+                            Check("fixed", "object", id, () => new SObject(id, 1));
+
+                        foreach (ISalable s in Merchant.GetSeedStock().Keys)
+                            Check("seedshop", "seed", s.QualifiedItemId, () => (Item)s);
+
+                        ModEntry.ModMonitor.Log($"shop id audit: {total} ids checked, {bad} broken", bad > 0 ? LogLevel.Error : LogLevel.Info);
+
+                        // Now the menus themselves, with their real stock.
+                        var built = Merchant.GetMerchantStock(random: new Random(1));
+                        ModEntry.ModMonitor.Log($"merchant stock for level {Roguelike.CurrentLevel}: {built.Count} items", LogLevel.Info);
+                        foreach (var (item, info) in built)
+                            ModEntry.ModMonitor.Log($"  {item.DisplayName} (qid={item.QualifiedItemId}) price={info.Price} stock={info.Stock}", LogLevel.Info);
+
+                        var seeds = Merchant.GetSeedStock();
+                        ModEntry.ModMonitor.Log($"seed stock: {seeds.Count} items", LogLevel.Info);
+                        foreach (var (item, info) in seeds)
+                            ModEntry.ModMonitor.Log($"  {item.DisplayName} (qid={item.QualifiedItemId}) price={info.Price} stock={info.Stock}", LogLevel.Info);
+                    }
+                    break;
+
+                // Opens one of the roguelike's menus for real, so it draws and any
+                // exception lands in the log the way it would in play.
+                case "openshop":
+                    {
+                        string which = args.Length > 1 ? args[1] : "Roguelike";
+                        bool opened = Merchant.TryOpenShop(Game1.currentLocation, which);
+                        IClickableMenu? menu = Game1.activeClickableMenu;
+                        ModEntry.ModMonitor.Log($"openshop {which}: handled={opened} menu={menu?.GetType().Name ?? "none"}", LogLevel.Info);
+
+                        if (menu is ShopMenu shop)
+                        {
+                            ModEntry.ModMonitor.Log(
+                                $"  shopId={shop.ShopId} forSale={shop.forSale.Count} stock={shop.itemPriceAndStock.Count} " +
+                                $"sellableCategories={string.Join(",", shop.categoriesToSellHere)}",
+                                LogLevel.Info);
+                        }
+                    }
+                    break;
+
+                case "closeshop":
+                    Game1.activeClickableMenu = null;
+                    ModEntry.ModMonitor.Log("closed menu", LogLevel.Info);
+                    break;
+
                 case "help":
                     PrintHelp();
                     break;
