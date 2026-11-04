@@ -227,7 +227,10 @@ namespace StardewRoguelike.ChallengeFloors
         private void SpawnSlimes(MineShaft mine)
         {
             int toSpawn = SlimesToSpawn;
-            while (toSpawn > 0)
+            // A tile has to be clear and well away from the start, so on a cramped
+            // floor there may be very few or none. Give up rather than spin.
+            int attempts = 0;
+            while (toSpawn > 0 && attempts++ < 2000)
             {
                 Vector2 tile = new(Roguelike.FloorRng.Next(mine.Map.Layers[0].LayerWidth), Roguelike.FloorRng.Next(mine.Map.Layers[0].LayerHeight));
                 if (!mine.isTileClearForMineObjects(tile) || mine.getDistanceFromStart((int)tile.X, (int)tile.Y) < 7)

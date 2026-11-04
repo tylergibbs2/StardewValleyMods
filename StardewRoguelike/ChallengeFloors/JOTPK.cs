@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
@@ -118,18 +119,25 @@ namespace StardewRoguelike.ChallengeFloors
                 monstersToSpawn += 2;
 
             int sideToSpawn = Game1.random.Next(0, 4);
+            Rectangle spawnRect = sideToSpawn switch
+            {
+                0 => spawnRectTop,
+                1 => spawnRectRight,
+                2 => spawnRectBottom,
+                3 => spawnRectLeft,
+                _ => throw new System.Exception("Invalid side to spawn"),
+            };
+
+            // Each side is four tiles and the loop below wants a distinct one per
+            // monster, so asking for more than the side holds never finishes. The
+            // MoreEnemiesLessHealth curse adds two to a roll of up to three, which
+            // put it past four one time in three.
+            monstersToSpawn = Math.Min(monstersToSpawn, spawnRect.Width * spawnRect.Height);
 
             List<Vector2> spawnTiles = new();
             while (spawnTiles.Count < monstersToSpawn)
             {
-                Vector2 tile = GetRandomTileInRect(sideToSpawn switch
-                {
-                    0 => spawnRectTop,
-                    1 => spawnRectRight,
-                    2 => spawnRectBottom,
-                    3 => spawnRectLeft,
-                    _ => throw new System.Exception("Invalid side to spawn"),
-                });
+                Vector2 tile = GetRandomTileInRect(spawnRect);
                 if (!spawnTiles.Contains(tile))
                     spawnTiles.Add(tile);
             }

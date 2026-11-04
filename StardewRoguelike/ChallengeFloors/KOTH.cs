@@ -263,7 +263,11 @@ namespace StardewRoguelike.ChallengeFloors
             int padding = 4;
             Rectangle spawnRect = new((kothBox.X / 64) - padding, (kothBox.Y / 64) - padding, (kothBox.Width / 64) + (padding * 2), (kothBox.Height / 64) + (padding * 2));
 
-            while (enemiesToSpawn > 0)
+            // Only a tile that is free and outside the box counts, and neither is
+            // guaranteed: the box moves over the spawn area and monsters pile up in
+            // it. Without a limit on tries, a full spawn area never finishes.
+            int attempts = 0;
+            while (enemiesToSpawn > 0 && attempts++ < 1000)
             {
                 Vector2 randomTile = new(
                     Game1.random.Next(spawnRect.X, spawnRect.X + spawnRect.Width),

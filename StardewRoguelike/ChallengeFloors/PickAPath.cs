@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
@@ -89,11 +90,14 @@ namespace StardewRoguelike.ChallengeFloors
             if (!Context.IsMultiplayer && !Curse.HasAnyCurse())
                 validRoomTypes.Remove(RoomType.Cauldron);
 
-            RoomType roomType;
-            do
-            {
-                roomType = validRoomTypes[Roguelike.FloorRng.Next(validRoomTypes.Count)];
-            } while (roomType == otherRoom);
+            // Pick from what is left after excluding the other side's room, rather
+            // than rolling until we miss it: Cauldron is conditionally removed above,
+            // and a pool that shrinks to just the room we are avoiding never rolls
+            // anything else.
+            List<RoomType> choices = validRoomTypes.Where(type => type != otherRoom).ToList();
+            RoomType roomType = choices.Count > 0
+                ? choices[Roguelike.FloorRng.Next(choices.Count)]
+                : validRoomTypes[Roguelike.FloorRng.Next(validRoomTypes.Count)];
 
             InitializedRoomType.Value = roomType;
             InaccessibleRoomType.Value = otherRoom;

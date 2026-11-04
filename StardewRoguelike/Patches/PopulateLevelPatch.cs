@@ -73,8 +73,12 @@ namespace StardewRoguelike.Patches
 
             if (level == 8)
             {
+                // Retries until it finds a tile clear enough for the chest, which a
+                // cramped layout may never offer. Generation runs before the player
+                // can do anything about it, so give up rather than hang the load.
                 bool spawnedTimedChest = false;
-                while (!spawnedTimedChest)
+                int chestAttempts = 0;
+                while (!spawnedTimedChest && chestAttempts++ < 2000)
                 {
                     Vector2 tile = new(Roguelike.FloorRng.Next(__instance.Map.Layers[0].LayerWidth), Roguelike.FloorRng.Next(__instance.Map.Layers[0].LayerHeight));
                     if (!__instance.isTileClearForMineObjects(tile))
