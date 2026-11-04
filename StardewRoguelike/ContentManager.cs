@@ -4,9 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewRoguelike.Mode;
 using StardewValley.GameData.Objects;
 using StardewValley.GameData.Crops;
 
@@ -20,14 +23,59 @@ namespace StardewRoguelike
         /// The dictionary key is the name of the asset as the game requests it,
         /// the value is the filepath of the asset to replace it with.
         /// </summary>
+        /// <summary>
+        /// The vanilla assets the roguelike replaces. The cache has to be dropped
+        /// for each of these whenever the mode flips, in both directions.
+        /// </summary>
+        public static IEnumerable<string> ModeScopedAssets => ModifiedAssets.Keys.Concat(OverlaidAssets.Keys);
+
+        /// <summary>
+        /// Regions of vanilla sheets the mod draws its own art from.
+        ///
+        /// These used to be whole-sheet replacements, which meant shipping a copy of
+        /// each vanilla sheet and overwriting everything on it. The copies were made
+        /// against an older game version, so 1.6's art was being replaced with 1.5.6's:
+        /// the mod's Cursors differed from the real one across 15% of the sheet, which
+        /// is why the clock and money counter rendered wrong, and its Projectiles sheet
+        /// was shorter than 1.6's and truncated the rows the game had added.
+        ///
+        /// Only the rectangles listed here are overlaid now, so every pixel the mod
+        /// does not actually use stays whatever the game shipped.
+        /// </summary>
+        private static readonly Dictionary<string, (string FromPath, Rectangle[] Regions)> OverlaidAssets = new()
+        {
+            ["LooseSprites/Cursors"] = ("assets/TileSheets/Cursors.png", new[]
+            {
+                new Rectangle(0, 608, 96, 96),     // shop refresh icon, then the perk icons below it
+                new Rectangle(340, 432, 65, 17),   // the run's money box, see DayTimeMoneyBoxDrawBoxPatch
+                new Rectangle(128, 1184, 160, 112),// the gamba machine, see UI/GambaMenu
+                new Rectangle(255, 1436, 12, 14)   // merchant backpack, see Merchant.Draw
+            }),
+
+            ["LooseSprites/ForgeMenu"] = ("assets/TileSheets/ForgeMenu.png", new[]
+            {
+                new Rectangle(136, 16, 24, 24)
+            }),
+
+            ["TileSheets/Projectiles"] = ("assets/TileSheets/Projectiles.png", new[]
+            {
+                new Rectangle(0, 0, 16, 16),       // ThunderKid's strike marker
+                new Rectangle(48, 0, 16, 16)       // Modulosaurus' strike marker
+            }),
+
+            ["Maps/Festivals"] = ("assets/Maps/Festivals.png", new[]
+            {
+                new Rectangle(32, 32, 80, 16),     // egg hunt variants 66-70
+                new Rectangle(464, 0, 32, 32),     // pick-a-path tiles 29, 30, 61, 62
+                new Rectangle(320, 128, 16, 32),   // pick-a-path tiles 276, 308
+                new Rectangle(400, 224, 32, 32)    // pick-a-path tiles 473, 474, 505, 506
+            })
+        };
+
         private static readonly Dictionary<string, string> ModifiedAssets = new()
         {
             { "Maps/Mine", "assets/Maps/custom-lobby.tmx" },
-            { "Maps/Festivals", "assets/Maps/Festivals.png" },
-            { "TileSheets/Projectiles", "assets/TileSheets/Projectiles.png" },
             { "TileSheets/HatBoard", "assets/TileSheets/HatBoard.png" },
-            { "LooseSprites/Cursors", "assets/TileSheets/Cursors.png" },
-            { "LooseSprites/ForgeMenu", "assets/TileSheets/ForgeMenu.png" },
             { "TerrainFeatures/CleansingCauldron", "assets/TileSheets/Cauldron.png" },
             { "TerrainFeatures/CleansingCauldronEmpty", "assets/TileSheets/CauldronEmpty.png" },
             { "TerrainFeatures/SpeedPad", "assets/TileSheets/speedrun_pads.png" }
@@ -120,6 +168,27 @@ namespace StardewRoguelike
         /// <exception cref="NotImplementedException">If a file attempting to be loaded has no implemented way to be loaded.</exception>
         public static void AssetRequested(object? sender, AssetRequestedEventArgs e)
         {
+            // In a vanilla session the mod owns none of these. Maps/Mine is the one
+            // that would be noticed first - it is the roguelike lobby - but the
+            // cursor and forge sheets are just as wrong in someone else's save.
+            if (!RoguelikeMode.IsActive)
+                return;
+
+            if (OverlaidAssets.TryGetValue(e.Name.BaseName, out var overlay))
+            {
+                e.Edit(
+                    asset =>
+                    {
+                        IAssetDataForImage editor = asset.AsImage();
+                        Texture2D source = ModEntry.Instance.Helper.ModContent.Load<Texture2D>(overlay.FromPath);
+
+                        foreach (Rectangle region in overlay.Regions)
+                            editor.PatchImage(source, region, region);
+                    },
+                    AssetEditPriority.Late);
+                return;
+            }
+
             if (ModifiedAssets.TryGetValue(e.Name.BaseName, out string? fromPath))
             {
                 string extension = Path.GetExtension(fromPath);
