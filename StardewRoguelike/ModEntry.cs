@@ -7,6 +7,7 @@ using StardewRoguelike.Bosses;
 using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewValley;
+using StardewRoguelike.Mode;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -63,7 +64,15 @@ namespace StardewRoguelike
 
             I18n.Init(helper.Translation);
             Config = helper.ReadConfig<ModConfig>();
-            Patch.PatchAll("tylergibbs2.StardewRoguelike");
+            // Only the patches that let the player pick a mode. The rest are
+            // applied when they actually choose the roguelike, so a vanilla save
+            // runs on a stock game.
+            Patch.PatchAlwaysActive();
+
+            RoguelikeMode.Register(new HarmonyEffect());
+            RoguelikeMode.Register(new EventEffect());
+            RoguelikeMode.Register(new AssetEffect());
+            RoguelikeMode.Register(new StateEffect());
 
             // Assign references to various helpers to
             // static fields.
@@ -81,29 +90,30 @@ namespace StardewRoguelike
             // Initialize all event handlers
             helper.Events.GameLoop.GameLaunched += SetupGMCM;
             helper.Events.GameLoop.GameLaunched += CheckForUpdate;
-            helper.Events.GameLoop.SaveLoaded += Roguelike.SaveLoaded;
-            helper.Events.GameLoop.ReturnedToTitle += Roguelike.ReturnedToTitle;
-            helper.Events.GameLoop.TimeChanged += Roguelike.TimeChanged;
-            helper.Events.GameLoop.UpdateTicked += ActiveStats.WatchChanges;
-            helper.Events.GameLoop.UpdateTicked += Roguelike.UpdateTicked;
-            helper.Events.GameLoop.UpdateTicked += SpectatorMode.Update;
-            helper.Events.GameLoop.UpdateTicked += Curse.UpdateTicked;
+            // Carries out a pending mode switch from the update loop, where none of
+            // our own patches are on the stack to be pulled out from under.
+            helper.Events.GameLoop.UpdateTicked += RoguelikeMode.UpdateTicked;
+
+            // Runs after the switch above, so it only loads once the mode is on.
+            helper.Events.GameLoop.UpdateTicked += RoguelikeEntry.UpdateTicked;
+
+            // Leaving to the title hands the game back, whether the run ended or the
+            // player quit out of it. Registered here rather than in the mode's own
+            // handlers, which are gone by the time the switch finishes.
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => RoguelikeEntry.Leave();
+
+            // Stays subscribed in both modes and declines to replace anything while
+            // the roguelike is off.
+            // The way into a run, drawn over the title screen instead of patching it.
+            helper.Events.Display.RenderedActiveMenu += TitleRoguelikeEntry.RenderedActiveMenu;
+            helper.Events.Input.ButtonPressed += TitleRoguelikeEntry.ButtonPressed;
 
             helper.Events.Content.AssetRequested += ContentManager.AssetRequested;
 
+            // How a farmhand learns the host is running a roguelike, which has to
+            // work before the client has entered the mode.
             helper.Events.Multiplayer.ModMessageReceived += ModMessageReceived;
-
-            helper.Events.Display.MenuChanged += MenuChanged;
-            helper.Events.Display.MenuChanged += Roguelike.MenuChanged;
-            helper.Events.Display.RenderedHud += RenderHud;
-
-            helper.Events.Player.Warped += Roguelike.PlayerWarped;
-            helper.Events.Player.Warped += Merchant.PlayerWarped;
-            helper.Events.Player.Warped += ChallengeFloor.PlayerWarped;
-            helper.Events.Player.Warped += BossManager.PlayerWarped;
-            helper.Events.Player.Warped += SpectatorMode.RespawnPlayers;
-
-            helper.Events.Input.ButtonPressed += Roguelike.ButtonPressed;
+            helper.Events.Multiplayer.PeerContextReceived += CoopHandshake.PeerContextReceived;
 
             var assemblyConfiguration = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyConfigurationAttribute>();
             if (assemblyConfiguration?.Configuration == "Debug")
@@ -234,7 +244,11 @@ namespace StardewRoguelike
             if (e.FromModID != ModManifest.UniqueID)
                 return;
 
-            if (e.Type == "RespawnMessage") // Perform a respawn on this client
+            if (e.Type == CoopHandshake.MessageType)
+            {
+                CoopHandshake.Receive(e);
+            }
+            else if (e.Type == "RespawnMessage") // Perform a respawn on this client
             {
                 RespawnMessage message = e.ReadAs<RespawnMessage>();
                 ActiveStats.EndTime = null;

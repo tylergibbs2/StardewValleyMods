@@ -34,6 +34,7 @@
     "UI.PerkDisplayMenu.Title": "Perks",
     "UI.PerkDisplayMenu.NoPerks": "You do not currently have any perks.",
 
+    "UI.TitleEntry.Play": "Play Roguelike",
     "UI.StatsMenu.Title": "Statistics",
 
     "UI.SeedMenu.Title": "Seed",

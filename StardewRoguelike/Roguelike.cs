@@ -1,5 +1,6 @@
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
+using StardewRoguelike.Mode;
 using StardewValley.Buffs;
 using StardewValley.Locations;
 using StardewValley.Objects;
@@ -331,9 +332,7 @@ namespace StardewRoguelike
             Game1.options.zoomButtons = true;
             Game1.player.fishingLevel.Value = 10;
 
-            var loadedOptions = ModEntry.DataHelper.ReadGlobalData<Options>("RoguelikeGameOptions");
-            if (loadedOptions is not null)
-                Game1.options = loadedOptions;
+            RestorePlayerOptions();
 
 
             WarpLocalPlayerToStart();
@@ -817,6 +816,29 @@ namespace StardewRoguelike
         /// <summary>
         /// Warps the local player to the start of the game.
         /// </summary>
+        /// <summary>
+        /// Restores the player's own settings over the ones baked into the save the
+        /// mod ships with, without carrying over how their window was set up.
+        ///
+        /// The bundled save stores a zoom of 0.75 against a UI scale of 1, so loading
+        /// it leaves the world rendering at three quarters size inside a full size
+        /// window while the HUD lays itself out across the whole thing. The player's
+        /// own window settings are captured before the load and put back here, so
+        /// only how they like to play is restored, never how the save was set up.
+        /// </summary>
+        private static void RestorePlayerOptions()
+        {
+            Options? saved = ModEntry.DataHelper.ReadGlobalData<Options>("RoguelikeGameOptions");
+            if (saved is not null)
+                Game1.options = saved;
+
+            // Always last, and always run: the bundled save carries its own zoom and
+            // UI scale, and they are applied whether or not the player has settings
+            // of their own stored for the mod to restore.
+            RoguelikeEntry.CapturedDisplay?.Apply();
+            RoguelikeEntry.ReassertDisplay();
+        }
+
         public static void WarpLocalPlayerToStart()
         {
             Game1.warpFarmer("Mine", 17, 15, 2);

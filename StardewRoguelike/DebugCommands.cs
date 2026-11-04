@@ -3,10 +3,13 @@ using StardewRoguelike.VirtualProperties;
 using System.Text;
 using StardewModdingAPI;
 using StardewRoguelike.UI;
+using StardewRoguelike.Mode;
+using HarmonyLib;
 using StardewValley;
 using StardewValley.Locations;
 using System.Reflection;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley.Network;
 using StardewRoguelike.Bosses;
@@ -363,6 +366,110 @@ namespace StardewRoguelike
                         ModEntry.ModMonitor.Log($"entering mine level {target}", LogLevel.Info);
                     }
                     break;
+                // Reports which game is running and how many patches are live, so a
+                // mode switch can be checked without reading the title screen.
+                case "mode":
+                    {
+                        if (args.Length > 1)
+                        {
+                            bool wanted = args[1] == "on";
+                            if (wanted)
+                                RoguelikeEntry.Begin();
+                            else
+                                RoguelikeEntry.Leave();
+
+                            ModEntry.ModMonitor.Log($"requested mode {(wanted ? "on" : "off")}", LogLevel.Info);
+                            break;
+                        }
+
+                        var patched = Harmony.GetAllPatchedMethods().ToList();
+                        int core = 0, scoped = 0;
+                        foreach (var method in patched)
+                        {
+                            var info = Harmony.GetPatchInfo(method);
+                            if (info is null)
+                                continue;
+                            foreach (var owner in info.Owners)
+                            {
+                                if (owner == Patch.AlwaysActiveId) core++;
+                                else if (owner == Patch.ModeScopedId) scoped++;
+                            }
+                        }
+
+                        ModEntry.ModMonitor.Log(
+                            $"roguelike mode: {(RoguelikeMode.IsActive ? "ON" : "off")}; " +
+                            $"patched methods: {core} always-active, {scoped} mode-scoped",
+                            LogLevel.Info);
+                        ModEntry.ModMonitor.Log(
+                            $"location={Game1.currentLocation?.Name ?? "none"} " +
+                            $"mineMap={(Game1.getLocationFromName("Mine")?.mapPath.Value ?? "n/a")}",
+                            LogLevel.Info);
+                    }
+                    break;
+
+                // Writes a currently loaded texture out to PNG. Run with the mode
+                // off to capture vanilla art, so the mod's own sheets can be diffed
+                // against it and reduced to the regions that actually differ.
+                case "dumpsheet":
+                    {
+                        string assetName = args.Length > 1 ? args[1] : "LooseSprites/Cursors";
+                        Texture2D texture = Game1.content.Load<Texture2D>(assetName);
+                        string outPath = Path.Combine(
+                            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
+                            "dump_" + (RoguelikeMode.IsActive ? "on_" : "off_")
+                                + assetName.Replace('/', '_').Replace('\\', '_') + ".png");
+
+                        using (FileStream stream = File.Create(outPath))
+                            texture.SaveAsPng(stream, texture.Width, texture.Height);
+
+                        ModEntry.ModMonitor.Log(
+                            $"dumped {assetName} ({texture.Width}x{texture.Height}) -> {outPath}",
+                            LogLevel.Info);
+                    }
+                    break;
+
+                case "display":
+                    {
+                        ModEntry.ModMonitor.Log(
+                            $"zoomLevel={Game1.options.zoomLevel} uiScale={Game1.options.uiScale} " +
+                            $"baseZoom={Game1.options.desiredBaseZoomLevel} " +
+                            $"viewport={Game1.viewport.Width}x{Game1.viewport.Height} " +
+                            $"uiViewport={Game1.uiViewport.Width}x{Game1.uiViewport.Height}",
+                            LogLevel.Info);
+
+                        foreach (string name in new[] { "draw", "drawMoneyBox", "updatePosition" })
+                        {
+                            var method = AccessTools.Method(typeof(StardewValley.Menus.DayTimeMoneyBox), name);
+                            var info = method is null ? null : Harmony.GetPatchInfo(method);
+                            ModEntry.ModMonitor.Log(
+                                $"DayTimeMoneyBox.{name}: method={(method is not null)} " +
+                                $"prefixes={info?.Prefixes.Count ?? 0} postfixes={info?.Postfixes.Count ?? 0}",
+                                LogLevel.Info);
+                        }
+                    }
+                    break;
+
+                // The mod compares ParentSheetIndex to int literals in six places.
+                // In 1.6 that property is the sprite index from Data/Objects, not the
+                // item id, so this reports whether they still coincide.
+                case "sheetids":
+                    {
+                        int mismatched = 0;
+                        foreach (string id in new[] { "384", "803", "239", "265", "62", "599", "848", "668" })
+                        {
+                            SObject obj = new(id, 1);
+                            bool ok = obj.ParentSheetIndex.ToString() == id;
+                            if (!ok) mismatched++;
+                            ModEntry.ModMonitor.Log(
+                                $"  id={id} name={obj.Name} ParentSheetIndex={obj.ParentSheetIndex} " +
+                                (ok ? "matches" : "MISMATCH"),
+                                ok ? LogLevel.Info : LogLevel.Error);
+                        }
+                        ModEntry.ModMonitor.Log($"sheet id check: {mismatched} mismatch(es)",
+                            mismatched > 0 ? LogLevel.Error : LogLevel.Info);
+                    }
+                    break;
+
                 case "load":
                     {
                         // Same path LoadGameMenuPatch takes when the Load menu opens,
