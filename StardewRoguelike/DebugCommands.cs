@@ -470,6 +470,28 @@ namespace StardewRoguelike
                     }
                     break;
 
+                // Kills the player the way a monster would, so the death path can be
+                // watched end to end: the mod is supposed to catch Game1.killScreen
+                // before vanilla's pass-out sequence gets going.
+                case "die":
+                    {
+                        Game1.player.health = 0;
+                        ModEntry.ModMonitor.Log(
+                            $"set health to 0 at {Game1.currentLocation?.Name ?? "none"}; " +
+                            $"killScreen={Game1.killScreen} invincible={ModEntry.Invincible}",
+                            LogLevel.Info);
+                    }
+                    break;
+
+                case "deathstate":
+                    ModEntry.ModMonitor.Log(
+                        $"location={Game1.currentLocation?.Name ?? "none"} " +
+                        $"health={Game1.player.health}/{Game1.player.maxHealth} " +
+                        $"killScreen={Game1.killScreen} eventUp={Game1.eventUp} " +
+                        $"mode={RoguelikeMode.IsActive} level={Roguelike.CurrentLevel}",
+                        LogLevel.Info);
+                    break;
+
                 case "load":
                     {
                         // Same path LoadGameMenuPatch takes when the Load menu opens,

@@ -28,6 +28,8 @@ namespace StardewRoguelike.Mode
 
         public void Deactivate()
         {
+            ReleaseRunReferences();
+
             foreach (object container in StateContainers())
             {
                 switch (container)
@@ -40,6 +42,29 @@ namespace StardewRoguelike.Mode
                         break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Drops the plain statics that outlive a run.
+        ///
+        /// The reflection below only finds PerScreen fields and the virtual property
+        /// tables. These are ordinary statics holding live objects - menus built for
+        /// the last run, and a Farmer from a save that has since been unloaded - and
+        /// nothing else lets go of them when the mode turns off.
+        /// </summary>
+        private static void ReleaseRunReferences()
+        {
+            Merchant.CurrentShop = null;
+            Merchant.CurrentSeedShop = null;
+            Merchant.CurrentHatBoard = null;
+            Merchant.CurseToAdd = null;
+
+            Perks.CurrentMenu = null;
+            ForgeFloor.CurrentForge = null;
+
+            SpectatorMode.Reset();
+
+            ModEntry.Invincible = false;
         }
 
         private static void Clear(object container)

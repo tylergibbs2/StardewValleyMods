@@ -47,6 +47,20 @@ namespace StardewRoguelike
                 Following = null;
         }
 
+        /// <summary>
+        /// Drops what spectating holds onto when a run ends.
+        ///
+        /// ExitSpectatorMode returns early outside multiplayer and does a lot more
+        /// besides; this is just the part that has to happen when the roguelike
+        /// hands the game back, so a Farmer from an unloaded save is not kept alive.
+        /// </summary>
+        public static void Reset()
+        {
+            Following = null;
+            FollowingToolbar = null;
+            Game1.onScreenMenus = Game1.onScreenMenus.Where(m => m is not SpectateToolbar).ToList();
+        }
+
         public static void ExitSpectatorMode(int? level = null)
         {
             if (!Context.IsMultiplayer)
