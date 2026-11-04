@@ -11,8 +11,11 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(BreakableContainer), nameof(BreakableContainer.releaseContents))]
     internal class BarrelContentsPatch
     {
-        public static bool Prefix(BreakableContainer __instance, GameLocation location, Farmer who)
+        public static bool Prefix(BreakableContainer __instance, Farmer who)
         {
+            // 1.6 dropped the GameLocation parameter; placed objects carry their own Location.
+            GameLocation location = __instance.Location;
+
 			int x = (int)__instance.TileLocation.X;
 			int y = (int)__instance.TileLocation.Y;
 			if (location is MineShaft mine)
@@ -27,7 +30,7 @@ namespace StardewRoguelike.Patches
                     location.debris.Add(new Debris(toDrop, new Vector2(x * 64 + 32, y * 64 + 32), Game1.player.getStandingPosition()));
                 }
                 else if (itemId > 0 && quantity > 0)
-                    Game1.createMultipleObjectDebris(itemId, x, y, quantity, location);
+                    Game1.createMultipleObjectDebris(itemId.ToString(), x, y, quantity, location);
             }
 
             if (who == Game1.player && who.get_FarmerActiveHatQuest() is not null)

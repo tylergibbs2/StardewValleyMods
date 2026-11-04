@@ -6,9 +6,9 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(Farmer), "isWearingRing")]
     internal class FarmerIsWearingRingPatch
     {
-        public static void Postfix(ref bool __result, int ringIndex)
+        public static void Postfix(ref bool __result, string itemId)
         {
-            if (ringIndex == 525 && Perks.HasPerk(Perks.PerkType.Sturdy))
+            if (itemId == "525" && Perks.HasPerk(Perks.PerkType.Sturdy))
                 __result = true;
         }
     }

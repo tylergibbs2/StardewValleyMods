@@ -11,15 +11,15 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(MineShaft __instance)
         {
-            __instance.GetType().GetField("ladderHasSpawned", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, false);
-            __instance.GetType().GetField("loadedDarkArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, false);
+            __instance.ladderHasSpawned = false;
+            __instance.loadedDarkArea = false;
             __instance.loadLevel(__instance.mineLevel);
 
-            __instance.GetType().GetProperty("isMonsterArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, false);
-            __instance.GetType().GetProperty("isSlimeArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, false);
-            __instance.GetType().GetProperty("isQuarryArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, false);
-            __instance.GetType().GetProperty("isDinoArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, false);
-            __instance.GetType().GetProperty("lighting", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, new Color(80, 80, 40));
+            __instance.isMonsterArea = false;
+            __instance.isSlimeArea = false;
+            __instance.isQuarryArea = false;
+            __instance.isDinoArea = false;
+            __instance.lighting = new Color(80, 80, 40);
 
             MineShaft.permanentMineChanges.Clear();
 
@@ -27,7 +27,7 @@ namespace StardewRoguelike.Patches
             __instance.GetType().GetMethod("populateLevel", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(__instance, null);
 
             if (__instance.IsNormalFloor() || BossFloor.IsBossFloor(__instance))
-                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, true);
+                __instance.isMonsterArea = true;
 
             return false;
         }

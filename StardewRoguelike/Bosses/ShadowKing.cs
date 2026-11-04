@@ -43,6 +43,12 @@ namespace StardewRoguelike.Bosses
         {
             List<Vector2> positions = new();
 
+            // Each point is only taken once, so asking for more than the perimeter
+            // holds would spin forever looking for one that is left. Callers ask for
+            // twenty at most against a perimeter of eighty-eight, but the cost of
+            // being wrong here is a frozen game rather than a wrong number.
+            amount = Math.Min(amount, Perimeter);
+
             while (amount > 0)
             {
                 Vector2 pos;
@@ -166,14 +172,12 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
-            NetFields.AddFields(new INetSerializable[]
-            {
-                Encountered
-            });
             base.initNetFields();
+            NetFields.AddField(Encountered);
+
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName)
             {
@@ -254,6 +258,14 @@ namespace StardewRoguelike.Bosses
                 if (Health <= MaxHealth * 0.66f)
                 {
                     currentLocation.netAudio.StopPlaying("fuse");
+
+                    // Cancelling the fuse has to undo what starting it did. Without
+                    // the glow being stopped the boss stays red for the rest of the
+                    // fight, and without resetting this the explosion cooldown is
+                    // still spent, so the next hit detonates another one instantly.
+                    stopGlowing();
+                    TicksSinceLastExplosion = 0;
+
                     TicksToExplode = 0;
                     TicksToArrowVolley = 0;
 
@@ -440,7 +452,7 @@ namespace StardewRoguelike.Bosses
             {
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)), -(float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)));
                 shot_velocity *= 10f;
-                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 12, 0, 1, 0f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
+                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 12, 0, 1, 0f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", false, false, currentLocation, this, null);
                 projectile.startingRotation.Value = RoguelikeUtility.VectorToRadians(shot_velocity) + (float)RoguelikeUtility.DegreesToRadians(90);
                 projectile.ignoreTravelGracePeriod.Value = true;
                 projectile.ignoreMeleeAttacks.Value = true;
@@ -458,7 +470,7 @@ namespace StardewRoguelike.Bosses
             {
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)), -(float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)));
                 shot_velocity *= 10f;
-                DebuffingProjectile projectile = new(14, 7, 1, 4, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, new Vector2(GetBoundingBox().X, GetBoundingBox().Y), currentLocation, this);
+                DebuffingProjectile projectile = new(Buff.evilEye, 7, 1, 4, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, new Vector2(GetBoundingBox().X, GetBoundingBox().Y), currentLocation, this);
                 projectile.maxTravelDistance.Value = 64 * 5;
                 projectile.ignoreTravelGracePeriod.Value = true;
                 currentLocation.projectiles.Add(projectile);
@@ -497,7 +509,7 @@ namespace StardewRoguelike.Bosses
                 int tileId = TilesToBlockIds[i];
                 Vector2 tile = TilesToBlock[i];
 
-                currentLocation.setMapTileIndex((int)tile.X, (int)tile.Y, tileId, "Buildings");
+                currentLocation.setMapTile((int)tile.X, (int)tile.Y, tileId, "Buildings", currentLocation.map.TileSheets[0].Id);
             }
 
             foreach (Vector2 warpTile in TilesToWarp)
@@ -534,9 +546,9 @@ namespace StardewRoguelike.Bosses
 
         protected override void sharedDeathAnimation()
         {
-            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X, Sprite.SourceRect.Y, 16, 5), 16, getStandingX(), getStandingY() - 32, 1, getStandingY() / 64, Color.White);
-            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X + 2, Sprite.SourceRect.Y + 5, 16, 5), 10, getStandingX(), getStandingY() - 32, 1, getStandingY() / 64, Color.White);
-            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(0, 10, 16, 5), 16, getStandingX(), getStandingY() - 32, 1, getStandingY() / 64, Color.White);
+            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X, Sprite.SourceRect.Y, 16, 5), 16, StandingPixel.X, StandingPixel.Y - 32, 1, StandingPixel.Y / 64, Color.White);
+            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(Sprite.SourceRect.X + 2, Sprite.SourceRect.Y + 5, 16, 5), 10, StandingPixel.X, StandingPixel.Y - 32, 1, StandingPixel.Y / 64, Color.White);
+            Game1.createRadialDebris(currentLocation, TextureName, new Rectangle(0, 10, 16, 5), 16, StandingPixel.X, StandingPixel.Y - 32, 1, StandingPixel.Y / 64, Color.White);
         }
 
         protected override void localDeathAnimation()

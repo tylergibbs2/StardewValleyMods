@@ -24,7 +24,7 @@ namespace StardewRoguelike.Patches
                 return false;
             }
             bool num = damager != null && !damager.isInvincible() && !overrideParry;
-            bool monsterDamageCapable = (damager == null || !damager.isInvincible()) && (damager == null || (damager is not GreenSlime && damager is not BigSlime) || !__instance.isWearingRing(520));
+            bool monsterDamageCapable = (damager == null || !damager.isInvincible()) && (damager == null || (damager is not GreenSlime && damager is not BigSlime) || !__instance.isWearingRing("520"));
             bool playerParryable = __instance.CurrentTool != null && __instance.CurrentTool is MeleeWeapon weapon && weapon.isOnSpecial && weapon.type.Value == 3;
             bool playerDamageable = __instance.CanBeDamaged();
             if (num && playerParryable)
@@ -41,14 +41,14 @@ namespace StardewRoguelike.Patches
 
                 damager?.onDealContactDamage(__instance);
                 damage += Game1.random.Next(Math.Min(-1, -damage / 8), Math.Max(1, damage / 8));
-                int effectiveResilience = __instance.resilience;
+                int effectiveResilience = __instance.buffs.Defense;
                 if (__instance.CurrentTool is MeleeWeapon weapon1)
                     effectiveResilience += weapon1.addedDefense.Value;
 
                 if (effectiveResilience >= damage * 0.5f)
                     effectiveResilience -= (int)(effectiveResilience * Game1.random.Next(3) / 10f);
 
-                if (damager != null && (__instance.isWearingRing(839) || Perks.HasPerk(Perks.PerkType.Reflect)))
+                if (damager != null && (__instance.isWearingRing("839") || Perks.HasPerk(Perks.PerkType.Reflect)))
                 {
                     Rectangle monsterBox = damager.GetBoundingBox();
                     Vector2 trajectory = Utility.getAwayFromPlayerTrajectory(monsterBox, __instance);
@@ -65,10 +65,10 @@ namespace StardewRoguelike.Patches
                     damager.takeDamage(damageToMonster, (int)trajectory.X, (int)trajectory.Y, isBomb: false, 1.0, __instance);
                     damager.currentLocation.debris.Add(new Debris(damageToMonster, new Vector2(monsterBox.Center.X + 16, monsterBox.Center.Y), new Color(255, 130, 0), 1f, damager));
                 }
-                if (__instance.isWearingRing(524) && !Game1.buffsDisplay.hasBuff(21) && Game1.random.NextDouble() < (0.9 - (double)(__instance.health / 100f)) / (3 - __instance.LuckLevel / 10) + ((__instance.health <= 15) ? 0.2 : 0.0))
+                if (__instance.isWearingRing("524") && !__instance.hasBuff(Buff.yobaBlessing) && Game1.random.NextDouble() < (0.9 - (double)(__instance.health / 100f)) / (3 - __instance.LuckLevel / 10) + ((__instance.health <= 15) ? 0.2 : 0.0))
                 {
                     __instance.currentLocation.playSound("yoba");
-                    Game1.buffsDisplay.addOtherBuff(new Buff(21));
+                    __instance.applyBuff(Buff.yobaBlessing);
                     return false;
                 }
                 Rumble.rumble(0.75f, 150f);
@@ -104,11 +104,11 @@ namespace StardewRoguelike.Patches
                 {
                     int toLose = Game1.random.Next(10, 17) * damage;
                     __instance.currentLocation.playSound("sell");
-                    __instance.currentLocation.debris.Add(new Debris(toLose, new Vector2(__instance.getStandingX(), __instance.getStandingY()), Color.Gold, 1f, __instance));
+                    __instance.currentLocation.debris.Add(new Debris(toLose, new Vector2(__instance.StandingPixel.X, __instance.StandingPixel.Y), Color.Gold, 1f, __instance));
                     Game1.player.Money = Math.Max(0, Game1.player.Money - toLose);
                 }
 
-                if (__instance.health <= 0 && __instance.GetEffectsOfRingMultiplier(863) > 0 && !__instance.hasUsedDailyRevive.Value)
+                if (__instance.health <= 0 && __instance.GetEffectsOfRingMultiplier("863") > 0 && !__instance.hasUsedDailyRevive.Value)
                 {
                     Game1.player.startGlowing(new Color(255, 255, 0), border: false, 0.25f);
                     DelayedAction.functionAfterDelay(delegate
@@ -137,7 +137,7 @@ namespace StardewRoguelike.Patches
                         alphaFade = -0.01f,
                         alphaFadeFade = -0.00025f
                     });
-                    __instance.health = (int)Math.Min(__instance.maxHealth, __instance.maxHealth * 0.5f + __instance.GetEffectsOfRingMultiplier(863));
+                    __instance.health = (int)Math.Min(__instance.maxHealth, __instance.maxHealth * 0.5f + __instance.GetEffectsOfRingMultiplier("863"));
                     __instance.hasUsedDailyRevive.Value = true;
                     Curse.DOTDamageToTick = 0;
                 }
@@ -153,17 +153,13 @@ namespace StardewRoguelike.Patches
                     int duration = 5000;
 
                     // Apply random buff/debuff
-                    if (Game1.random.Next(11) >= __instance.immunity)
+                    if (Game1.random.Next(11) >= __instance.Immunity)
                     {
-                        int[] sourceArray = Game1.random.NextDouble() < 0.5 && !__instance.hasBuff(28) ? Constants.RandomDebuffIds : Constants.RandomBuffIds;
-                        int buffId = sourceArray[Game1.random.Next(sourceArray.Length)];
-                        Buff buff = new(buffId)
-                        {
-                            millisecondsDuration = duration
-                        };
-                        Game1.buffsDisplay.addOtherBuff(buff);
+                        string[] sourceArray = Game1.random.NextDouble() < 0.5 && !__instance.hasBuff(Buff.squidInkRavioli) ? Constants.RandomDebuffIds : Constants.RandomBuffIds;
+                        string buffId = sourceArray[Game1.random.Next(sourceArray.Length)];
+                        __instance.applyBuff(new Buff(buffId, duration: duration));
 
-                        if (buffId == 19)
+                        if (buffId == Buff.frozen)
                             __instance.currentLocation.playSound("frozen");
                         else
                             __instance.currentLocation.playSound("debuffHit");
@@ -172,8 +168,8 @@ namespace StardewRoguelike.Patches
 
                 __instance.temporarilyInvincible = true;
                 __instance.temporaryInvincibilityTimer = 0;
-                __instance.currentTemporaryInvincibilityDuration = 1200 + __instance.GetEffectsOfRingMultiplier(861) * 400;
-                __instance.currentLocation.debris.Add(new Debris(damage, new Vector2(__instance.getStandingX() + 8, __instance.getStandingY()), Color.Red, 1f, __instance));
+                __instance.currentTemporaryInvincibilityDuration = 1200 + __instance.GetEffectsOfRingMultiplier("861") * 400;
+                __instance.currentLocation.debris.Add(new Debris(damage, new Vector2(__instance.StandingPixel.X + 8, __instance.StandingPixel.Y), Color.Red, 1f, __instance));
                 __instance.currentLocation.playSound("ow");
                 Game1.hitShakeTimer = 100 * damage;
 

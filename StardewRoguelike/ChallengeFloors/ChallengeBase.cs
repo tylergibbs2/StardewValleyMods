@@ -14,10 +14,16 @@ namespace StardewRoguelike.ChallengeFloors
     {
         protected ChallengeBase()
         {
+            NetFields = new(NetFields.GetNameForInstance(this));
+
+            // Claim ownership before any field is registered. 1.6 uses the owner to
+            // name fields in network error logs, and warns for every field added
+            // without one - which was every field on every challenge floor.
+            NetFields.SetOwner(this);
             InitNetFields();
         }
 
-        public NetFields NetFields { get; } = new();
+        public NetFields NetFields { get; }
 
         protected virtual void InitNetFields() { }
 

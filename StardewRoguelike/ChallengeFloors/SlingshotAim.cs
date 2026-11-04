@@ -37,7 +37,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(floorSecondsLeft, wavesKilled);
+            NetFields.AddField(floorSecondsLeft).AddField(wavesKilled);
         }
 
         public override bool ShouldSpawnLadder(MineShaft mine)
@@ -100,14 +100,14 @@ namespace StardewRoguelike.ChallengeFloors
             ModEntry.Events.Display.RenderedHud += RenderHud;
 
             Slingshot slingshot = new();
-            slingshot.attachments[0] = new(388, 50);
+            slingshot.attachments[0] = new("388", 50);
 
             Vector2 chestSpot = new(6, 23);
             List<Item> chestItems = new()
             {
                 slingshot
             };
-            Chest chest = new(0, chestItems, chestSpot)
+            Chest chest = new(chestItems, chestSpot)
             {
                 Tint = Color.White
             };
@@ -146,7 +146,7 @@ namespace StardewRoguelike.ChallengeFloors
                     Game1.random.Next((int)upperLeftCorner.X, (int)bottomRightCorner.X + 1),
                     Game1.random.Next((int)upperLeftCorner.Y, (int)bottomRightCorner.Y + 1)
                 );
-            } while (!mine.isTileLocationTotallyClearAndPlaceable(randomTile));
+            } while (!mine.CanItemBePlacedHere(randomTile));
 
             SlingshotTargetMinion target = new(randomTile * 64f);
 
@@ -159,7 +159,7 @@ namespace StardewRoguelike.ChallengeFloors
         public void GameOver(MineShaft mine)
         {
             gameOver = true;
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
 
             if (wavesKilled.Value == 0)
                 return;
@@ -191,8 +191,8 @@ namespace StardewRoguelike.ChallengeFloors
 
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
-                new SObject(384, goldAmount)
+                new SObject(gemReward.ToString(), 1),
+                new SObject("384", goldAmount)
             };
 
             mine.SpawnLocalChest(new(28, 24), chestItems);
@@ -276,7 +276,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.initNetFields();
 
-            NetFields.AddFields(seenPlayer);
+            NetFields.AddField(seenPlayer);
             position.Field.AxisAlignedMovement = true;
         }
 
@@ -288,7 +288,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         protected override void sharedDeathAnimation()
         {
-            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, 576, 64, 64), 32, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, Game1.random.Next(4, 9), (int)getTileLocation().Y);
+            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, 576, 64, 64), 32, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, Game1.random.Next(4, 9), (int)Tile.Y);
         }
 
         public override void noMovementProgressNearPlayerBehavior()

@@ -12,16 +12,16 @@ namespace StardewRoguelike.Extensions
             speechBubbles[drawPosition] = new(drawPosition, text, duration);
         }
 
-        public static void debuffPlayers(this GameLocation location, Rectangle area, int debuff)
+        public static void debuffPlayers(this GameLocation location, Rectangle area, string debuff)
         {
             var debuffEvent = location.get_DebuffPlayerEvent();
             debuffEvent.Fire(area, debuff);
         }
 
-        public static void performDebuffPlayers(this GameLocation location, Rectangle area, int debuff)
+        public static void performDebuffPlayers(this GameLocation location, Rectangle area, string debuff)
         {
             if (Game1.player.currentLocation == location && Game1.player.GetBoundingBox().Intersects(area))
-                Game1.buffsDisplay.addOtherBuff(new Buff(debuff));
+                Game1.player.applyBuff(debuff);
         }
     }
 }

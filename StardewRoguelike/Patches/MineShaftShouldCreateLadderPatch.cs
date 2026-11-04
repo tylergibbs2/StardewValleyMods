@@ -12,7 +12,7 @@ namespace StardewRoguelike.Patches
         {
             if (ChallengeFloor.IsChallengeFloor(__instance))
             {
-                ChallengeBase challenge = __instance.get_MineShaftChallengeFloor();
+                ChallengeBase challenge = __instance.get_MineShaftChallengeFloor().Value;
                 __result = challenge.ShouldSpawnLadder(__instance);
                 return false;
             }

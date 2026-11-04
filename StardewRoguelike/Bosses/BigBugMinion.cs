@@ -39,7 +39,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(CurrentState);
+            NetFields.AddField(CurrentState);
         }
 
         public void SetDefaults()
@@ -105,7 +105,7 @@ namespace StardewRoguelike.Bosses
                 Debuff(Game1.player);
         }
 
-        private static int GetRandomDebuff()
+        private static string GetRandomDebuff()
         {
             int index = Game1.random.Next(Constants.RandomDebuffIds.Length);
             return Constants.RandomDebuffIds[index];
@@ -115,31 +115,24 @@ namespace StardewRoguelike.Bosses
         {
             if (Utility.isOnScreen(base.Position, 128))
             {
-                b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, this.hard ? Color.Lime : Color.White, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.991f : ((float)(base.getStandingY() + 8) / 10000f)));
-                b.Draw(Game1.shadowTexture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (float)(base.getStandingY() - 1) / 10000f);
+                b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, this.hard ? Color.Lime : Color.White, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.991f : ((float)(base.StandingPixel.Y + 8) / 10000f)));
+                b.Draw(Game1.shadowTexture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (float)(base.StandingPixel.Y - 1) / 10000f);
                 if (isGlowing)
-                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, base.glowingColor * base.glowingTransparency, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.getStandingY() / 10000f + 0.001f)));
+                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, base.glowingColor * base.glowingTransparency, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.StandingPixel.Y / 10000f + 0.001f)));
                 else if (CurrentColor is not null)
-                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, CurrentColor.Value * 0.75f, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.getStandingY() / 10000f + 0.001f)));
+                    b.Draw(this.Sprite.Texture, base.getLocalPosition(Game1.viewport) + new Vector2(32f, this.GetBoundingBox().Height / 2 - 32), this.Sprite.SourceRect, CurrentColor.Value * 0.75f, base.rotation, new Vector2(8f, 16f), Math.Max(0.2f, Scale) * 4f, base.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, base.drawOnTop ? 0.99f : ((float)base.StandingPixel.Y / 10000f + 0.001f)));
             }
         }
 
         public void Debuff(Farmer player)
         {
-            if (Game1.random.Next(11) >= player.immunity && !player.hasBuff(28))
+            if (Game1.random.Next(11) >= player.Immunity && !player.hasBuff(Buff.squidInkRavioli))
             {
-                int debuff = GetRandomDebuff();
+                string debuff = GetRandomDebuff();
                 if (Game1.player == player)
-                {
-                    Buff buff = new(debuff)
-                    {
-                        millisecondsDuration = 5000
-                    };
-                    Game1.buffsDisplay.addOtherBuff(buff);
+                    player.applyBuff(new Buff(debuff, duration: 5000));
 
-                }
-
-                if (debuff == 19)
+                if (debuff == Buff.frozen)
                     currentLocation.playSound("frozen");
                 else
                     currentLocation.playSound("debuffHit");

@@ -1,11 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using StardewModdingAPI;
 using StardewRoguelike.Extensions;
 using StardewValley;
 using StardewValley.Menus;
-using System;
 
 namespace StardewRoguelike.UI
 {
@@ -20,26 +18,10 @@ namespace StardewRoguelike.UI
 
         private readonly Rectangle horizontalLineRectangle = new(0, 256, 60, 60);
 
-        private float uploadScale = 1f;
-        private float uploadBaseScale = 1f;
-
-        private Color uploadButtonColor = Game1.textColor;
-        private ClickableComponent uploadButton;
-        private Vector2 textSize;
-
-        private bool AlreadyUploaded = false;
-
         private int currentDrawHeight;
 
         public StatsMenu()
         {
-            string uploadText = I18n.UI_StatsMenu_Upload();
-            textSize = Game1.smallFont.MeasureString(uploadText);
-            uploadButton = new(new(0, 0, (int)textSize.X, (int)textSize.Y), "uploadButton", uploadText)
-            {
-                myID = 101
-            };
-
             upperRightCloseButton = new(new(xPositionOnScreen + width - 36, yPositionOnScreen - 8, 48, 48), Game1.mouseCursors, new Rectangle(337, 494, 12, 12), 4f)
             {
                 myID = 102
@@ -55,7 +37,7 @@ namespace StardewRoguelike.UI
 
         public override void snapToDefaultClickableComponent()
         {
-            currentlySnappedComponent = uploadButton;
+            currentlySnappedComponent = upperRightCloseButton;
             snapCursorToCurrentSnappedComponent();
         }
 
@@ -91,66 +73,7 @@ namespace StardewRoguelike.UI
             xPositionOnScreen = Game1.uiViewport.Width / 2 - width / 2;
             yPositionOnScreen = 100.ToUIScale();
 
-            uploadButton.bounds = new(0, 0, (int)textSize.X, (int)textSize.Y);
             upperRightCloseButton.bounds = new(xPositionOnScreen + width - 36, yPositionOnScreen - 8, 48, 48);
-        }
-
-        public override void performHoverAction(int x, int y)
-        {
-            if (uploadButton.containsPoint(x, y))
-            {
-                uploadScale = Math.Min(uploadScale + 0.04f, uploadBaseScale + 0.25f);
-                uploadButtonColor = Game1.unselectedOptionColor;
-            }
-            else
-            {
-                uploadScale = Math.Max(uploadScale - 0.04f, uploadBaseScale);
-                uploadButtonColor = Game1.textColor;
-            }
-        }
-
-        public override void receiveLeftClick(int x, int y, bool playSound = true)
-        {
-            base.receiveLeftClick(x, y, playSound);
-
-            if (uploadButton is not null && uploadButton.containsPoint(x, y) && ModEntry.ActiveStats.EndTime is not null)
-            {
-                Game1.playSound("bigSelect");
-                if (ModEntry.GetInvalidMods().Count > 0 || ModEntry.DisableUpload)
-                {
-                    Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_Mods(), 3));
-                    return;
-                }
-                if (!Context.IsMainPlayer)
-                {
-                    Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_NotHost(), 3));
-                    return;
-                }
-                else if (ModEntry.ActiveStats.EndTime is null)
-                {
-                    Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_MidRun(), 3));
-                    return;
-                }
-                else if (AlreadyUploaded)
-                {
-                    Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_AlreadyUploaded(), 3));
-                    return;
-                }
-                else if (ModEntry.ActiveStats.StartTime is null)
-                {
-                    Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_NotStarted(), 3));
-                    return;
-                }
-
-                bool result = ModEntry.ActiveStats.Upload();
-                if (result)
-                {
-                    AlreadyUploaded = true;
-                    Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_UploadSuccess(), 1));
-                }
-                else
-                    Game1.addHUDMessage(new HUDMessage(I18n.UI_StatsMenu_Errors_Generic(), 3));
-            }
         }
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
@@ -233,38 +156,6 @@ namespace StardewRoguelike.UI
             currentDrawHeight -= (int)textSize.Y + statLinePadding;
         }
 
-        public void DrawUploadButton(SpriteBatch spriteBatch)
-        {
-            uploadButton.bounds.X = xPositionOnScreen + (width / 2) - (uploadButton.bounds.Width / 2);
-            uploadButton.bounds.Y = currentDrawHeight + uploadButton.bounds.Height + statLinePadding + borderSize + 16;
-
-            drawTextureBox(
-                spriteBatch,
-                Game1.menuTexture,
-                new Rectangle(0, 256, 60, 60),
-                xPositionOnScreen + (width / 2) - (uploadButton.bounds.Width / 2) - 16,
-                currentDrawHeight + uploadButton.bounds.Height + statLinePadding + borderSize,
-                uploadButton.bounds.Width + 32,
-                uploadButton.bounds.Height + 24,
-                Color.White,
-                drawShadow: false,
-                scale: uploadScale
-            );
-
-            Utility.drawBoldText(
-                spriteBatch,
-                uploadButton.label,
-                Game1.smallFont,
-                new Vector2(
-                    xPositionOnScreen + (width / 2) - (uploadButton.bounds.Width / 2),
-                    currentDrawHeight + uploadButton.bounds.Height + statLinePadding + borderSize + 16
-                ),
-                uploadButtonColor
-            );
-
-            currentDrawHeight += uploadButton.bounds.Height + statLinePadding + borderSize;
-        }
-
         public override void draw(SpriteBatch spriteBatch)
         {
             currentDrawHeight = yPositionOnScreen;
@@ -283,9 +174,6 @@ namespace StardewRoguelike.UI
 
             DrawTitle(spriteBatch);
             DrawStats(spriteBatch);
-
-            if (ModEntry.ActiveStats.EndTime is not null)
-                DrawUploadButton(spriteBatch);
 
             height = currentDrawHeight;
 

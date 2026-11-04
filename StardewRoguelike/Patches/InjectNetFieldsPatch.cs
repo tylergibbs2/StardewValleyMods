@@ -10,18 +10,17 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(MineShaft __instance)
         {
-            __instance.NetFields.AddFields(
-                __instance.get_MineShaftLevel(),
-                __instance.get_MineShaftChestFloor(),
-                __instance.get_MineShaftForgeFloor(),
-                __instance.get_MineShaftCustomDestination(),
-                __instance.get_MineShaftEntryTime(),
-                __instance.get_MineShaftChallengeFloor(),
-                __instance.get_MineShaftIsChallengeFloor(),
-                __instance.get_MineShaftDwarfGates(),
-                __instance.get_MineShaftNetChests(),
-                __instance.get_MineShaftLoadedMap()
-            );
+            __instance.NetFields
+                .AddField(__instance.get_MineShaftLevel())
+                .AddField(__instance.get_MineShaftChestFloor())
+                .AddField(__instance.get_MineShaftForgeFloor())
+                .AddField(__instance.get_MineShaftCustomDestination())
+                .AddField(__instance.get_MineShaftEntryTime())
+                .AddField(__instance.get_MineShaftChallengeFloor())
+                .AddField(__instance.get_MineShaftIsChallengeFloor())
+                .AddField(__instance.get_MineShaftDwarfGates())
+                .AddField(__instance.get_MineShaftNetChests())
+                .AddField(__instance.get_MineShaftLoadedMap());
         }
     }
 
@@ -30,12 +29,11 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(Farmer __instance)
         {
-            __instance.NetFields.AddFields(
-                __instance.get_FarmerIsSpectating(),
-                __instance.get_FarmerWasDamagedOnThisLevel(),
-                __instance.get_FarmerCurrentLevel(),
-                __instance.get_FarmerCurses()
-            );
+            __instance.NetFields
+                .AddField(__instance.get_FarmerIsSpectating())
+                .AddField(__instance.get_FarmerWasDamagedOnThisLevel())
+                .AddField(__instance.get_FarmerCurrentLevel())
+                .AddField(__instance.get_FarmerCurses());
         }
     }
 
@@ -44,9 +42,7 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(DwarfGate __instance)
         {
-            __instance.NetFields.AddFields(
-                __instance.get_DwarfGateDisabled()
-            );
+            __instance.NetFields.AddField(__instance.get_DwarfGateDisabled());
         }
     }
 
@@ -55,9 +51,7 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(GameLocation __instance)
         {
-            __instance.NetFields.AddFields(
-                __instance.get_DebuffPlayerEvent()
-            );
+            __instance.NetFields.AddField(__instance.get_DebuffPlayerEvent());
         }
     }
 
@@ -66,9 +60,7 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(FarmerTeam __instance)
         {
-            __instance.NetFields.AddFields(
-                __instance.get_FarmerTeamHardMode()
-            );
+            __instance.NetFields.AddField(__instance.get_FarmerTeamHardMode());
         }
     }
 }

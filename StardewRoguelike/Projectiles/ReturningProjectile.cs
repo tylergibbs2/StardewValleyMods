@@ -14,21 +14,19 @@ namespace StardewRoguelike.Projectiles
 
         public ReturningProjectile() : base()
         {
-            InitNetFields();
         }
 
-        public ReturningProjectile(float returningVelocityMultiplier, int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float velocityX, float velocityY, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation? location = null, Character? firer = null, bool spriteFromObjectSheet = false, onCollisionBehavior? collisionBehavior = null)
-            : base(damageToFarmer, parentSheetIndex, bouncesTillDestruct, tailLength, rotationVelocity, velocityX, velocityY, startingPosition, collisionSound, firingSound, explode, damagesMonsters, location, firer, spriteFromObjectSheet, collisionBehavior)
+        public ReturningProjectile(float returningVelocityMultiplier, int damageToFarmer, int parentSheetIndex, int bouncesTillDestruct, int tailLength, float rotationVelocity, float velocityX, float velocityY, Vector2 startingPosition, string collisionSound, string firingSound, bool explode, bool damagesMonsters = false, GameLocation? location = null, Character? firer = null, onCollisionBehavior? collisionBehavior = null)
+            : base(damageToFarmer, parentSheetIndex, bouncesTillDestruct, tailLength, rotationVelocity, velocityX, velocityY, startingPosition, collisionSound, null, firingSound, explode, damagesMonsters, location, firer, collisionBehavior)
         {
-            InitNetFields();
-
             ReturningVelocityMultiplier.Value = returningVelocityMultiplier;
             StartingPosition.Value = startingPosition;
         }
 
-        private void InitNetFields()
+        protected override void InitNetFields()
         {
-            NetFields.AddFields(ReturningVelocityMultiplier, StartingPosition);
+            base.InitNetFields();
+            NetFields.AddField(ReturningVelocityMultiplier).AddField(StartingPosition);
         }
 
         public override void behaviorOnCollisionWithOther(GameLocation location)

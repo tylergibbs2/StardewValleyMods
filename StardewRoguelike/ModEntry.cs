@@ -7,6 +7,7 @@ using StardewRoguelike.Bosses;
 using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewValley;
+using StardewRoguelike.Mode;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,12 @@ namespace StardewRoguelike
     public class ModEntry : Mod
     {
         public static readonly string WebsiteBaseUrl = "https://roguelike.tyler.solutions";
+
+        /// <summary>
+        /// This mod's unique ID, used to prefix the string IDs that 1.6
+        /// requires for things like buffs.
+        /// </summary>
+        public const string ModId = "tylergibbs2.StardewRoguelike";
 
         public static ModEntry Instance { get; private set; } = null!;
 
@@ -38,44 +45,16 @@ namespace StardewRoguelike
         public static IMonitor ModMonitor { get; private set; } = null!;
 
         /// <summary>
-        /// Used for uploading the run statistics online.
-        /// </summary>
-        public static readonly HttpClient WebClient = new();
-
-        /// <summary>
         /// Tracks the statistics of the game.
         /// </summary>
         public static readonly Stats ActiveStats = new();
 
         public static bool Invincible { get; set; } = false;
 
-        public static bool ShouldShowModDisclaimer { get; set; } = false;
-
         public static ModConfig Config { get; private set; } = null!;
-
-        /// <summary>
-        /// Whether or not being able to upload a run online is disabled.
-        /// </summary>
-        public static bool DisableUpload { get; set; } = false;
 
         public static string? CurrentVersion { get; private set; } = null;
         public static string? NewUpdateVersion { get; private set; } = null;
-
-        /// <summary>
-        /// Manifest IDs of mods that are allowed to be played with while
-        /// also being able to upload a run online.
-        /// </summary>
-        public static readonly List<string> WhitelistedMods = new()
-        {
-            "SMAPI.ErrorHandler",
-            "SMAPI.SaveBackup",
-            "tylergibbs2.StardewRoguelike",
-            "tylergibbs2.StardewNametags",
-            "tylergibbs2.DefaultFarmer",
-            "spacechase0.GenericModConfigMenu",
-            "jltaylor-us.GMCMOptions",
-            "thespbgamer.ZoomLevel"
-        };
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
@@ -85,7 +64,15 @@ namespace StardewRoguelike
 
             I18n.Init(helper.Translation);
             Config = helper.ReadConfig<ModConfig>();
-            Patch.PatchAll("tylergibbs2.StardewRoguelike");
+            // Only the patches that let the player pick a mode. The rest are
+            // applied when they actually choose the roguelike, so a vanilla save
+            // runs on a stock game.
+            Patch.PatchAlwaysActive();
+
+            RoguelikeMode.Register(new HarmonyEffect());
+            RoguelikeMode.Register(new EventEffect());
+            RoguelikeMode.Register(new AssetEffect());
+            RoguelikeMode.Register(new StateEffect());
 
             // Assign references to various helpers to
             // static fields.
@@ -103,30 +90,30 @@ namespace StardewRoguelike
             // Initialize all event handlers
             helper.Events.GameLoop.GameLaunched += SetupGMCM;
             helper.Events.GameLoop.GameLaunched += CheckForUpdate;
-            helper.Events.GameLoop.SaveLoaded += Roguelike.SaveLoaded;
-            helper.Events.GameLoop.ReturnedToTitle += Roguelike.ReturnedToTitle;
-            helper.Events.GameLoop.TimeChanged += Roguelike.TimeChanged;
-            helper.Events.GameLoop.UpdateTicked += ActiveStats.WatchChanges;
-            helper.Events.GameLoop.UpdateTicked += Roguelike.UpdateTicked;
-            helper.Events.GameLoop.UpdateTicked += SpectatorMode.Update;
-            helper.Events.GameLoop.UpdateTicked += Curse.UpdateTicked;
+            // Carries out a pending mode switch from the update loop, where none of
+            // our own patches are on the stack to be pulled out from under.
+            helper.Events.GameLoop.UpdateTicked += RoguelikeMode.UpdateTicked;
+
+            // Runs after the switch above, so it only loads once the mode is on.
+            helper.Events.GameLoop.UpdateTicked += RoguelikeEntry.UpdateTicked;
+
+            // Leaving to the title hands the game back, whether the run ended or the
+            // player quit out of it. Registered here rather than in the mode's own
+            // handlers, which are gone by the time the switch finishes.
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => RoguelikeEntry.Leave();
+
+            // Stays subscribed in both modes and declines to replace anything while
+            // the roguelike is off.
+            // The way into a run, drawn over the title screen instead of patching it.
+            helper.Events.Display.RenderedActiveMenu += TitleRoguelikeEntry.RenderedActiveMenu;
+            helper.Events.Input.ButtonPressed += TitleRoguelikeEntry.ButtonPressed;
 
             helper.Events.Content.AssetRequested += ContentManager.AssetRequested;
 
+            // How a farmhand learns the host is running a roguelike, which has to
+            // work before the client has entered the mode.
             helper.Events.Multiplayer.ModMessageReceived += ModMessageReceived;
-            helper.Events.Multiplayer.PeerConnected += PeerConnected;
-
-            helper.Events.Display.MenuChanged += MenuChanged;
-            helper.Events.Display.MenuChanged += Roguelike.MenuChanged;
-            helper.Events.Display.RenderedHud += RenderHud;
-
-            helper.Events.Player.Warped += Roguelike.PlayerWarped;
-            helper.Events.Player.Warped += Merchant.PlayerWarped;
-            helper.Events.Player.Warped += ChallengeFloor.PlayerWarped;
-            helper.Events.Player.Warped += BossManager.PlayerWarped;
-            helper.Events.Player.Warped += SpectatorMode.RespawnPlayers;
-
-            helper.Events.Input.ButtonPressed += Roguelike.ButtonPressed;
+            helper.Events.Multiplayer.PeerContextReceived += CoopHandshake.PeerContextReceived;
 
             var assemblyConfiguration = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyConfigurationAttribute>();
             if (assemblyConfiguration?.Configuration == "Debug")
@@ -197,69 +184,15 @@ namespace StardewRoguelike
         }
 
         /// <summary>
-        /// Gets all installed mods for mods are aren't on the whitelist.
-        /// </summary>
-        /// <returns>All mods that aren't whitelisted.</returns>
-        public static List<IModInfo> GetInvalidMods()
-        {
-            List<IModInfo> invalidMods = new();
-
-            foreach (IModInfo mod in ModRegistry.GetAll())
-            {
-                if (!WhitelistedMods.Contains(mod.Manifest.UniqueID))
-                    invalidMods.Add(mod);
-            }
-
-            if (invalidMods.Count > 0)
-                ModMonitor.Log("Found invalid mods: " + string.Join(", ", invalidMods.Select(m => m.Manifest.Name)), LogLevel.Debug);
-            else
-                ModMonitor.Log("No invalid mods found.", LogLevel.Debug);
-
-            return invalidMods;
-        }
-
-        /// <summary>
-        /// Gets all installed mods that aren't whitelisted. from a multiplayer peer connection.
-        /// </summary>
-        /// <param name="peer">The multiplayer peer.</param>
-        /// <returns>All mods that aren't whitelisted.</returns>
-        public static List<IMultiplayerPeerMod> GetInvalidMods(IMultiplayerPeer peer)
-        {
-            List<IMultiplayerPeerMod> invalidMods = new();
-
-            foreach (IMultiplayerPeerMod mod in peer.Mods)
-            {
-                if (!WhitelistedMods.Contains(mod.ID))
-                    invalidMods.Add(mod);
-            }
-
-            if (invalidMods.Count > 0)
-                ModMonitor.Log("Found invalid mods for multiplayer peer: " + string.Join(", ", invalidMods.Select(m => m.Name)), LogLevel.Info);
-            else
-                ModMonitor.Log("No invalid mods found for multiplayer peer.", LogLevel.Info);
-
-            return invalidMods;
-        }
-
-        /// <summary>
         /// Event handler for when the Game1 activeClickableMenu changes.
-        /// This handles showing the disclaimer for if the player has invalid mods.
+        /// This persists the player's game options when they close the menu.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="MenuChangedEventArgs"/> instance containing the event data.</param>
         public void MenuChanged(object? sender, MenuChangedEventArgs e)
         {
             if (e.OldMenu is GameMenu && e.NewMenu is null)
-            {
                 Helper.Data.WriteGlobalData("RoguelikeGameOptions", Game1.options);
-                return;
-            }
-
-            if (!ShouldShowModDisclaimer || e.NewMenu is not null || Config.SkipModDisclaimer)
-                return;
-
-            Game1.activeClickableMenu = new DisclaimerMenu();
-            ShouldShowModDisclaimer = false;
         }
 
         private void SetupGMCM(object? sender, GameLaunchedEventArgs e)
@@ -272,14 +205,6 @@ namespace StardewRoguelike
                 mod: ModManifest,
                 reset: () => Config = new ModConfig(),
                 save: () => Helper.WriteConfig(Config)
-            );
-
-            configMenu.AddBoolOption(
-                mod: ModManifest,
-                name: () => I18n.Config_SkipDisclaimer_Name(),
-                tooltip: () => I18n.Config_SkipDisclaimer_Tooltip(),
-                getValue: () => Config.SkipModDisclaimer,
-                setValue: value => Config.SkipModDisclaimer = value
             );
 
             configMenu.AddBoolOption(
@@ -308,27 +233,6 @@ namespace StardewRoguelike
         }
 
         /// <summary>
-        /// Event handler for when a multiplayer peer connects.
-        /// This handles checking if a connected peer has mods that are invalid/illegal.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="PeerConnectedEventArgs"/> instance containing the event data.</param>
-        public void PeerConnected(object? sender, PeerConnectedEventArgs e)
-        {
-            if (!Context.IsMainPlayer || !e.Peer.HasSmapi)
-                return;
-
-            List<IMultiplayerPeerMod> invalidMods = GetInvalidMods(e.Peer);
-            if (invalidMods.Count == 0)
-                return;
-
-            string error = I18n.Roguelike_InvalidClientMods(count: invalidMods.Count);
-            Game1.chatBox.addErrorMessage(error);
-
-            DisableUpload = true;
-        }
-
-        /// <summary>
         /// Event handler for messages between multiplayer mod clients.
         /// This handles player respawning and "game over"ing runs.
         /// </summary>
@@ -340,7 +244,11 @@ namespace StardewRoguelike
             if (e.FromModID != ModManifest.UniqueID)
                 return;
 
-            if (e.Type == "RespawnMessage") // Perform a respawn on this client
+            if (e.Type == CoopHandshake.MessageType)
+            {
+                CoopHandshake.Receive(e);
+            }
+            else if (e.Type == "RespawnMessage") // Perform a respawn on this client
             {
                 RespawnMessage message = e.ReadAs<RespawnMessage>();
                 ActiveStats.EndTime = null;

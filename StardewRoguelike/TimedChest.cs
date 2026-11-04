@@ -15,23 +15,20 @@ namespace StardewRoguelike
 
         public long SecondsLeft { get; set; }
 
-        public TimedChest() : base()
-        {
-            initNetFields();
-        }
+        // No initNetFields() here: Item's constructor already calls it virtually,
+        // and calling it again registers every field a second time.
+        public TimedChest() : base() { }
 
-        public TimedChest(long mustOpenBy, List<Item> items, Vector2 tileLocation) : base(0, items, tileLocation)
+        public TimedChest(long mustOpenBy, List<Item> items, Vector2 tileLocation) : base(items, tileLocation)
         {
             MustOpenBy.Value = mustOpenBy;
             SecondsLeft = MustOpenBy.Value - ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
-
-            initNetFields();
         }
 
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(MustOpenBy);
+            NetFields.AddField(MustOpenBy);
         }
 
         public override bool checkForAction(Farmer who, bool justCheckingForActivity = false)
@@ -42,9 +39,9 @@ namespace StardewRoguelike
             return base.checkForAction(who, justCheckingForActivity);
         }
 
-        public override void updateWhenCurrentLocation(GameTime time, GameLocation environment)
+        public override void updateWhenCurrentLocation(GameTime time)
         {
-            base.updateWhenCurrentLocation(time, environment);
+            base.updateWhenCurrentLocation(time);
 
             if (SecondsLeft < 0 && !locked)
                 locked = true;

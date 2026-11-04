@@ -12,7 +12,7 @@ namespace StardewRoguelike.Patches
         {
             Roguelike.AdjustMonster(__instance, ref m);
 
-            if (__instance.isTileClearForMineObjects(tileX, tileY) && !__instance.isTileOccupied(new Vector2(tileX, tileY)))
+            if (__instance.isTileClearForMineObjects(tileX, tileY) && !__instance.IsTileBlockedBy(new Vector2(tileX, tileY)))
             {
                 m.setTilePosition(tileX, tileY);
                 __instance.characters.Add(m);

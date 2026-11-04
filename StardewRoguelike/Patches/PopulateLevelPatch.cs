@@ -21,9 +21,9 @@ namespace StardewRoguelike.Patches
             if (!__instance.IsNormalFloor())
                 return false;
 
-            Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+            Random mineRandom = __instance.mineRandom;
 
-            __instance.GetType().GetField("ghostAdded", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, false);
+            __instance.ghostAdded = false;
             int stonesLeftOnThisLevel = 0;
 
             __instance.objects.Clear();
@@ -73,15 +73,23 @@ namespace StardewRoguelike.Patches
 
             if (level == 8)
             {
+                // Retries until it finds a tile clear enough for the chest, which a
+                // cramped layout may never offer. Generation runs before the player
+                // can do anything about it, so give up rather than hang the load.
                 bool spawnedTimedChest = false;
-                while (!spawnedTimedChest)
+                int chestAttempts = 0;
+                while (!spawnedTimedChest && chestAttempts++ < 2000)
                 {
                     Vector2 tile = new(Roguelike.FloorRng.Next(__instance.Map.Layers[0].LayerWidth), Roguelike.FloorRng.Next(__instance.Map.Layers[0].LayerHeight));
                     if (!__instance.isTileClearForMineObjects(tile))
                         continue;
 
-                    // 5 minutes into the run
-                    long openBy = ((DateTimeOffset)ModEntry.ActiveStats.StartTime!).ToUnixTimeSeconds() + 300;
+                    // 5 minutes into the run. The run clock is set a tick after the
+                    // first floor is entered, so a floor generated before that (the
+                    // rdebug genmines command, or a fast descent) has no start time
+                    // yet; time it from now instead of throwing.
+                    DateTime runStart = ModEntry.ActiveStats.StartTime ?? DateTime.UtcNow;
+                    long openBy = ((DateTimeOffset)runStart).ToUnixTimeSeconds() + 300;
                     __instance.SpawnLocalChest(tile, openBy);
 
                     spawnedTimedChest = true;
@@ -120,7 +128,7 @@ namespace StardewRoguelike.Patches
                         if (__instance.isTileClearForMineObjects(p.X, p.Y))
                         {
                             Vector2 objectPos5 = new(p.X, p.Y);
-                            __instance.objects.Add(objectPos5, new BreakableContainer(objectPos5, 118, __instance));
+                            __instance.objects.Add(objectPos5, BreakableContainer.GetBarrelForMines(objectPos5, __instance));
                             break;
                         }
                     }
@@ -144,8 +152,9 @@ namespace StardewRoguelike.Patches
                             SObject? stone = null;
                             if (gemStoneChance != 0.0 && mineRandom.NextDouble() < gemStoneChance + gemStoneChance + __instance.mineLevel / 24000.0)
                             {
-                                stone = new(objectPos4, __instance.getRandomGemRichStoneForThisLevel(__instance.mineLevel), "Stone", canBeSetDown: true, canBeGrabbed: false, isHoedirt: false, isSpawnedObject: false)
+                                stone = new(__instance.getRandomGemRichStoneForThisLevel(__instance.mineLevel), 1)
                                 {
+                                    TileLocation = objectPos4,
                                     MinutesUntilReady = 5
                                 };
                             }
@@ -248,7 +257,7 @@ namespace StardewRoguelike.Patches
                         else if (__instance.GetAdditionalDifficulty() > 0)
                         {
                             if (__instance.getMineArea() == 40 && __instance.mineLevel % 40 < 30 && mineRandom.NextDouble() < 0.01 && __instance.getTileIndexAt(j, l - 1, "Buildings") != -1)
-                                __instance.terrainFeatures.Add(new(j, l), new Tree(8, 5));
+                                __instance.terrainFeatures.Add(new(j, l), new Tree("8", 5));
                             else if (__instance.getMineArea() == 40 && __instance.mineLevel % 40 < 30 && mineRandom.NextDouble() < 0.1 && (__instance.getTileIndexAt(j, l - 1, "Buildings") != -1 || __instance.getTileIndexAt(j - 1, l, "Buildings") != -1 || __instance.getTileIndexAt(j, l + 1, "Buildings") != -1 || __instance.getTileIndexAt(j + 1, l, "Buildings") != -1 || __instance.terrainFeatures.ContainsKey(new Vector2(j - 1, l)) || __instance.terrainFeatures.ContainsKey(new Vector2(j + 1, l)) || __instance.terrainFeatures.ContainsKey(new Vector2(j, l - 1)) || __instance.terrainFeatures.ContainsKey(new Vector2(j, l + 1))))
                                 __instance.terrainFeatures.Add(new(j, l), new Grass((__instance.mineLevel >= 50) ? 6 : 5, (__instance.mineLevel >= 50) ? 1 : mineRandom.Next(1, 5)));
                             else if (__instance.getMineArea() == 80 && !__instance.isDarkArea() && mineRandom.NextDouble() < 0.1 && (__instance.getTileIndexAt(j, l - 1, "Buildings") != -1 || __instance.getTileIndexAt(j - 1, l, "Buildings") != -1 || __instance.getTileIndexAt(j, l + 1, "Buildings") != -1 || __instance.getTileIndexAt(j + 1, l, "Buildings") != -1 || __instance.terrainFeatures.ContainsKey(new Vector2(j - 1, l)) || __instance.terrainFeatures.ContainsKey(new Vector2(j + 1, l)) || __instance.terrainFeatures.ContainsKey(new Vector2(j, l - 1)) || __instance.terrainFeatures.ContainsKey(new Vector2(j, l + 1))))
@@ -258,10 +267,10 @@ namespace StardewRoguelike.Patches
 
                     // BREAKABLES SPAWNING (barrels, crates, etc)
 
-                    else if (__instance.isContainerPlatform(j, l) && __instance.isTileLocationTotallyClearAndPlaceable(j, l) && mineRandom.NextDouble() < 0.4 && (firstTime || (bool)canAdd.Invoke(__instance, new object[] { 0, barrelsAdded })!))
+                    else if (__instance.isContainerPlatform(j, l) && __instance.CanItemBePlacedHere(new Vector2(j, l)) && mineRandom.NextDouble() < 0.4 && (firstTime || (bool)canAdd.Invoke(__instance, new object[] { 0, barrelsAdded })!))
                     {
                         Vector2 objectPos = new(j, l);
-                        __instance.objects.Add(objectPos, new BreakableContainer(objectPos, 118, __instance));
+                        __instance.objects.Add(objectPos, BreakableContainer.GetBarrelForMines(objectPos, __instance));
                         barrelsAdded++;
                         if (firstTime)
                             __instance.updateMineLevelData(0);
@@ -281,12 +290,12 @@ namespace StardewRoguelike.Patches
             // SPAWN LADDER IF NO ENEMIES WERE SPAWNED
             if (__instance.mustKillAllMonstersToAdvance() && __instance.EnemyCount <= 1)
             {
-                Vector2 tileBeneathLadder = (Vector2)__instance.GetType().GetField("tileBeneathLadder", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+                Vector2 tileBeneathLadder = __instance.tileBeneathLadder;
                 __instance.characters.Add(new Bat(tileBeneathLadder * 64f + new Vector2(256f, 256f)));
             }
 
             __instance.tryToAddOreClumps();
-            __instance.GetType().GetProperty("stonesLeftOnThisLevel", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, stonesLeftOnThisLevel);
+            __instance.stonesLeftOnThisLevel = stonesLeftOnThisLevel;
 
             return false;
         }

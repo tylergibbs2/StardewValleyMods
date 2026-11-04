@@ -28,7 +28,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(floorSecondsLeft);
+            NetFields.AddField(floorSecondsLeft);
         }
 
         public void SpawnMonsters(MineShaft mine)
@@ -46,7 +46,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void DespawnMonsters(MineShaft mine)
         {
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
         }
 
         public void Win(MineShaft mine)
@@ -56,7 +56,10 @@ namespace StardewRoguelike.ChallengeFloors
 
             // find adjacent free tile to spawn the chest
             Vector2 spawnLocation = ChallengeFloor.GetSpawnLocation(mine);
-            Vector2 chestSpot = Vector2.Zero;
+            // Falls back to the spawn tile itself: left at zero the reward chest is
+            // placed at the top-left corner of the map, where the player cannot
+            // reach it, and the floor is won with nothing to show for it.
+            Vector2 chestSpot = spawnLocation;
             for (int i = -1; i <= 1; i++)
             {
                 for (int j = -1; j <= 1; j++)
@@ -64,7 +67,7 @@ namespace StardewRoguelike.ChallengeFloors
                     if (i == 0 && j == 0)
                         continue;
 
-                    if (mine.isTileLocationTotallyClearAndPlaceable((int)spawnLocation.X + i, (int)spawnLocation.Y + j))
+                    if (mine.CanItemBePlacedHere(new Vector2((int)spawnLocation.X + i, (int)spawnLocation.Y + j)))
                     {
                         chestSpot = new((int)spawnLocation.X + i, (int)spawnLocation.Y + j);
                         break;
@@ -91,7 +94,7 @@ namespace StardewRoguelike.ChallengeFloors
                     if (i == 0 && j == 0)
                         continue;
 
-                    if (mine.isTileLocationTotallyClearAndPlaceable((int)spawnLocation.X + i, (int)spawnLocation.Y + j))
+                    if (mine.CanItemBePlacedHere(new Vector2((int)spawnLocation.X + i, (int)spawnLocation.Y + j)))
                     {
                         chestSpot = new((int)spawnLocation.X + i, (int)spawnLocation.Y + j);
                         break;
@@ -99,7 +102,7 @@ namespace StardewRoguelike.ChallengeFloors
                 }
             }
 
-            mine.SpawnLocalChest(chestSpot, new SObject(384, 20));
+            mine.SpawnLocalChest(chestSpot, new SObject("384", 20));
         }
 
         public override bool ShouldSpawnLadder(MineShaft mine)
@@ -148,7 +151,10 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override void Update(MineShaft mine, GameTime time)
         {
-            if (!Context.IsMainPlayer || gameOver)
+            // Every other timed floor stops its clock here. Without it the
+            // countdown drains while a chest is open, dialogue is up or the player
+            // is eating, so the floor can be lost from inside a menu.
+            if (!Context.IsMainPlayer || gameOver || !Game1.shouldTimePass())
                 return;
 
             if (!spawnedMonsters)

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.UI;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -97,7 +98,7 @@ namespace StardewRoguelike.Patches
             }
             else if (__instance.hoveredItem != null)
             {
-                if (__instance.hoveredItem == __instance.craftResultDisplay.item && Utility.IsNormalObjectAtParentSheetIndex(__instance.rightIngredientSpot.item, 74))
+                if (__instance.hoveredItem == __instance.craftResultDisplay.item && Utility.IsNormalObjectAtParentSheetIndex(__instance.rightIngredientSpot.item, "74"))
                     BaseEnchantment.hideEnchantmentName = true;
 
                 IClickableMenu.drawToolTip(b, __instance.hoveredItem.getDescription(), __instance.hoveredItem.DisplayName, __instance.hoveredItem, __instance.heldItem != null);

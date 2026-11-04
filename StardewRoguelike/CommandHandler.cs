@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewValley.Pathfinding;
 using Netcode;
 using StardewModdingAPI;
 using StardewRoguelike.Extensions;
@@ -123,7 +124,7 @@ namespace StardewRoguelike
             {
                 if (character is Monster monster)
                 {
-                    Vector2 tileLoc = monster.getTileLocation();
+                    Vector2 tileLoc = monster.Tile;
                     Point tilePoint = new((int)tileLoc.X, (int)tileLoc.Y);
                     int backTile = mine.getTileIndexAt(tilePoint, "Back");
                     int backbackTile = mine.getTileIndexAt(tilePoint, "BackBack");
@@ -147,16 +148,16 @@ namespace StardewRoguelike
 
             if (monstersOffMap == 0)
             {
-                bool ladderHasSpawned = (bool)mine.GetType().GetField("ladderHasSpawned", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(mine)!;
+                bool ladderHasSpawned = mine.ladderHasSpawned;
 
                 if (ladderHasSpawned)
                     Game1.chatBox.addErrorMessage("This level already has a ladder.");
                 else if (!ladderHasSpawned && mine.EnemyCount == 0 && (mine.IsNormalFloor() || BossFloor.IsBossFloor(mine)))
                 {
-                    Vector2 tileBeneathLadder = (Vector2)mine.GetType().GetProperty("tileBeneathLadder", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(mine)!;
+                    Vector2 tileBeneathLadder = mine.tileBeneathLadder;
                     NetVector2Dictionary<bool, NetBool> createLadderEvent = (NetVector2Dictionary<bool, NetBool>)mine.GetType().GetField("createLadderAtEvent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(mine)!;
                     createLadderEvent[tileBeneathLadder] = true;
-                    mine.GetType().GetField("ladderHasSpawned", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(mine, true);
+                    mine.ladderHasSpawned = true;
                     Game1.chatBox.addInfoMessage("Spawned ladder.");
                 }
                 else
@@ -171,7 +172,7 @@ namespace StardewRoguelike
                         Stack<Point> path;
                         try
                         {
-                            path = PathFindController.findPath(monster.getTileLocationPoint(), Game1.player.getTileLocationPoint(), PathFindController.isAtEndPoint, mine, monster, 10_000);
+                            path = PathFindController.findPath(monster.TilePoint, Game1.player.TilePoint, PathFindController.isAtEndPoint, mine, monster, 10_000);
                         }
                         catch (Exception)  // interlock
                         {

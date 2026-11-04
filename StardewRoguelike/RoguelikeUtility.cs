@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using System.Reflection;
 using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewValley;
@@ -66,5 +67,17 @@ namespace StardewRoguelike
         {
             return (float)(degrees * (Math.PI / 180));
         }
+
+        private static Multiplayer? multiplayerInstance;
+
+        /// <summary>
+        /// The game's <see cref="Multiplayer"/> helper, needed to broadcast sprites and
+        /// sounds. Game1.multiplayer is still non-public in 1.6, so this stays
+        /// reflection — but only in one place.
+        /// </summary>
+        public static Multiplayer MultiplayerInstance =>
+            multiplayerInstance ??= (Multiplayer)typeof(Game1)
+                .GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!
+                .GetValue(null)!;
     }
 }

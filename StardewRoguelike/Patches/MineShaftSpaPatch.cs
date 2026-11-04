@@ -1,10 +1,10 @@
 using HarmonyLib;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Locations;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
@@ -28,19 +28,19 @@ namespace StardewRoguelike.Patches
 
                 swimShadow = Game1.temporaryContent.Load<Texture2D>("LooseSprites\\swimShadow");
 
-                oldValue = (bool)__instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
-                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, false);
+                oldValue = __instance.isMonsterArea;
+                __instance.isMonsterArea = false;
                 return true;
             }
 
             public static void Postfix(MineShaft __instance)
             {
-                __instance.GetType().GetProperty("isMonsterArea", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(__instance, oldValue);
+                __instance.isMonsterArea = oldValue;
 
                 __instance.removeTile(new(0, 0), "Buildings");
 
                 bool foundAnyWater = false;
-                __instance.waterTiles = new bool[__instance.map.Layers[0].LayerWidth, __instance.map.Layers[0].LayerHeight];
+                __instance.waterTiles = new WaterTiles(new bool[__instance.map.Layers[0].LayerWidth, __instance.map.Layers[0].LayerHeight]);
                 __instance.waterColor.Value = ((__instance.getMineArea() == 80) ? (Color.Red * 0.8f) : (new Color(50, 100, 200) * 0.5f));
                 for (int y = 0; y < __instance.map.GetLayer("Buildings").LayerHeight; y++)
                 {
@@ -52,7 +52,10 @@ namespace StardewRoguelike.Patches
                             __instance.waterTiles[x, y] = true;
 
                             if (__instance.getMineArea() == 80 && Game1.random.NextDouble() < 0.1)
-                                __instance.sharedLights[x + y * 1000] = new LightSource(4, new Vector2(x, y) * 64f, 2f, new Color(0, 220, 220), x + y * 1000, LightSource.LightContext.None, 0L);
+                            {
+                                string lightId = $"{ModEntry.ModId}_SpaWater_{x}_{y}";
+                                __instance.sharedLights[lightId] = new LightSource(lightId, 4, new Vector2(x, y) * 64f, 2f, new Color(0, 220, 220), LightSource.LightContext.None, 0L);
+                            }
                         }
                     }
                 }
@@ -79,8 +82,11 @@ namespace StardewRoguelike.Patches
         [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.draw))]
         internal class Draw
         {
-            public static void Postfix(MineShaft __instance, SpriteBatch b)
+            public static void Postfix(GameLocation __instance, SpriteBatch b)
             {
+                if (__instance is not MineShaft)
+                    return;
+
                 foreach (Farmer f in __instance.farmers)
                 {
                     if (f.swimming.Value)
@@ -107,15 +113,14 @@ namespace StardewRoguelike.Patches
             }
         }
 
-        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performTouchAction))]
+        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performTouchAction), new Type[] { typeof(string[]), typeof(Vector2) })]
         internal class PerformTouchAction
         {
-            public static bool Prefix(MineShaft __instance, string fullActionString, Vector2 playerStandingPosition)
+            public static bool Prefix(GameLocation __instance, string[] action, Vector2 playerStandingPosition)
             {
-                if (fullActionString != "PoolEntrance")
+                if (__instance is not MineShaft || action.Length == 0 || action[0] != "PoolEntrance")
                     return true;
 
-                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
                 if (!Game1.player.swimming.Value)
                 {
@@ -128,7 +133,7 @@ namespace StardewRoguelike.Patches
                     Game1.player.position.Y += 16f;
                     Game1.player.yVelocity = -8f;
                     __instance.playSound("pullItemFromWater");
-                    multiplayer.broadcastSprites(__instance, new TemporaryAnimatedSprite(27, 100f, 4, 0, new Vector2(Game1.player.Position.X, Game1.player.getStandingY() - 40), flicker: false, flipped: false)
+                    RoguelikeUtility.MultiplayerInstance.broadcastSprites(__instance, new TemporaryAnimatedSprite(27, 100f, 4, 0, new Vector2(Game1.player.Position.X, Game1.player.StandingPixel.Y - 40), flicker: false, flipped: false)
                     {
                         layerDepth = 1f,
                         motion = new Vector2(0f, 2f)

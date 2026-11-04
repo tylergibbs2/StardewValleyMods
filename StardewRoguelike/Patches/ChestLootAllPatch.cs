@@ -36,10 +36,10 @@ namespace StardewRoguelike.Patches
                 else
                     __instance.performOpenChest();
             }
-            else if (currentLidFrame == __instance.getLastLidFrame() && __instance.items.Count > 0 && !__instance.synchronized.Value)
+            else if (currentLidFrame == __instance.getLastLidFrame() && __instance.Items.Count > 0 && !__instance.synchronized.Value)
             {
-                List<Item> items = __instance.items.ToList();
-                __instance.items.Clear();
+                List<Item> items = __instance.Items.ToList();
+                __instance.Items.Clear();
 
                 if (items.Count > 1)
                     RoguelikeUtility.AddItemsByMenu(items);
@@ -58,7 +58,7 @@ namespace StardewRoguelike.Patches
                 }
             }
 
-            if (__instance.items.Count == 0 && __instance.coins.Value == 0)
+            if (__instance.Items.Count == 0)
             {
                 who.currentLocation.removeObject(__instance.TileLocation, showDestroyedObject: false);
                 who.currentLocation.playSound("woodWhack");
@@ -72,17 +72,17 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(Chest), "dumpContents")]
     internal class ChestDumpContentsPatch
     {
-        public static bool Prefix(Chest __instance, GameLocation location)
+        public static bool Prefix(Chest __instance)
         {
             if (__instance.synchronized.Value && (__instance.GetMutex().IsLocked() || !Game1.IsMasterGame) && !__instance.GetMutex().IsLockHeld())
                 return false;
 
-            if (__instance.items.Count > 0 && __instance.items.Count >= 1 && (__instance.GetMutex().IsLockHeld()))
+            if (__instance.Items.Count > 0 && __instance.Items.Count >= 1 && (__instance.GetMutex().IsLockHeld()))
             {
                 if (!__instance.synchronized.Value || __instance.GetMutex().IsLockHeld())
                 {
-                    List<Item> items = __instance.items.ToList();
-                    __instance.items.Clear();
+                    List<Item> items = __instance.Items.ToList();
+                    __instance.Items.Clear();
 
                     if (items.Count > 1)
                         RoguelikeUtility.AddItemsByMenu(items);
@@ -111,8 +111,8 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(Chest __instance)
         {
-            List<Item> items = __instance.items.ToList();
-            __instance.items.Clear();
+            List<Item> items = __instance.Items.ToList();
+            __instance.Items.Clear();
 
             if (items.Count > 1)
                 RoguelikeUtility.AddItemsByMenu(items);

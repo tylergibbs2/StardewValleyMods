@@ -209,7 +209,7 @@ namespace StardewRoguelike.Bosses
 
             for (int i = 0; i < amount; i++)
             {
-                Vector2 randomTile = new(getTileX() + Game1.random.Next(-4, 5), getTileY() + Game1.random.Next(-4, 5));
+                Vector2 randomTile = new(TilePoint.X + Game1.random.Next(-4, 5), TilePoint.Y + Game1.random.Next(-4, 5));
 
                 Monster bee = new QueenBeeMinion(randomTile, Difficulty);
                 Roguelike.AdjustMonster((MineShaft)currentLocation, ref bee);
@@ -228,10 +228,10 @@ namespace StardewRoguelike.Bosses
         {
             if (Utility.isOnScreen(Position, 128))
             {
-                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f, GetBoundingBox().Height / 2 - 32), Sprite.SourceRect, Color.White, rotation, new Vector2(8f, 16f), Math.Max(0.2f, scale) * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((float)(getStandingY() + 8) / 10000f)));
-                b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(32f, GetBoundingBox().Height / 2), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (float)(getStandingY() - 1) / 10000f);
+                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f, GetBoundingBox().Height / 2 - 32), Sprite.SourceRect, Color.White, rotation, new Vector2(8f, 16f), Math.Max(0.2f, scale.Value) * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((float)(StandingPixel.Y + 8) / 10000f)));
+                b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(32f, GetBoundingBox().Height / 2), Game1.shadowTexture.Bounds, Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (float)(StandingPixel.Y - 1) / 10000f);
                 if (isGlowing)
-                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f, GetBoundingBox().Height / 2 - 32), Sprite.SourceRect, glowingColor * glowingTransparency, rotation, new Vector2(8f, 16f), Math.Max(0.2f, scale) * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.99f : ((float)getStandingY() / 10000f + 0.001f)));
+                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f, GetBoundingBox().Height / 2 - 32), Sprite.SourceRect, glowingColor * glowingTransparency, rotation, new Vector2(8f, 16f), Math.Max(0.2f, scale.Value) * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.99f : ((float)StandingPixel.Y / 10000f + 0.001f)));
             }
         }
 
@@ -257,7 +257,7 @@ namespace StardewRoguelike.Bosses
                 WasHitCounter -= time.ElapsedGameTime.Milliseconds;
 
             Sprite.Animate(time, (FacingDirection == 0) ? 8 : ((FacingDirection != 2) ? (FacingDirection * 4) : 0), 4, 75f);
-            if ((withinPlayerThreshold() || Utility.isOnScreen(position, 256)) && invincibleCountdown <= 0)
+            if ((withinPlayerThreshold() || Utility.isOnScreen(position.Value, 256)) && invincibleCountdown <= 0)
             {
                 faceDirection(0);
                 float xSlope = -(Player.GetBoundingBox().Center.X - GetBoundingBox().Center.X) + Game1.random.Next(-64, 65);
@@ -304,7 +304,7 @@ namespace StardewRoguelike.Bosses
             resetAnimationSpeed();
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName);
             HideShadow = true;
@@ -319,8 +319,8 @@ namespace StardewRoguelike.Bosses
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)
         {
-            int actualDamage = Math.Max(1, damage - resilience);
-            if (Game1.random.NextDouble() < missChance - missChance * addedPrecision)
+            int actualDamage = Math.Max(1, damage - resilience.Value);
+            if (Game1.random.NextDouble() < missChance.Value - missChance.Value * addedPrecision)
             {
                 actualDamage = -1;
             }
@@ -359,7 +359,7 @@ namespace StardewRoguelike.Bosses
         public StingerProjectile() : base() { }
 
         public StingerProjectile(int damageToFarmer, float xVelocity, float yVelocity, Vector2 startingPosition, string collisionSound, string firingSound, GameLocation? location = null, Character? firer = null)
-            : base(damageToFarmer, 5, 0, 0, 0f, xVelocity, yVelocity, startingPosition, collisionSound, firingSound, false, false, location, firer)
+            : base(damageToFarmer, 5, 0, 0, 0f, xVelocity, yVelocity, startingPosition, collisionSound, null, firingSound, false, false, location, firer)
         {
             ignoreLocationCollision.Value = true;
             ignoreMeleeAttacks.Value = true;

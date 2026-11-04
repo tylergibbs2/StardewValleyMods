@@ -71,7 +71,7 @@ namespace StardewRoguelike.Bosses
             moveTowardPlayerThreshold.Value = 20;
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName);
             Sprite.LoadTexture(TextureName);
@@ -83,9 +83,10 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
-            NetFields.AddFields(MeteorStrikeWarningEvent);
-            MeteorStrikeWarningEvent.onEvent += MeteorStrikeWarning;
             base.initNetFields();
+            NetFields.AddField(MeteorStrikeWarningEvent);
+            MeteorStrikeWarningEvent.onEvent += MeteorStrikeWarning;
+
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -219,7 +220,11 @@ namespace StardewRoguelike.Bosses
             else if (IsAttacking())
                 return;
 
-            int attack = 0;
+            // -1 is the sentinel the loop below tests for. Starting at 0 meant the
+            // loop was skipped whenever 0 was not in the recent history, so attack 0
+            // was chosen outright instead of being rolled for - and it was chosen
+            // even while a meteor strike was active, which the roll exists to avoid.
+            int attack = -1;
             while (attack == -1 || AttackHistory.Contains(attack))
             {
                 if (MeteorStrikeTicksLeft > 0)
@@ -293,7 +298,7 @@ namespace StardewRoguelike.Bosses
             Game1.currentLocation.TemporarySprites.Add(new("TileSheets\\Projectiles", spriteSourceRect, 9999f, 1, 999, drawPosition, false, Game1.random.NextDouble() < 0.5, (position.Y + 32f) / 10000f + 0.001f, 0.0075f, Color.White, markerScale, 0f, 0f, 0f, false)
             {
                 delayBeforeAnimationStart = delay,
-                light = true,
+                lightId = $"{ModEntry.ModId}_Modulosaurus_{Game1.random.Next()}",
                 lightRadius = 1f,
                 lightcolor = Color.White,
                 endFunction = (_) =>
@@ -332,8 +337,10 @@ namespace StardewRoguelike.Bosses
 
             FacingDirection = 2;
 
+            // Keep trying for a hundred open tiles, but give up rather than hang if
+            // the arena has few or none left to find.
             List<Vector2> randomTiles = new();
-            while (randomTiles.Count < 100)
+            for (int attempt = 0; attempt < 2000 && randomTiles.Count < 100; attempt++)
             {
                 Vector2 randomTile = currentLocation.getRandomTile();
                 if (currentLocation.isTileLocationOpen(new xTile.Dimensions.Location((int)randomTile.X, (int)randomTile.Y)))
@@ -369,7 +376,7 @@ namespace StardewRoguelike.Bosses
                 int fireAngle = angle + (offset ? 15 : 0) % 360;
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fireAngle)), -(float)Math.Sin(RoguelikeUtility.DegreesToRadians(fireAngle)));
                 shot_velocity *= 10f;
-                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
+                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", false, false, currentLocation, this, null);
                 projectile.ignoreTravelGracePeriod.Value = true;
                 projectile.IgnoreLocationCollision = true;
                 projectile.ignoreMeleeAttacks.Value = true;
@@ -394,7 +401,7 @@ namespace StardewRoguelike.Bosses
                 Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)), (float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle + angleOffset)));
                 shot_velocity *= 10f;
 
-                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
+                BasicProjectile projectile = new((int)Math.Round(35 * Difficulty), 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", false, false, currentLocation, this, null);
                 projectile.ignoreTravelGracePeriod.Value = true;
                 projectile.ignoreMeleeAttacks.Value = true;
                 projectile.IgnoreLocationCollision = true;
@@ -420,7 +427,7 @@ namespace StardewRoguelike.Bosses
             Vector2 shot_velocity = new((float)Math.Cos(RoguelikeUtility.DegreesToRadians(fire_angle)), (float)Math.Sin(RoguelikeUtility.DegreesToRadians(fire_angle)));
             shot_velocity *= 10f;
 
-            BasicProjectile projectile = new(25, 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", explode: false, damagesMonsters: false, currentLocation, this);
+            BasicProjectile projectile = new(25, 10, 0, 1, (float)Math.PI / 16f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", explode: false, damagesMonsters: false, currentLocation, this);
             projectile.ignoreTravelGracePeriod.Value = true;
             projectile.ignoreMeleeAttacks.Value = true;
             projectile.IgnoreLocationCollision = true;
@@ -460,7 +467,7 @@ namespace StardewRoguelike.Bosses
                 if (wanderState)
                 {
                     moveLeft = moveUp = moveRight = moveDown = false;
-                    tryToMoveInDirection(facingDirection.Value, isFarmer: false, DamageToFarmer, isGlider);
+                    tryToMoveInDirection(facingDirection.Value, isFarmer: false, DamageToFarmer, isGlider.Value);
                 }
             }
         }

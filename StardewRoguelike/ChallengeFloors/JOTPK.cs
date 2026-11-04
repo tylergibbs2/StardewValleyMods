@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
@@ -51,7 +52,12 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(floorSecondsLeft);
+            NetFields.AddField(floorSecondsLeft);
+
+            // Declared as a NetBool but never registered, so it stayed false on
+            // farmhands: ShouldSpawnLadder answered no for them and the music never
+            // changed. Only the host's explicit createLadderAt hid it.
+            NetFields.AddField(gameOver);
         }
 
         public void RenderHud(object? sender, RenderedHudEventArgs e)
@@ -118,18 +124,25 @@ namespace StardewRoguelike.ChallengeFloors
                 monstersToSpawn += 2;
 
             int sideToSpawn = Game1.random.Next(0, 4);
+            Rectangle spawnRect = sideToSpawn switch
+            {
+                0 => spawnRectTop,
+                1 => spawnRectRight,
+                2 => spawnRectBottom,
+                3 => spawnRectLeft,
+                _ => throw new System.Exception("Invalid side to spawn"),
+            };
+
+            // Each side is four tiles and the loop below wants a distinct one per
+            // monster, so asking for more than the side holds never finishes. The
+            // MoreEnemiesLessHealth curse adds two to a roll of up to three, which
+            // put it past four one time in three.
+            monstersToSpawn = Math.Min(monstersToSpawn, spawnRect.Width * spawnRect.Height);
 
             List<Vector2> spawnTiles = new();
             while (spawnTiles.Count < monstersToSpawn)
             {
-                Vector2 tile = GetRandomTileInRect(sideToSpawn switch
-                {
-                    0 => spawnRectTop,
-                    1 => spawnRectRight,
-                    2 => spawnRectBottom,
-                    3 => spawnRectLeft,
-                    _ => throw new System.Exception("Invalid side to spawn"),
-                });
+                Vector2 tile = GetRandomTileInRect(spawnRect);
                 if (!spawnTiles.Contains(tile))
                     spawnTiles.Add(tile);
             }
@@ -146,7 +159,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void GameOver(MineShaft mine)
         {
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
 
             gameOver.Value = true;
             mine.createLadderAt(new(20, 20));
@@ -196,7 +209,10 @@ namespace StardewRoguelike.ChallengeFloors
                         if (i == 0)
                             continue;
 
-                        ticksToSpawnEnemies /= 2;
+                        // Integer division, once per extra player. Reaching zero would
+                // stop the spawner for good, since it only re-arms from its own
+                // countdown.
+                ticksToSpawnEnemies = Math.Max(1, ticksToSpawnEnemies / 2);
                     }
                 }
             }

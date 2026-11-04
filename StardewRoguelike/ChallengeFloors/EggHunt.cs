@@ -51,7 +51,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(eggsFound, eggsOnMap, floorSecondsLeft);
+            NetFields.AddField(eggsFound).AddField(eggsOnMap).AddField(floorSecondsLeft);
         }
 
         public override bool ShouldSpawnLadder(MineShaft mine) => gameOver;
@@ -219,8 +219,8 @@ namespace StardewRoguelike.ChallengeFloors
 
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
-                new SObject(384, goldAmount)
+                new SObject(gemReward.ToString(), 1),
+                new SObject("384", goldAmount)
             };
 
             mine.SpawnLocalChest(new(39, 30), chestItems);
@@ -351,10 +351,15 @@ namespace StardewRoguelike.ChallengeFloors
 
         private Microsoft.Xna.Framework.Rectangle boundingRect;
 
-        public NetFields NetFields { get; } = new();
+        public NetFields NetFields { get; }
 
         public Egg()
         {
+            NetFields = new(NetFields.GetNameForInstance(this));
+            // Claim ownership before registering anything: 1.6 names fields in
+            // network error logs after their owner, and warns for every field added
+            // without one.
+            NetFields.SetOwner(this);
             InitializeNetFields();
         }
 
@@ -366,7 +371,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         private void InitializeNetFields()
         {
-            this.NetFields.AddFields(tileLocation, variant);
+            this.NetFields.AddField(tileLocation).AddField(variant);
         }
 
         private void Initialize()

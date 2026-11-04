@@ -12,7 +12,7 @@ namespace StardewRoguelike.Projectiles
         public SlimeSpawnProjectile() : base() { }
 
         public SlimeSpawnProjectile(float scale, int damageToFarmer, float xVelocity, float yVelocity, Vector2 startingPosition, string firingSound, GameLocation location, Character firer)
-            : base(damageToFarmer, 13, 5, 0, (float)Math.PI / 16f, xVelocity, yVelocity, startingPosition, "", firingSound, true, false, location, firer, false, null)
+            : base(damageToFarmer, 13, 5, 0, (float)Math.PI / 16f, xVelocity, yVelocity, startingPosition, "", null, firingSound, true, false, location, firer, null)
         {
             startingScale.Value = scale;
         }
@@ -42,7 +42,7 @@ namespace StardewRoguelike.Projectiles
                         tilePosition.X + Game1.random.Next(-spread, spread + 1),
                         tilePosition.Y + Game1.random.Next(-spread, spread + 1)
                     );
-                    if (!location.isTileLocationTotallyClearAndPlaceable(randomTile))
+                    if (!location.CanItemBePlacedHere(randomTile))
                         continue;
 
                     MineShaft mine = (MineShaft)location;

@@ -26,7 +26,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(alreadyUsed);
+            NetFields.AddField(alreadyUsed);
         }
 
         public override List<string> MapPaths => new() { "custom-dwarf" };
@@ -45,7 +45,7 @@ namespace StardewRoguelike.ChallengeFloors
                 Vector2 chestSpot = new(leftMostChest.X + (i * 3), leftMostChest.Y);
                 List<Item> chestItems = new() { merchantFloor.PickAnyRandom(Roguelike.FloorRng) };
 
-                Chest chest = new(0, chestItems, chestSpot)
+                Chest chest = new(chestItems, chestSpot)
                 {
                     Tint = Color.White
                 };
@@ -64,8 +64,8 @@ namespace StardewRoguelike.ChallengeFloors
             foreach (Vector2 v in toRemove)
             {
                 Chest chest = mine.overlayObjects[v] as Chest;
-                Item chestItem = chest.items[0];
-                Sign sign = new(v, 39);
+                Item chestItem = chest.Items[0];
+                Sign sign = new(v, "39");
                 sign.displayItem.Value = chestItem;
                 sign.displayType.Value = chestItem is Ring ? 4 : 1;
                 mine.overlayObjects[v] = sign;
@@ -120,7 +120,7 @@ namespace StardewRoguelike.ChallengeFloors
     {
         public ChestDwarf() : base() { }
 
-        public ChestDwarf(GameLocation location, Vector2 tileLocation, Texture2D portrait) : base(new AnimatedSprite($"Characters/Dwarf", 0, 16, 24), tileLocation * 64, location.Name, 0, "ChestChoiceNPC", null, portrait, eventActor: false) { }
+        public ChestDwarf(GameLocation location, Vector2 tileLocation, Texture2D portrait) : base(new AnimatedSprite($"Characters/Dwarf", 0, 16, 24), tileLocation * 64, location.Name, 0, "ChestChoiceNPC", portrait, eventActor: false) { }
 
         public NetCollection<NetLong> GetUsedFarmers()
         {

@@ -11,7 +11,7 @@ namespace StardewRoguelike.Netcode
 {
     public class NetChest : INetObject<NetFields>
     {
-        public NetFields NetFields { get; } = new();
+        public NetFields NetFields { get; }
 
         public readonly NetVector2 TileLocation = new();
 
@@ -27,6 +27,11 @@ namespace StardewRoguelike.Netcode
 
         public NetChest()
         {
+            NetFields = new(NetFields.GetNameForInstance(this));
+            // Claim ownership before registering anything: 1.6 names fields in
+            // network error logs after their owner, and warns for every field added
+            // without one.
+            NetFields.SetOwner(this);
             InitNetFields();
         }
 
@@ -56,7 +61,7 @@ namespace StardewRoguelike.Netcode
 
         protected void InitNetFields()
         {
-            NetFields.AddFields(TileLocation, Items, IndeterminateItemChest, IsTimedChest, MustOpenBy);
+            NetFields.AddField(TileLocation).AddField(Items).AddField(IndeterminateItemChest).AddField(IsTimedChest).AddField(MustOpenBy);
         }
 
         // Is only called for Game1.player
@@ -100,7 +105,7 @@ namespace StardewRoguelike.Netcode
             }
             else
             {
-                chest = new(0, items, TileLocation.Value)
+                chest = new(items, TileLocation.Value)
                 {
                     Tint = Color.White
                 };

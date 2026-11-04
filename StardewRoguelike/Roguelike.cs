@@ -1,5 +1,7 @@
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
+using StardewRoguelike.Mode;
+using StardewValley.Buffs;
 using StardewValley.Locations;
 using StardewValley.Objects;
 using StardewValley.Tools;
@@ -28,6 +30,28 @@ namespace StardewRoguelike
 {
     public static class Roguelike
     {
+        /// <summary>
+        /// The adrenaline buff granted while the player is on a mine floor.
+        /// </summary>
+        private const string AdrenalineBuffId = $"{ModEntry.ModId}_Adrenaline";
+
+        /// <summary>
+        /// How long the adrenaline buff lasts between refreshes. Short enough that it
+        /// lapses almost immediately once it stops being refreshed.
+        /// </summary>
+        private const int AdrenalineDurationMs = 50;
+
+        /// <summary>
+        /// The buff that widens the player's item-pickup radius for the whole run.
+        /// </summary>
+        private const string MagnetismBuffId = $"{ModEntry.ModId}_Magnetism";
+
+        /// <summary>
+        /// How much to add to <see cref="Farmer.BaseMagneticRadius"/> (128), to keep
+        /// the pre-1.6 pickup radius of 256.
+        /// </summary>
+        private const int AddedMagneticRadius = 128;
+
         public static int FloorRngSeed { get; set; } = Guid.NewGuid().GetHashCode();
 
         public static bool RerollRandomEveryRun { get; set; } = true;
@@ -157,15 +181,15 @@ namespace StardewRoguelike
                 Game1.player.set_FarmerActiveHatQuest(null);
             }
 
-            if (HardMode && !DidHardModeDowngrade && Game1.player.hasItemInInventory(194, 1))
+            if (HardMode && !DidHardModeDowngrade && Game1.player.Items.CountId("194") >= 1)
             {
-                Game1.player.removeFirstOfThisItemFromInventory(194);
+                Game1.player.removeFirstOfThisItemFromInventory("194");
                 DelayedAction.playSoundAfterDelay("clank", 250);
                 DidHardModeDowngrade = true;
             }
             else if (!HardMode && DidHardModeDowngrade)
             {
-                Game1.player.addItemToInventory(new SObject(194, 1));
+                Game1.player.addItemToInventory(new SObject("194", 1));
                 DelayedAction.playSoundAfterDelay("clank", 250);
                 DidHardModeDowngrade = false;
             }
@@ -179,15 +203,29 @@ namespace StardewRoguelike
                     chest.Spawn(mine);
             }
 
-            int buffId = 88999;
-            Buff? buff = Game1.buffsDisplay.otherBuffs.FirstOrDefault(p => p.which == buffId);
-            if (buff is null)
+            Perks.EnsurePerkBuff();
+            Curse.EnsureCurseBuffs();
+
+            // Kept alive by refreshing a very short duration each tick, so it lapses
+            // as soon as the player stops qualifying for it.
+            //
+            // The duration is refreshed in place rather than re-applied: applyBuff
+            // removes and re-adds, which would mark the buff display dirty and flag
+            // the icon as updated on every tick, rebuilding every icon each frame.
+            if (Game1.player.buffs.AppliedBuffs.TryGetValue(AdrenalineBuffId, out Buff? adrenaline))
             {
-                Game1.buffsDisplay.addOtherBuff(
-                    buff = new Buff(0, 0, 0, 0, 0, 0, 0, 0, 0, speed: 1, 0, 0, minutesDuration: 1, source: "Roguelike", displaySource: I18n.Roguelike_Adrenaline()) { which = buffId }
-                );
+                adrenaline.millisecondsDuration = AdrenalineDurationMs;
             }
-            buff.millisecondsDuration = 50;
+            else
+            {
+                Game1.player.applyBuff(new Buff(
+                    id: AdrenalineBuffId,
+                    source: "Roguelike",
+                    displaySource: I18n.Roguelike_Adrenaline(),
+                    duration: AdrenalineDurationMs,
+                    effects: new BuffEffects() { Speed = { 1 } }
+                ));
+            }
 
             if (Game1.player.Stamina < 0 && Game1.player.health > 0)
             {
@@ -292,30 +330,20 @@ namespace StardewRoguelike
         {
             Game1.options.screenFlash = false;
             Game1.options.zoomButtons = true;
-            Game1.player.FishingLevel = 10;
+            Game1.player.fishingLevel.Value = 10;
 
-            var loadedOptions = ModEntry.DataHelper.ReadGlobalData<Options>("RoguelikeGameOptions");
-            if (loadedOptions is not null)
-                Game1.options = loadedOptions;
+            RestorePlayerOptions();
 
-            ModEntry.DisableUpload = false;
-
-            List<IModInfo> invalidMods = ModEntry.GetInvalidMods();
-            if (invalidMods.Count > 0)
-                ModEntry.ShouldShowModDisclaimer = true;
 
             WarpLocalPlayerToStart();
             Game1.player.team.useSeparateWallets.Value = true;
 
             GameLocation mine = Game1.getLocationFromName("Mine");
-            NPC qi = mine.getCharacterFromName("Mister Qi");
-            if (qi is null)
-            {
-                qi = Game1.getCharacterFromName("Mister Qi");
-                qi = qi.ShallowClone();
-            }
+            NPC? qi = mine.getCharacterFromName("Mister Qi") ?? Game1.getCharacterFromName("Mister Qi")?.ShallowClone();
 
-            qi.showTextAboveHead(I18n.Lobby_QiIntroduction(), duration: 15000);
+            // 1.6 only instantiates villagers in loaded locations, so this can come
+            // back empty; the intro bubble is cosmetic, so just skip it.
+            qi?.showTextAboveHead(I18n.Lobby_QiIntroduction(), duration: 15000);
 
             if (Context.IsMainPlayer)
             {
@@ -327,7 +355,7 @@ namespace StardewRoguelike
                 mine.addCharacter(qi);
 
                 Vector2 computerTile = new(19, 7);
-                mine.Objects[computerTile] = new SObject(computerTile, 239);
+                mine.Objects[computerTile] = new SObject(computerTile, "239");
 
                 Game1.player.Name = "";
                 Game1.player.favoriteThing.Value = "";
@@ -335,11 +363,6 @@ namespace StardewRoguelike
 
             if (!ModEntry.Config.SkipCharacterCreation)
                 Game1.activeClickableMenu = new CharacterCustomization(CharacterCustomization.Source.NewFarmhand);
-            else if (!ModEntry.Config.SkipModDisclaimer && ModEntry.ShouldShowModDisclaimer)
-            {
-                Game1.activeClickableMenu = new DisclaimerMenu();
-                ModEntry.ShouldShowModDisclaimer = false;
-            }
 
             ResetLocalGameState();
             ResetLocalPlayer();
@@ -419,9 +442,7 @@ namespace StardewRoguelike
 
             if (!Context.IsMultiplayer)
             {
-                LocalizedContentManager? mapContent = (LocalizedContentManager?)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(MineShaft.activeMines[0]);
-                mapContent?.Dispose();
-                MineShaft.activeMines.RemoveAt(0);
+                DiscardMine(MineShaft.activeMines[0]);
                 return;
             }
 
@@ -431,7 +452,9 @@ namespace StardewRoguelike
             int amountToRemove = 0;
             int merchantInterval = Constants.ScalingOrder[1] - Constants.ScalingOrder[0];
 
-            for (int i = MineShaft.activeMines.Count - 1; i == 0; i--)
+            // Was "i == 0", so with more than one active mine the loop never ran
+            // and this whole method did nothing in multiplayer.
+            for (int i = MineShaft.activeMines.Count - 1; i >= 0; i--)
             {
                 bool allPlayersFound = playersAccountedFor == playersToAccountFor;
                 if (allPlayersFound && floorsSinceLastPlayer < merchantInterval)
@@ -451,10 +474,27 @@ namespace StardewRoguelike
 
             while (amountToRemove > 0 && MineShaft.activeMines.Count >= instancesToKeep)
             {
-                LocalizedContentManager? mapContent = (LocalizedContentManager?)MineShaft.activeMines[0].GetType().GetField("mapContent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(MineShaft.activeMines[0]);
-                mapContent?.Dispose();
-                MineShaft.activeMines.RemoveAt(0);
+                DiscardMine(MineShaft.activeMines[0]);
+
+                // Nothing decremented this before. It did not matter while the loop
+                // above never ran, but on its own it would discard every mine down to
+                // the keep-count instead of the number actually worked out.
+                amountToRemove--;
             }
+        }
+
+        /// <summary>
+        /// Drops a mine level the run no longer needs.
+        ///
+        /// 1.6 gives locations an OnRemoved lifecycle hook; MineShaft's override
+        /// disposes its map content and the base call tells every character in the
+        /// level it is going away. The mod used to reach for the private mapContent
+        /// field and dispose it directly, which skipped that character cleanup.
+        /// </summary>
+        private static void DiscardMine(MineShaft mine)
+        {
+            mine.OnRemoved();
+            MineShaft.activeMines.Remove(mine);
         }
 
         public static string GetRandomTrack(List<string> tracks)
@@ -573,10 +613,10 @@ namespace StardewRoguelike
                 UpgradeLevel = 4
             };
             Game1.player.addItemToInventory(pick);                // Copper Pickaxe
-            Game1.player.addItemToInventory(new MeleeWeapon(0));  // Rusty Sword
+            Game1.player.addItemToInventory(new MeleeWeapon("0"));  // Rusty Sword
 
             int eggStack = HardMode ? 2 : 3;
-            Game1.player.addItemToInventory(new SObject(194, eggStack));  // Fried Egg
+            Game1.player.addItemToInventory(new SObject("194", eggStack));  // Fried Egg
         }
 
         /// <summary>
@@ -618,6 +658,11 @@ namespace StardewRoguelike
         {
             ModEntry.Invincible = true;
             Game1.player.health = Game1.player.maxHealth;
+
+            // Single player death restores this too. Without it a player who died of
+            // exhaustion comes back with negative stamina, and UpdateTicked sets
+            // their health straight back to zero on the next tick.
+            Game1.player.Stamina = Game1.player.MaxStamina;
 
             DelayedAction.functionAfterDelay(() =>
             {
@@ -720,30 +765,40 @@ namespace StardewRoguelike
             Game1.player.Money = StartingGold;
 
             Game1.player.hasSkullKey = true;
-            Game1.player.MagneticRadius = 256;
 
             Game1.player.ClearBuffs();
+
+            // 1.6 made BaseMagneticRadius readonly and derives the rest from buffs,
+            // so the run's wider pickup radius has to be one.
+            Game1.player.applyBuff(new Buff(
+                id: MagnetismBuffId,
+                source: "Roguelike",
+                displaySource: "Roguelike",
+                duration: Buff.ENDLESS,
+                effects: new BuffEffects() { MagneticRadius = { AddedMagneticRadius } }
+            )
+            {
+                visible = false
+            });
 
             // Remove items
             if (Game1.player.leftRing.Value is not null)
             {
                 Ring ring = Game1.player.leftRing.Value;
-                ring.onUnequip(Game1.player, Game1.player.currentLocation);
+                ring.onUnequip(Game1.player);
             }
 
             if (Game1.player.rightRing.Value is not null)
             {
                 Ring ring = Game1.player.rightRing.Value;
-                ring.onUnequip(Game1.player, Game1.player.currentLocation);
+                ring.onUnequip(Game1.player);
             }
 
             if (Game1.player.boots.Value is not null)
             {
                 Boots boots = Game1.player.boots.Value;
-                boots.onUnequip();
+                boots.onUnequip(Game1.player);
             }
-
-            Game1.player.resilience = 0;
 
             Game1.player.leftRing.Set(null);
             Game1.player.rightRing.Set(null);
@@ -773,6 +828,29 @@ namespace StardewRoguelike
         /// <summary>
         /// Warps the local player to the start of the game.
         /// </summary>
+        /// <summary>
+        /// Restores the player's own settings over the ones baked into the save the
+        /// mod ships with, without carrying over how their window was set up.
+        ///
+        /// The bundled save stores a zoom of 0.75 against a UI scale of 1, so loading
+        /// it leaves the world rendering at three quarters size inside a full size
+        /// window while the HUD lays itself out across the whole thing. The player's
+        /// own window settings are captured before the load and put back here, so
+        /// only how they like to play is restored, never how the save was set up.
+        /// </summary>
+        private static void RestorePlayerOptions()
+        {
+            Options? saved = ModEntry.DataHelper.ReadGlobalData<Options>("RoguelikeGameOptions");
+            if (saved is not null)
+                Game1.options = saved;
+
+            // Always last, and always run: the bundled save carries its own zoom and
+            // UI scale, and they are applied whether or not the player has settings
+            // of their own stored for the mod to restore.
+            RoguelikeEntry.CapturedDisplay?.Apply();
+            RoguelikeEntry.ReassertDisplay();
+        }
+
         public static void WarpLocalPlayerToStart()
         {
             Game1.warpFarmer("Mine", 17, 15, 2);
@@ -808,7 +886,7 @@ namespace StardewRoguelike
             qi.CurrentDialogue.Clear();
 
             string perkKey = string.Join('+', Game1.options.journalButton);
-            qi.setNewDialogue(I18n.Lobby_QiDialogue(perkKey: perkKey));
+            qi.setNewDialogue(new Dialogue(qi, null, I18n.Lobby_QiDialogue(perkKey: perkKey)));
         }
 
         /// <summary>
@@ -971,7 +1049,7 @@ namespace StardewRoguelike
             }
 
 
-            return new SObject(itemId, 1, quality: quality);
+            return new SObject(itemId.ToString(), 1, quality: quality);
         }
 
         /// <summary>
@@ -1045,14 +1123,20 @@ namespace StardewRoguelike
         /// <param name="doSum">Whether or not to return the tile ID as the sum of all previous or standalone</param>
         /// <returns>tilesheet index, tile ID</returns>
         /// <exception cref="Exception">The tilesheet passed could not be found.</exception>
-        public static (int, int) GetTileIndexForMap(xTile.Map map, string tileSheetId, int tileId, bool doSum = false)
+        /// <summary>
+        /// Resolves a tile index within a named tilesheet, optionally offset by the
+        /// tile counts of the sheets before it.
+        ///
+        /// 1.6's setMapTile/setAnimatedMapTile take a tilesheet ID rather than an
+        /// index, so only the tile index is returned now.
+        /// </summary>
+        public static int GetTileIndexForMap(xTile.Map map, string tileSheetId, int tileId, bool doSum = false)
         {
             int idSum = 0;
-            for (int i = 0; i < map.TileSheets.Count; i++)
+            foreach (TileSheet tileSheet in map.TileSheets)
             {
-                TileSheet tileSheet = map.TileSheets[i];
                 if (tileSheet.Id == tileSheetId)
-                    return (i, doSum ? tileId + idSum : tileId);
+                    return doSum ? tileId + idSum : tileId;
 
                 idSum += tileSheet.TileCount - 1;
             }

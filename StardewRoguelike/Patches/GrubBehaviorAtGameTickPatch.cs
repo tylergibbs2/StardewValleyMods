@@ -5,7 +5,6 @@ using StardewValley.Monsters;
 using System;
 using Microsoft.Xna.Framework;
 using Netcode;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
@@ -14,18 +13,18 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(Grub __instance, GameTime time)
         {
-            NetBool pupating = (NetBool)__instance.GetType().GetField("pupating", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
-            int metamorphCounter = (int)__instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(__instance)!;
+            NetBool pupating = __instance.pupating;
+            int metamorphCounter = __instance.metamorphCounter;
 
             if (pupating.Value)
             {
                 __instance.Scale = 1f + (float)Math.Sin(time.TotalGameTime.Milliseconds * ((float)Math.PI / 8f)) / 12f;
-                __instance.GetType().GetField("metamorphCounter", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(__instance, metamorphCounter - time.ElapsedGameTime.Milliseconds);
+                __instance.metamorphCounter = metamorphCounter - time.ElapsedGameTime.Milliseconds;
                 if (metamorphCounter <= 0)
                 {
                     __instance.Health = -500;
-                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 4, __instance.getStandingX(), __instance.getStandingY(), 25, (int)__instance.getTileLocation().Y);
-                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 8, __instance.getStandingX(), __instance.getStandingY(), 15, (int)__instance.getTileLocation().Y);
+                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 4, __instance.StandingPixel.X, __instance.StandingPixel.Y, 25, (int)__instance.Tile.Y);
+                    Game1.createRadialDebris(__instance.currentLocation, __instance.Sprite.textureName.Value, new Rectangle(208, 424, 32, 40), 8, __instance.StandingPixel.X, __instance.StandingPixel.Y, 15, (int)__instance.Tile.Y);
                     if (__instance.currentLocation is MineShaft)
                     {
                         Monster toSpawn = ((MineShaft)__instance.currentLocation).BuffMonsterIfNecessary(new Fly(__instance.Position, __instance.hard.Value)

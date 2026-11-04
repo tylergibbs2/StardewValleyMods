@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
@@ -67,7 +68,7 @@ namespace StardewRoguelike.ChallengeFloors
         protected override void InitNetFields()
         {
             base.InitNetFields();
-            NetFields.AddFields(InitializedRoomType, InaccessibleRoomType, IsLeftSide, ShouldSpawnRooms);
+            NetFields.AddField(InitializedRoomType).AddField(InaccessibleRoomType).AddField(IsLeftSide).AddField(ShouldSpawnRooms);
         }
 
         public void OnGateOpen(Point point)
@@ -89,11 +90,14 @@ namespace StardewRoguelike.ChallengeFloors
             if (!Context.IsMultiplayer && !Curse.HasAnyCurse())
                 validRoomTypes.Remove(RoomType.Cauldron);
 
-            RoomType roomType;
-            do
-            {
-                roomType = validRoomTypes[Roguelike.FloorRng.Next(validRoomTypes.Count)];
-            } while (roomType == otherRoom);
+            // Pick from what is left after excluding the other side's room, rather
+            // than rolling until we miss it: Cauldron is conditionally removed above,
+            // and a pool that shrinks to just the room we are avoiding never rolls
+            // anything else.
+            List<RoomType> choices = validRoomTypes.Where(type => type != otherRoom).ToList();
+            RoomType roomType = choices.Count > 0
+                ? choices[Roguelike.FloorRng.Next(choices.Count)]
+                : validRoomTypes[Roguelike.FloorRng.Next(validRoomTypes.Count)];
 
             InitializedRoomType.Value = roomType;
             InaccessibleRoomType.Value = otherRoom;
@@ -113,8 +117,8 @@ namespace StardewRoguelike.ChallengeFloors
             Location = mine;
 
             CurseToAdd = Curse.GetRandomUniqueCurse(Roguelike.FloorRng);
-            CurrentShop = new(Merchant.GetMerchantStock(0.5f, Roguelike.FloorRng), context: "Blacksmith", on_purchase: OpenShopPatch.OnPurchase);
-            CurrentShop.setUpStoreForContext();
+            CurrentShop = new(Merchant.MerchantShopId, Merchant.GetMerchantStock(0.5f, Roguelike.FloorRng), on_purchase: Merchant.OnPurchase, playOpenSound: false);
+            Merchant.ApplySellableCategories(CurrentShop);
         }
 
         private void SpawnRoomType(RoomType roomType, MineShaft mine, Point originPoint)
@@ -324,9 +328,7 @@ namespace StardewRoguelike.ChallengeFloors
                     return;
             }
 
-            NPC marlon = Game1.getCharacterFromName("Marlon");
-            marlon.setTileLocation(new Vector2(xOrigin + 3, yOrigin));
-            mine.addCharacter(marlon);
+            Merchant.SpawnVillager(mine, "Marlon", new Vector2(xOrigin + 3, yOrigin), 2);
         }
 
         public void SpawnHealingStatue(MineShaft mine, Point topLeftTile)

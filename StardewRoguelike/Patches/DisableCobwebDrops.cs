@@ -11,8 +11,11 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(Grass), "performToolAction")]
     internal class DisableCobwebDrops
     {
-        public static bool Prefix(Grass __instance, Tool t, int explosion, Vector2 tileLocation, GameLocation location)
+        public static bool Prefix(Grass __instance, Tool t, int explosion, Vector2 tileLocation)
         {
+            // 1.6 dropped the GameLocation parameter; placed objects carry their own Location.
+            GameLocation location = __instance.Location;
+
             location ??= Game1.currentLocation;
 
             if ((t != null && t is MeleeWeapon weapon && weapon.type.Value != 2) || explosion > 0)
@@ -38,15 +41,15 @@ namespace StardewRoguelike.Patches
                 switch (__instance.grassType.Value)
                 {
                     case 1:
-                        switch (location.GetSeasonForLocation())
+                        switch (location.GetSeason())
                         {
-                            case "spring":
+                            case Season.Spring:
                                 c = new Color(60, 180, 58);
                                 break;
-                            case "summer":
+                            case Season.Summer:
                                 c = new Color(110, 190, 24);
                                 break;
-                            case "fall":
+                            case Season.Fall:
                                 c = new Color(219, 102, 58);
                                 break;
                         }
@@ -65,8 +68,7 @@ namespace StardewRoguelike.Patches
                         break;
                 }
 
-                Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-                multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(28, tileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-16, 16)), c, 8, Game1.random.NextDouble() < 0.5, Game1.random.Next(60, 100)));
+                RoguelikeUtility.MultiplayerInstance.broadcastSprites(location, new TemporaryAnimatedSprite(28, tileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-16, 16)), c, 8, Game1.random.NextDouble() < 0.5, Game1.random.Next(60, 100)));
             }
 
             return false;

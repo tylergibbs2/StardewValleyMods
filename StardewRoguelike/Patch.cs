@@ -1,4 +1,5 @@
 using HarmonyLib;
+using StardewRoguelike.Mode;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,16 +85,63 @@ namespace StardewRoguelike
             }
         }
 
-        public static void PatchAll(string id)
+        /// <summary>Patches that implement routing and stay applied in vanilla sessions.</summary>
+        public const string AlwaysActiveId = "tylergibbs2.StardewRoguelike.core";
+
+        /// <summary>Gameplay patches, applied only while a roguelike run owns the game.</summary>
+        public const string ModeScopedId = "tylergibbs2.StardewRoguelike.mode";
+
+        /// <summary>
+        /// Applies the patches that have to be present before the player has chosen
+        /// a mode, so the title screen can offer the roguelike at all.
+        /// </summary>
+        public static void PatchAlwaysActive()
         {
-            Harmony harmonyInstance = new(id);
+            Harmony harmony = new(AlwaysActiveId);
+
+            foreach (Type type in AttributePatches())
+            {
+                if (type.GetCustomAttribute<AlwaysActiveAttribute>() is not null)
+                    harmony.CreateClassProcessor(type).Patch();
+            }
+        }
+
+        /// <summary>
+        /// Applies every gameplay patch. Mode scoped is the default: a patch only
+        /// escapes this by being marked <see cref="AlwaysActiveAttribute"/>, so new
+        /// patches are undone on exit without anyone having to opt in.
+        /// </summary>
+        public static void PatchModeScoped()
+        {
+            Harmony harmony = new(ModeScopedId);
 
             foreach (Type type in (from type in Assembly.GetExecutingAssembly().GetTypes()
                                    where type.IsClass && type.BaseType == typeof(Patch)
                                    select type))
-                ((Patch)Activator.CreateInstance(type)!).ApplyPatch(harmonyInstance);
+                ((Patch)Activator.CreateInstance(type)!).ApplyPatch(harmony);
 
-            harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
+            foreach (Type type in AttributePatches())
+            {
+                if (type.GetCustomAttribute<AlwaysActiveAttribute>() is null)
+                    harmony.CreateClassProcessor(type).Patch();
+            }
+        }
+
+        /// <summary>Removes every gameplay patch, handing the game back to vanilla.</summary>
+        public static void UnpatchModeScoped()
+        {
+            new Harmony(ModeScopedId).UnpatchAll(ModeScopedId);
+        }
+
+        /// <summary>
+        /// The [HarmonyPatch] annotated classes. Harmony's own PatchAll takes the
+        /// whole assembly at once, which is exactly what we cannot do here.
+        /// </summary>
+        private static IEnumerable<Type> AttributePatches()
+        {
+            return from type in Assembly.GetExecutingAssembly().GetTypes()
+                   where type.IsClass && type.GetCustomAttributes(typeof(HarmonyPatch), inherit: false).Length > 0
+                   select type;
         }
     }
 }

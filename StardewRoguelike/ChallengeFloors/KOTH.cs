@@ -60,6 +60,9 @@ namespace StardewRoguelike.ChallengeFloors
 
         private Texture2D kothBoxProgressTexture = null!;
 
+        /// <summary>The progress the bar texture was last built for.</summary>
+        private int builtProgress = -1;
+
         private readonly Texture2D kothBoxTexture;
 
         private readonly List<Rectangle> possibleBoxes = new() { };
@@ -80,7 +83,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(state, boxTimer, kothBox);
+            NetFields.AddField(state).AddField(boxTimer).AddField(kothBox);
         }
 
         public override void Initialize(MineShaft mine)
@@ -126,7 +129,7 @@ namespace StardewRoguelike.ChallengeFloors
             e.SpriteBatch.Draw(
                 kothBoxTexture,
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(kothBox.X, kothBox.Y)),
-                kothBox,
+                kothBox.Value,
                 Color.DarkGray * 0.4f,
                 0f,
                 Vector2.Zero,
@@ -138,6 +141,15 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void MakeBoxProgressBar(int Progress, int MaxProgress)
         {
+            // Drawn from the HUD every frame, but the timer behind it only moves
+            // every fifteen ticks. Rebuilding regardless meant sixty of these a
+            // second, each one replacing the last without releasing it.
+            if (Progress == builtProgress && kothBoxProgressTexture is not null)
+                return;
+
+            builtProgress = Progress;
+            kothBoxProgressTexture?.Dispose();
+
             kothBoxProgressTexture = new Texture2D(Game1.graphics.GraphicsDevice, 1000.ToUIScale(), 30.ToUIScale());
             Color[] data = new Color[kothBoxProgressTexture.Width * kothBoxProgressTexture.Height];
             kothBoxProgressTexture.GetData(data);
@@ -263,13 +275,17 @@ namespace StardewRoguelike.ChallengeFloors
             int padding = 4;
             Rectangle spawnRect = new((kothBox.X / 64) - padding, (kothBox.Y / 64) - padding, (kothBox.Width / 64) + (padding * 2), (kothBox.Height / 64) + (padding * 2));
 
-            while (enemiesToSpawn > 0)
+            // Only a tile that is free and outside the box counts, and neither is
+            // guaranteed: the box moves over the spawn area and monsters pile up in
+            // it. Without a limit on tries, a full spawn area never finishes.
+            int attempts = 0;
+            while (enemiesToSpawn > 0 && attempts++ < 1000)
             {
                 Vector2 randomTile = new(
                     Game1.random.Next(spawnRect.X, spawnRect.X + spawnRect.Width),
                     Game1.random.Next(spawnRect.Y, spawnRect.Y + spawnRect.Height)
                 );
-                if (!mine.isTileLocationTotallyClearAndPlaceable((int)randomTile.X, (int)randomTile.Y) || kothBox.Value.Contains(randomTile * 64f))
+                if (!mine.CanItemBePlacedHere(new Vector2((int)randomTile.X, (int)randomTile.Y)) || kothBox.Value.Contains(randomTile * 64f))
                     continue;
 
                 // spawn enemy
@@ -372,6 +388,11 @@ namespace StardewRoguelike.ChallengeFloors
         {
             ModEntry.Events.Display.RenderedWorld -= OnRenderedWorld;
             ModEntry.Events.Display.RenderedHud -= RenderProgressBar;
+
+            // The only textures the mod owns outright; nothing else frees them.
+            kothBoxProgressTexture?.Dispose();
+            kothBoxProgressTexture = null!;
+            kothBoxTexture?.Dispose();
         }
     }
 }

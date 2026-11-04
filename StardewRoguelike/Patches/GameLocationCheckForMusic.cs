@@ -15,7 +15,9 @@ namespace StardewRoguelike.Patches
                 return true;
 
             string targetTrack = "Upper_Ambient";
-            if (!Game1.currentSong.IsPlaying)
+            // currentSong is null when nothing is playing yet, which is exactly the
+            // case this branch wants to handle.
+            if (Game1.currentSong is null || !Game1.currentSong.IsPlaying)
                 Game1.changeMusicTrack("none");
 
             if (targetTrack != Game1.getMusicTrackName())

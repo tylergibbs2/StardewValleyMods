@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewValley.GameData;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -119,6 +120,11 @@ namespace StardewRoguelike.Bosses
 
         public static void MakeBossHealthBar(int Health, int MaxHealth)
         {
+            // Called from the HUD handler every time a boss's health changes, so the
+            // previous texture has to go: without this a long fight leaks one of
+            // these per hit and never gets the graphics memory back.
+            healthBarTexture?.Dispose();
+
             healthBarTexture = new Texture2D(Game1.graphics.GraphicsDevice, 1000.ToUIScale(), 30.ToUIScale());
             Color[] data = new Color[healthBarTexture.Width * healthBarTexture.Height];
             healthBarTexture.GetData(data);
@@ -174,7 +180,7 @@ namespace StardewRoguelike.Bosses
 
             string sound = allFarmersNoHit ? "getNewSpecialItem" : "Cowboy_Secret";
             location.playSound(sound);
-            Game1.changeMusicTrack("none", true, Game1.MusicContext.Default);
+            Game1.changeMusicTrack("none", true, MusicContext.Default);
             location.checkForMusic(new GameTime());
 
             if (chestLocation.HasValue)
@@ -185,10 +191,10 @@ namespace StardewRoguelike.Bosses
 
                 List<Item> chestItems = new()
                 {
-                    new SObject(384, 20 + additionalGold),
+                    new SObject("384", 20 + additionalGold),
                 };
                 if (allFarmersNoHit)
-                    chestItems.Add(new SObject(896, 1));
+                    chestItems.Add(new SObject("896", 1));
 
                 mine.SpawnLocalChest(chestLocation.Value, chestItems);
             }

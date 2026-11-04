@@ -22,7 +22,7 @@ namespace StardewRoguelike
                 int goldAmount = (JunimoKartScore / 3333) + (PrairieKingKills / 5);
                 if (goldAmount > 0)
                 {
-                    SObject gold = new(384, goldAmount);
+                    SObject gold = new("384", goldAmount);
                     Game1.player.addItemByMenuIfNecessaryElseHoldUp(gold);
                 }
             }

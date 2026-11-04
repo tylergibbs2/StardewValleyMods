@@ -55,7 +55,7 @@ namespace StardewRoguelike.Bosses
                 base.MovePosition(time, viewport, currentLocation);
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName)
             {
@@ -70,13 +70,13 @@ namespace StardewRoguelike.Bosses
         {
             int boxWidth = (int)(Sprite.SpriteWidth * 4 * 5 / 6 * Scale);
             int boxHeight = (int)(Sprite.SpriteHeight * Scale * 1.5);
-            if (scale < 0.85)
+            if (scale.Value < 0.85)
                 return new Rectangle((int)Position.X + boxWidth / 4, (int)Position.Y + boxHeight / 4, boxWidth, boxHeight);
-            else if (scale < 1f)
+            else if (scale.Value < 1f)
                 return new Rectangle((int)Position.X, (int)Position.Y + boxHeight / 6, boxWidth, boxHeight);
-            else if (scale < 1.5f)
+            else if (scale.Value < 1.5f)
                 return new Rectangle((int)Position.X - boxWidth / 5, (int)Position.Y + boxHeight / 6, boxWidth, boxHeight);
-            else if (scale < 2f)
+            else if (scale.Value < 2f)
                 return new Rectangle((int)Position.X - boxWidth / 4, (int)Position.Y + boxHeight / 6, boxWidth, boxHeight);
 
             return new Rectangle((int)Position.X - boxWidth / 3, (int)Position.Y + boxHeight / 6, boxWidth, boxHeight);
@@ -84,7 +84,7 @@ namespace StardewRoguelike.Bosses
 
         public override void shedChunks(int number, float scale)
         {
-            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, Height * 4, Width, Height), Width / 2, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, number, (int)getTileLocation().Y, Color.White, 4f);
+            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, Height * 4, Width, Height), Width / 2, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, number, (int)Tile.Y, Color.White, 4f);
         }
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)

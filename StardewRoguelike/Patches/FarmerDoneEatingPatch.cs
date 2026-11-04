@@ -1,5 +1,4 @@
 using HarmonyLib;
-using Netcode;
 using StardewRoguelike.HatQuests;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -7,87 +6,67 @@ using System;
 
 namespace StardewRoguelike.Patches
 {
-    [HarmonyPatch(typeof(Farmer), "doneEating")]
-    internal class FarmerDoneEatingPatch
+    /// <summary>
+    /// Applies the roguelike's eating bonuses on top of vanilla's.
+    ///
+    /// 1.5.6 needed a full reimplementation of <c>Farmer.doneEating</c>, because the
+    /// buff and healing logic was inlined there and read <c>Data/ObjectInformation</c>
+    /// strings directly. 1.6 moved all of that out: food buffs come from
+    /// <c>Item.GetFoodOrDrinkBuffs()</c>, the nausea removal for ginger is vanilla
+    /// behaviour, and healing goes through
+    /// <see cref="StardewValley.Object.healthRecoveredOnConsumption"/>. So the mod
+    /// only needs to adjust the heal amount and redirect it when the heal-over-time
+    /// curse is active.
+    /// </summary>
+    [HarmonyPatch(typeof(SObject), nameof(SObject.healthRecoveredOnConsumption))]
+    internal class FoodHealAmountPatch
     {
-        public static bool Prefix(Farmer __instance)
+        public static void Postfix(ref int __result)
         {
-            __instance.isEating = false;
-            __instance.completelyStopAnimatingOrDoingAction();
-            __instance.forceCanMove();
-            if (__instance.mostRecentlyGrabbedItem == null)
-                return false;
-
-            if (__instance != Game1.player)
-                return true;
-
-            SObject consumed = (SObject)__instance.itemToEat;
-            if (consumed is null)
-                return false;
-
-            if (consumed.HasContextTag("ginger_item") && __instance.hasBuff(25))
-            {
-                Game1.buffsDisplay.removeOtherBuff(25);
-            }
-            string[] objectDescription = Game1.objectInformation[consumed.ParentSheetIndex].Split('/');
-            if (Convert.ToInt32(objectDescription[2]) > 0)
-            {
-                string[] whatToBuff = ((objectDescription.Length > 7) ? objectDescription[7].Split(' ') : new string[12]
-                {
-                        "0", "0", "0", "0", "0", "0", "0", "0", "0", "0",
-                        "0", "0"
-                });
-                consumed.ModifyItemBuffs(whatToBuff);
-                int duration = ((objectDescription.Length > 8) ? Convert.ToInt32(objectDescription[8]) : (-1));
-                if (consumed.Quality != 0)
-                    duration = (int)((float)duration * 1.5f);
-
-                Buff buff = new(Convert.ToInt32(whatToBuff[0]), Convert.ToInt32(whatToBuff[1]), Convert.ToInt32(whatToBuff[2]), Convert.ToInt32(whatToBuff[3]), Convert.ToInt32(whatToBuff[4]), Convert.ToInt32(whatToBuff[5]), Convert.ToInt32(whatToBuff[6]), Convert.ToInt32(whatToBuff[7]), Convert.ToInt32(whatToBuff[8]), Convert.ToInt32(whatToBuff[9]), Convert.ToInt32(whatToBuff[10]), (whatToBuff.Length > 11) ? Convert.ToInt32(whatToBuff[11]) : 0, duration, objectDescription[0], objectDescription[4]);
-                if (Utility.IsNormalObjectAtParentSheetIndex(consumed, 921))
-                    buff.which = 28;
-
-                if (objectDescription.Length > 6 && objectDescription[6].Equals("drink"))
-                    Game1.buffsDisplay.tryToAddDrinkBuff(buff);
-                else if (Convert.ToInt32(objectDescription[2]) > 0)
-                    Game1.buffsDisplay.tryToAddFoodBuff(buff, Math.Min(120000, (int)(Convert.ToInt32(objectDescription[2]) / 20f * 30000f)));
-            }
-            float oldStam = __instance.Stamina;
-            int oldHealth = __instance.health;
-
-            int staminaToHeal = consumed.staminaRecoveredOnConsumption();
-            __instance.Stamina = Math.Min(__instance.MaxStamina, __instance.Stamina + staminaToHeal);
-
-            int healAmount = consumed.healthRecoveredOnConsumption();
+            if (__result <= 0)
+                return;
 
             if (Perks.HasPerk(Perks.PerkType.FoodEnjoyer))
-                healAmount = (int)(healAmount * 1.2f);
+                __result = (int)(__result * 1.2f);
 
             if (HatQuest.HasBuffFor(HatQuestType.CHEF_HAT))
-                healAmount = (int)(healAmount * 1.2f);
+                __result = (int)(__result * 1.2f);
+        }
+    }
 
-            if (healAmount > 0 && Curse.HasCurse(CurseType.HealOverTime))
-                Curse.HOTHealToTick += (int)Math.Round(healAmount * 1.5f);
-            else
-            {
-                __instance.health = Math.Min(__instance.maxHealth, __instance.health + healAmount);
-                if (__instance.get_FarmerActiveHatQuest() is not null)
-                    __instance.get_FarmerActiveHatQuest()!.HealthHealed += healAmount;
+    /// <summary>
+    /// Routes health gained from eating into the heal-over-time curse rather than
+    /// applying it instantly, and credits it to the active hat quest.
+    /// </summary>
+    [HarmonyPatch(typeof(Farmer), nameof(Farmer.doneEating))]
+    internal class FarmerDoneEatingPatch
+    {
+        private static int healthBeforeEating;
+
+        public static void Prefix(Farmer __instance)
+        {
+            healthBeforeEating = __instance.health;
         }
 
-            if (oldStam < __instance.Stamina)
-                Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Game1.cs.3116", (int)(__instance.Stamina - oldStam)), 4));
+        public static void Postfix(Farmer __instance)
+        {
+            if (__instance != Game1.player)
+                return;
 
-            if (oldHealth < __instance.health)
-                Game1.addHUDMessage(new HUDMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Game1.cs.3118", __instance.health - oldHealth), 5));
+            int healed = __instance.health - healthBeforeEating;
+            if (healed <= 0)
+                return;
 
-            if (consumed != null && consumed.Edibility < 0 && __instance.IsLocalPlayer)
+            if (Curse.HasCurse(CurseType.HealOverTime))
             {
-                __instance.CanMove = false;
-                NetEvent0 sickAnimationEvent = (NetEvent0)__instance.GetType().GetField("sickAnimationEvent", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(__instance)!;
-                sickAnimationEvent.Fire();
+                // Take the instant heal back and pay it out over time instead.
+                __instance.health = healthBeforeEating;
+                Curse.HOTHealToTick += (int)Math.Round(healed * 1.5f);
+                return;
             }
 
-            return false;
+            if (__instance.get_FarmerActiveHatQuest() is not null)
+                __instance.get_FarmerActiveHatQuest()!.HealthHealed += healed;
         }
     }
 }

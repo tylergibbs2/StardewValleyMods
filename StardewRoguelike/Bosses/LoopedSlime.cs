@@ -84,20 +84,20 @@ namespace StardewRoguelike.Bosses
                 double roll = Game1.random.NextDouble();
                 if (roll <= 0.2)
                 {
-                    BasicProjectile miniProjectile = new(DamageToFarmer / 3 * 2, 13, Game1.random.Next(3, 7), 0, (float)Math.PI / 16f, trajectory.X, trajectory.Y, Position, "", "", explode: true, damagesMonsters: false, base.currentLocation, this);
+                    BasicProjectile miniProjectile = new(DamageToFarmer / 3 * 2, 13, Game1.random.Next(3, 7), 0, (float)Math.PI / 16f, trajectory.X, trajectory.Y, Position, "", null, "", explode: true, damagesMonsters: false, base.currentLocation, this);
                     miniProjectile.height.Value = 24f;
                     miniProjectile.color.Value = color.Value;
                     miniProjectile.ignoreMeleeAttacks.Value = true;
                     miniProjectile.hostTimeUntilAttackable = 0.1f;
                     if (Game1.random.NextDouble() < 0.5)
-                        miniProjectile.debuff.Value = 13;
+                        miniProjectile.debuff.Value = Buff.slimed;
 
                     currentLocation.projectiles.Add(miniProjectile);
                 }
                 else if (roll <= 0.45)
                 {
                     MineShaft mine = (MineShaft)currentLocation;
-                    Monster slime = mine.BuffMonsterIfNecessary(new GreenSlime(getTileLocation() * 64f, 80));
+                    Monster slime = mine.BuffMonsterIfNecessary(new GreenSlime(Tile * 64f, 80));
                     slime.isHardModeMonster.Value = true;
                     slime.moveTowardPlayerThreshold.Value = 25;
                     if (!slime.Sprite.textureName.Value.EndsWith("_dangerous"))
@@ -117,7 +117,7 @@ namespace StardewRoguelike.Bosses
             projectile.ignoreMeleeAttacks.Value = true;
             projectile.hostTimeUntilAttackable = 0.1f;
             if (Game1.random.NextDouble() < 0.5)
-                projectile.debuff.Value = 13;
+                projectile.debuff.Value = Buff.slimed;
 
             currentLocation.projectiles.Add(projectile);
 
@@ -159,35 +159,34 @@ namespace StardewRoguelike.Bosses
                 Health -= actualDamage;
                 setTrajectory(xTrajectory, yTrajectory);
                 currentLocation.playSound("slimeHit");
-                GetType().BaseType!.GetField("readyToJump", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(this, -1);
+                readyToJump = -1;
                 IsWalkingTowardPlayer = true;
                 if (Health <= 0)
                 {
                     currentLocation.playSound("slimedead");
 
-                    Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
-                    multiplayer.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position, color.Value * 0.66f, 10)
+                    RoguelikeUtility.MultiplayerInstance.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position, color.Value * 0.66f, 10)
                     {
                         interval = 70f,
                         holdLastFrame = true,
                         alphaFade = 0.01f
                     });
-                    multiplayer.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position + new Vector2(-16f, 0f), color.Value * 0.66f, 10)
+                    RoguelikeUtility.MultiplayerInstance.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position + new Vector2(-16f, 0f), color.Value * 0.66f, 10)
                     {
                         interval = 70f,
                         delayBeforeAnimationStart = 0,
                         holdLastFrame = true,
                         alphaFade = 0.01f
                     });
-                    multiplayer.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position + new Vector2(0f, 16f), color.Value * 0.66f, 10)
+                    RoguelikeUtility.MultiplayerInstance.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position + new Vector2(0f, 16f), color.Value * 0.66f, 10)
                     {
                         interval = 70f,
                         delayBeforeAnimationStart = 100,
                         holdLastFrame = true,
                         alphaFade = 0.01f
                     });
-                    multiplayer.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position + new Vector2(16f, 0f), color.Value * 0.66f, 10)
+                    RoguelikeUtility.MultiplayerInstance.broadcastSprites(currentLocation, new TemporaryAnimatedSprite(44, Position + new Vector2(16f, 0f), color.Value * 0.66f, 10)
                     {
                         interval = 70f,
                         delayBeforeAnimationStart = 200,
@@ -215,11 +214,9 @@ namespace StardewRoguelike.Bosses
                 if (stackedSlimes.Value > 0)
                     stack_adjustment = new Vector2((float)Math.Sin(randomStackOffset + Game1.currentGameTime.TotalGameTime.TotalSeconds * Math.PI * 2.0 + (i * 30)) * 8f * Scale, -30 * i * Scale);
 
-                int wagTimer = (int)GetType().BaseType!.GetField("wagTimer", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
-                int readyToJump = (int)GetType().BaseType!.GetField("readyToJump", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
-                NetVector2 facePosition = (NetVector2)GetType().BaseType!.GetField("facePosition", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
+                                                NetVector2 facePosition = (NetVector2)GetType().BaseType!.GetField("facePosition", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(this)!;
 
-                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset) + stack_adjustment, Sprite.SourceRect, prismatic ? Utility.GetPrismaticColor(348 + specialNumber.Value, 5f) : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * ((float)ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((float)(getStandingY() + i * 2) / 10000f)));
+                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset) + stack_adjustment, Sprite.SourceRect, prismatic.Value ? Utility.GetPrismaticColor(348 + specialNumber.Value, 5f) : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * ((float)ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((float)(StandingPixel.Y + i * 2) / 10000f)));
                 if (top_slime)
                 {
                     int xDongleSource = ((isMoving() || wagTimer > 0) ? (16 * Math.Min(7, Math.Abs(((wagTimer > 0) ? (992 - wagTimer) : (Game1.currentGameTime.TotalGameTime.Milliseconds % 992)) - 496) / 62) % 64) : 48);
@@ -227,13 +224,13 @@ namespace StardewRoguelike.Bosses
                     if (hasSpecialItem.Value)
                         yDongleSource += 48;
 
-                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f, GetBoundingBox().Height - 24 * Scale + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 + 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) * Scale, new Microsoft.Xna.Framework.Rectangle(xDongleSource, 168 + yDongleSource, 16, 24), hasSpecialItem ? Color.White : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : (getStandingY() / 10000f + 0.0001f)));
+                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f, GetBoundingBox().Height - 24 * Scale + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 + 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) * Scale, new Microsoft.Xna.Framework.Rectangle(xDongleSource, 168 + yDongleSource, 16, 24), hasSpecialItem.Value ? Color.White : color.Value, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : (StandingPixel.Y / 10000f + 0.0001f)));
                 }
 
-                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + (new Vector2(32f, GetBoundingBox().Height / 2 + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 - 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) + facePosition) * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), new Microsoft.Xna.Framework.Rectangle(32 + ((readyToJump > 0 || focusedOnFarmers) ? 16 : 0), 120 + ((readyToJump < 0 && (focusedOnFarmers || invincibleCountdown > 0)) ? 24 : 0), 16, 24), Color.White * ((FacingDirection == 0) ? 0.5f : 1f), 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((getStandingY() + i * 2) / 10000f + 0.0001f)));
+                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + (new Vector2(32f, GetBoundingBox().Height / 2 + ((readyToJump <= 0) ? (4 * (-2 + Math.Abs(Sprite.currentFrame % 4 - 2))) : (4 - 4 * (Sprite.currentFrame % 4 % 3))) + yOffset) + facePosition.Value) * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), new Microsoft.Xna.Framework.Rectangle(32 + ((readyToJump > 0 || focusedOnFarmers) ? 16 : 0), 120 + ((readyToJump < 0 && (focusedOnFarmers || invincibleCountdown > 0)) ? 24 : 0), 16, 24), Color.White * ((FacingDirection == 0) ? 0.5f : 1f), 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, (float)Scale - 0.4f * (ageUntilFullGrown.Value / 120000f)), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((StandingPixel.Y + i * 2) / 10000f + 0.0001f)));
 
                 if (isGlowing)
-                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset), Sprite.SourceRect, glowingColor * glowingTransparency, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, Scale), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.99f : (getStandingY() / 10000f + 0.001f)));
+                    b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + stack_adjustment + new Vector2(32f * Scale, GetBoundingBox().Height / 2 * Scale + yOffset), Sprite.SourceRect, glowingColor * glowingTransparency, 0f, new Vector2(8f, 16f), 4f * Math.Max(0.2f, Scale), SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.99f : (StandingPixel.Y / 10000f + 0.001f)));
             }
         }
     }

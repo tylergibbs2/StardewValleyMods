@@ -100,13 +100,13 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(SpawnEggEvent, despawnEggEvent, OnAttackedEvent);
+            NetFields.AddField(SpawnEggEvent).AddField(despawnEggEvent).AddField(OnAttackedEvent);
             SpawnEggEvent.onEvent += SpawnEgg;
             despawnEggEvent.onEvent += DespawnEgg;
             OnAttackedEvent.onEvent += OnAttacked;
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName);
             Sprite.LoadTexture(TextureName);
@@ -127,7 +127,7 @@ namespace StardewRoguelike.Bosses
 
         public override void MovePosition(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
         {
-            if (CurrentState == State.Normal)
+            if (CurrentState.Value == State.Normal)
                 base.MovePosition(time, viewport, currentLocation);
         }
 
@@ -158,7 +158,7 @@ namespace StardewRoguelike.Bosses
                 {
                     if (CurrentMinionState.Value != MinionState.Normal)
                     {
-                        PreviousMinionState = CurrentMinionState;
+                        PreviousMinionState = CurrentMinionState.Value;
                         CurrentMinionState.Value = MinionState.Normal;
                         TicksToChangeMinions = 300;
                     }
@@ -172,11 +172,11 @@ namespace StardewRoguelike.Bosses
                         TicksToChangeMinions = Roguelike.HardMode ? 480 : 600;
                     }
 
-                    SetAllMinionStates(CurrentMinionState);
+                    SetAllMinionStates(CurrentMinionState.Value);
                 }
             }
 
-            if (CurrentState == State.Normal)
+            if (CurrentState.Value == State.Normal)
             {
                 base.behaviorAtGameTick(time);
 
@@ -186,18 +186,30 @@ namespace StardewRoguelike.Bosses
 
                     if (TicksToLayEgg == 0)
                     {
-                        do
+                        // There are ten spots and an egg is laid every two seconds,
+                        // while the only thing that frees one up is the player
+                        // breaking an egg. Once they are all taken the loop below has
+                        // no exit and the game hangs, so wait instead of searching for
+                        // a spot that does not exist.
+                        if (Eggs.Count >= EggSpawnLocations.Count)
                         {
-                            TargetEggSpot = EggSpawnLocations[Game1.random.Next(EggSpawnLocations.Count)];
-                        } while (Eggs.ContainsKey(TargetEggSpot));
+                            TicksToLayEgg = 60;
+                        }
+                        else
+                        {
+                            do
+                            {
+                                TargetEggSpot = EggSpawnLocations[Game1.random.Next(EggSpawnLocations.Count)];
+                            } while (Eggs.ContainsKey(TargetEggSpot));
 
-                        TicksToLayEgg = 120;
-                        CurrentState.Value = State.MovingToEgg;
-                        StateTickCount = 0;
+                            TicksToLayEgg = 120;
+                            CurrentState.Value = State.MovingToEgg;
+                            StateTickCount = 0;
+                        }
                     }
                 }
             }
-            else if (CurrentState == State.MovingToEgg)
+            else if (CurrentState.Value == State.MovingToEgg)
             {
                 Vector2 moveVector = (new Vector2(TargetEggSpot.X + 1, TargetEggSpot.Y + 1) * 64f) - GetBoundingBox().Center.ToVector2();
 
@@ -214,7 +226,7 @@ namespace StardewRoguelike.Bosses
                 Position += moveVector;
                 rotation = RoguelikeUtility.VectorToRadians(moveVector) + RoguelikeUtility.DegreesToRadians(90);
             }
-            else if (CurrentState == State.LayingEgg)
+            else if (CurrentState.Value == State.LayingEgg)
             {
                 if (StateTickCount > 120)
                 {
@@ -282,7 +294,7 @@ namespace StardewRoguelike.Bosses
                 if (Utility.isOnScreen(spawnLocation * 64f, 64))
                     spawnLocation.X -= Game1.viewport.Width / 64;
 
-                BigBugMinion minion = new(spawnLocation, Difficulty, CurrentMinionState);
+                BigBugMinion minion = new(spawnLocation, Difficulty, CurrentMinionState.Value);
                 minion.moveTowardPlayerThreshold.Value = 100;
                 minion.focusedOnFarmers = true;
                 currentLocation.characters.Add(minion);
@@ -302,7 +314,7 @@ namespace StardewRoguelike.Bosses
             while (bugsToSpawn > 0)
             {
                 tileLocation = new(tileLocation.X + 64 + Game1.random.Next(-32, 33), tileLocation.Y + 64 + Game1.random.Next(-32, 33));
-                BigBugMinion minion = new(tileLocation, Difficulty, CurrentMinionState);
+                BigBugMinion minion = new(tileLocation, Difficulty, CurrentMinionState.Value);
                 currentLocation.characters.Add(minion);
 
                 bugsToSpawn--;
@@ -337,7 +349,7 @@ namespace StardewRoguelike.Bosses
 
         protected override void updateAnimation(GameTime time)
         {
-            if (CurrentState == State.LayingEgg)
+            if (CurrentState.Value == State.LayingEgg)
             {
                 Sprite.currentFrame = 4;
                 Halt();
@@ -365,7 +377,7 @@ namespace StardewRoguelike.Bosses
 
         public override void shedChunks(int number, float scale)
         {
-            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, Sprite.SpriteHeight * 4, Sprite.SpriteWidth, Sprite.SpriteHeight), Sprite.SpriteWidth / 2, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, number, (int)getTileLocation().Y, Color.White, 4f);
+            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, Sprite.SpriteHeight * 4, Sprite.SpriteWidth, Sprite.SpriteHeight), Sprite.SpriteWidth / 2, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, number, (int)Tile.Y, Color.White, 4f);
         }
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)

@@ -50,7 +50,7 @@ namespace StardewRoguelike.Patches
                     continue;
                 }
                 Vector2 local = Game1.GlobalToLocal(drawPosition);
-                SpriteText.drawStringWithScrollCenteredAt(b, bubble.Text, (int)local.X, (int)local.Y, "", bubble.Alpha, -1, 1, (float)(drawPosition.Y / 10000f + 0.001f + drawPosition.X / 10000f));
+                SpriteText.drawStringWithScrollCenteredAt(b, bubble.Text, (int)local.X, (int)local.Y, "", bubble.Alpha, null, 1, (float)(drawPosition.Y / 10000f + 0.001f + drawPosition.X / 10000f));
 
                 if (bubble.Duration > 30)
                     bubble.Alpha = Math.Min(1f, bubble.Alpha + 0.1f);
@@ -76,7 +76,7 @@ namespace StardewRoguelike.Patches
                     continue;
                 }
                 Vector2 local = Game1.GlobalToLocal(drawPosition);
-                SpriteText.drawStringWithScrollCenteredAt(b, bubble.Text, (int)local.X, (int)local.Y, "", bubble.Alpha, -1, 1, (float)(drawPosition.Y / 10000f + 0.001f + drawPosition.X / 10000f));
+                SpriteText.drawStringWithScrollCenteredAt(b, bubble.Text, (int)local.X, (int)local.Y, "", bubble.Alpha, null, 1, (float)(drawPosition.Y / 10000f + 0.001f + drawPosition.X / 10000f));
 
                 if (bubble.Duration > 30)
                     bubble.Alpha = Math.Min(1f, bubble.Alpha + 0.1f);

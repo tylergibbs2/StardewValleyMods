@@ -80,7 +80,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             if (!Started)
             {
-                if (Game1.player.getTileX() >= XTileStart)
+                if (Game1.player.TilePoint.X >= XTileStart)
                     Started = true;
                 else
                     return;
@@ -92,11 +92,15 @@ namespace StardewRoguelike.ChallengeFloors
             if (msCounter >= 1000)
             {
                 SecondsTaken++;
-                msCounter = 0;
+
+                // Carry the overshoot instead of discarding it: at sixty frames a
+                // second this threw away about 17ms per second, so the recorded
+                // time ran short of the real one.
+                msCounter -= 1000;
             }
             msCounter += time.ElapsedGameTime.TotalMilliseconds;
 
-            if (Game1.player.getTileX() >= XTileEnd)
+            if (Game1.player.TilePoint.X >= XTileEnd)
                 GameOver(mine);
         }
 
@@ -133,10 +137,10 @@ namespace StardewRoguelike.ChallengeFloors
             Vector2 chestSpot = new(89, 11);
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
-                new SObject(384, goldAmount)
+                new SObject(gemReward.ToString(), 1),
+                new SObject("384", goldAmount)
             };
-            Chest chest = new(0, chestItems, chestSpot)
+            Chest chest = new(chestItems, chestSpot)
             {
                 Tint = Color.White
             };
@@ -227,7 +231,10 @@ namespace StardewRoguelike.ChallengeFloors
         private void SpawnSlimes(MineShaft mine)
         {
             int toSpawn = SlimesToSpawn;
-            while (toSpawn > 0)
+            // A tile has to be clear and well away from the start, so on a cramped
+            // floor there may be very few or none. Give up rather than spin.
+            int attempts = 0;
+            while (toSpawn > 0 && attempts++ < 2000)
             {
                 Vector2 tile = new(Roguelike.FloorRng.Next(mine.Map.Layers[0].LayerWidth), Roguelike.FloorRng.Next(mine.Map.Layers[0].LayerHeight));
                 if (!mine.isTileClearForMineObjects(tile) || mine.getDistanceFromStart((int)tile.X, (int)tile.Y) < 7)

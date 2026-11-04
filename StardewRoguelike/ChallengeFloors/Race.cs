@@ -29,7 +29,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddFields(floorSecondsLeft, wavesKilled);
+            NetFields.AddField(floorSecondsLeft).AddField(wavesKilled);
         }
 
         public override List<string> MapPaths => new() {
@@ -43,7 +43,7 @@ namespace StardewRoguelike.ChallengeFloors
             gameOver = true;
             mine.createLadderAt(ChallengeFloor.GetSpawnLocation(mine));
 
-            mine.characters.Filter(c => c is not Monster);
+            mine.characters.RemoveWhere(c => c is Monster);
 
             if (wavesKilled.Value == 0)
                 return;
@@ -52,7 +52,10 @@ namespace StardewRoguelike.ChallengeFloors
 
             // find adjacent free tile to spawn the chest
             Vector2 spawnLocation = ChallengeFloor.GetSpawnLocation(mine);
-            Vector2 chestSpot = Vector2.Zero;
+            // Falls back to the spawn tile itself: left at zero the reward chest is
+            // placed at the top-left corner of the map, where the player cannot
+            // reach it, and the floor is won with nothing to show for it.
+            Vector2 chestSpot = spawnLocation;
             for (int i = -1; i <= 1; i++)
             {
                 for (int j = -1; j <= 1; j++)
@@ -60,7 +63,7 @@ namespace StardewRoguelike.ChallengeFloors
                     if (i == 0 && j == 0)
                         continue;
 
-                    if (mine.isTileLocationTotallyClearAndPlaceable((int)spawnLocation.X + i, (int)spawnLocation.Y + j))
+                    if (mine.CanItemBePlacedHere(new Vector2((int)spawnLocation.X + i, (int)spawnLocation.Y + j)))
                     {
                         chestSpot = new((int)spawnLocation.X + i, (int)spawnLocation.Y + j);
                         break;
@@ -88,8 +91,8 @@ namespace StardewRoguelike.ChallengeFloors
 
             List<Item> chestItems = new()
             {
-                new SObject(gemReward, 1),
-                new SObject(384, goldAmount)
+                new SObject(gemReward.ToString(), 1),
+                new SObject("384", goldAmount)
             };
 
             mine.SpawnLocalChest(chestSpot, chestItems);

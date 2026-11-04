@@ -79,7 +79,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(Firing, CurrentState, CurrentAttack);
+            NetFields.AddField(Firing).AddField(CurrentState).AddField(CurrentAttack);
         }
 
         public override void MovePosition(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
@@ -192,7 +192,7 @@ namespace StardewRoguelike.Bosses
                                 Vector2 shot_velocity = new((float)Math.Cos(fire_angle), (float)Math.Sin(fire_angle));
                                 shot_velocity *= 11f;
 
-                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 1, 0.196349546f, shot_velocity.X, shot_velocity.Y, shot_origin, "", "", false, false, currentLocation, this, false, null);
+                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 1, 0.196349546f, shot_velocity.X, shot_velocity.Y, shot_origin, "", null, "", false, false, currentLocation, this, null);
                                 projectile.ignoreTravelGracePeriod.Value = true;
                                 projectile.IgnoreLocationCollision = true;
                                 projectile.ignoreMeleeAttacks.Value = true;
@@ -213,7 +213,7 @@ namespace StardewRoguelike.Bosses
                                     trajectory *= 12f;
                                 else
                                     trajectory *= 10f;
-                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 1, 0.196349546f, trajectory.X, trajectory.Y, shot_origin, "", "fireball", false, false, currentLocation, this, false, null);
+                                BasicProjectile projectile = new(DamageToFarmer, 10, 0, 1, 0.196349546f, trajectory.X, trajectory.Y, shot_origin, "", null, "fireball", false, false, currentLocation, this, null);
                                 projectile.ignoreMeleeAttacks.Value = true;
                                 projectile.ignoreTravelGracePeriod.Value = true;
                                 projectile.IgnoreLocationCollision = true;
@@ -245,7 +245,7 @@ namespace StardewRoguelike.Bosses
                     CurrentState.Value = State.Charging;
                 }
             }
-            else if (CurrentState == State.Charging)
+            else if (CurrentState.Value == State.Charging)
             {
                 if (DamageToFarmer == (int)(BossManager.GetBaseDamageToFarmer((MineShaft)currentLocation, GetType()) * Difficulty))
                     DamageToFarmer = (int)Math.Round(DamageToFarmer * 1.5f);
@@ -265,7 +265,7 @@ namespace StardewRoguelike.Bosses
             }
         }
 
-        public override void reloadSprite()
+        public override void reloadSprite(bool onlyAppearance = false)
         {
             Sprite = new(TextureName)
             {
@@ -283,10 +283,10 @@ namespace StardewRoguelike.Bosses
 
         public override void drawAboveAllLayers(SpriteBatch b)
         {
-            b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(64f, GetBoundingBox().Height), new Rectangle?(Game1.shadowTexture.Bounds), Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (getStandingY() - 1) / 10000f);
-            b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), Color.White, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((getStandingY() + 8) / 10000f)));
+            b.Draw(Game1.shadowTexture, getLocalPosition(Game1.viewport) + new Vector2(64f, GetBoundingBox().Height), new Rectangle?(Game1.shadowTexture.Bounds), Color.White, 0f, new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y), 4f, SpriteEffects.None, (StandingPixel.Y - 1) / 10000f);
+            b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), Color.White, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale.Value * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((StandingPixel.Y + 8) / 10000f)));
             if (isGlowing)
-                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), glowingColor * glowingTransparency, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((getStandingY() + 8) / 10000f + 0.0001f)));
+                b.Draw(Sprite.Texture, getLocalPosition(Game1.viewport) + new Vector2(Sprite.SpriteWidth * 2, (GetBoundingBox().Height / 2)), new Rectangle?(Sprite.SourceRect), glowingColor * glowingTransparency, rotation, new Vector2(Sprite.SpriteWidth / 2, Sprite.SpriteHeight / 2), scale.Value * 4f, flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, Math.Max(0f, drawOnTop ? 0.991f : ((StandingPixel.Y + 8) / 10000f + 0.0001f)));
         }
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)

@@ -47,9 +47,33 @@ namespace StardewRoguelike
                 Following = null;
         }
 
+        /// <summary>
+        /// Drops what spectating holds onto when a run ends.
+        ///
+        /// ExitSpectatorMode returns early outside multiplayer and does a lot more
+        /// besides; this is just the part that has to happen when the roguelike
+        /// hands the game back, so a Farmer from an unloaded save is not kept alive.
+        /// </summary>
+        public static void Reset()
+        {
+            Following = null;
+            FollowingToolbar = null;
+
+            // Only PopItems clears these, and a run that ends while the player is
+            // dead never reaches it. Left behind, they are items from an unloaded
+            // save that the next run's first PopItems would hand to a new farmer.
+            StoredItems.Clear();
+            Game1.onScreenMenus = Game1.onScreenMenus.Where(m => m is not SpectateToolbar).ToList();
+        }
+
         public static void ExitSpectatorMode(int? level = null)
         {
-            if (!Context.IsMultiplayer)
+            // Deliberately not guarded on Context.IsMultiplayer. That is
+            // otherFarmers.Count > 0, so it turns false the moment the other player
+            // disconnects - which is a moment when someone may well be spectating,
+            // with their whole inventory held in StoredItems. Returning early there
+            // skipped PopItems and the items were gone for good.
+            if (!Game1.player.get_FarmerIsSpectating().Value && StoredItems.Count == 0)
                 return;
 
             Game1.player.get_FarmerIsSpectating().Value = false;
@@ -276,8 +300,8 @@ namespace StardewRoguelike
 
                         if (Following.currentLocation != myLocation)
                         {
-                            Game1.xLocationAfterWarp = Following.getTileX();
-                            Game1.yLocationAfterWarp = Following.getTileY();
+                            Game1.xLocationAfterWarp = Following.TilePoint.X;
+                            Game1.yLocationAfterWarp = Following.TilePoint.Y;
                             SendToLocation(Following.currentLocation);
                         }
                         else
@@ -322,6 +346,12 @@ namespace StardewRoguelike
                 if (newTarget != Following)
                 {
                     Following = newTarget;
+
+                    // The outgoing toolbar is not removed by anything else, and it
+                    // keeps being updated and drawn - and keeps its Farmer alive -
+                    // for as long as spectating lasts.
+                    Game1.onScreenMenus = Game1.onScreenMenus.Where(menu => menu is not SpectateToolbar).ToList();
+
                     FollowingToolbar = new SpectateToolbar(Following);
                     Game1.onScreenMenus.Add(FollowingToolbar);
                     return;

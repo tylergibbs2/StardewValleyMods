@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
 using System;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
@@ -12,7 +11,7 @@ namespace StardewRoguelike.Patches
     {
 		public static bool Prefix(MineShaft __instance)
         {
-			Random mineRandom = (Random)__instance.GetType().GetField("mineRandom", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(__instance)!;
+			Random mineRandom = __instance.mineRandom;
 
 			if (!(mineRandom.NextDouble() < 0.55))
 				return false;
@@ -20,9 +19,9 @@ namespace StardewRoguelike.Patches
 			Vector2 endPoint = __instance.getRandomTile();
 			for (int tries = 0; tries < 1 || mineRandom.NextDouble() < 0.25; tries++)
 			{
-				if (__instance.isTileLocationTotallyClearAndPlaceable(endPoint) && __instance.isTileOnClearAndSolidGround(endPoint) && __instance.doesTileHaveProperty((int)endPoint.X, (int)endPoint.Y, "Diggable", "Back") is null)
+				if (__instance.CanItemBePlacedHere(endPoint) && __instance.isTileOnClearAndSolidGround(endPoint) && __instance.doesTileHaveProperty((int)endPoint.X, (int)endPoint.Y, "Diggable", "Back") is null)
 				{
-                    SObject ore = new(endPoint, 764, "Stone", canBeSetDown: true, canBeGrabbed: false, isHoedirt: false, isSpawnedObject: false);
+                    SObject ore = new("764", 1) { TileLocation = endPoint };
 					ore.MinutesUntilReady = 8;
 					Utility.recursiveObjectPlacement(ore, (int)endPoint.X, (int)endPoint.Y, 0.949999988079071, 0.30000001192092896, __instance, "Dirt", (ore.ParentSheetIndex == 668) ? 1 : 0, 0.05000000074505806, (ore.ParentSheetIndex != 668) ? 1 : 2);
 				}

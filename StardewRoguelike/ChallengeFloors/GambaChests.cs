@@ -43,8 +43,8 @@ namespace StardewRoguelike.ChallengeFloors
             foreach (Vector2 v in toRemove)
             {
                 Chest chest = mine.overlayObjects[v] as Chest;
-                Item chestItem = chest.items[0];
-                Sign sign = new(v, 39);
+                Item chestItem = chest.Items[0];
+                Sign sign = new(v, "39");
                 sign.displayItem.Value = chestItem;
                 sign.displayType.Value = chestItem is Ring ? 4 : 1;
                 mine.overlayObjects[v] = sign;

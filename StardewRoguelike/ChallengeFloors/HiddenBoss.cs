@@ -45,7 +45,7 @@ namespace StardewRoguelike.ChallengeFloors
         public void SpawnReward(MineShaft mine)
         {
             mine.playSound("discoverMineral");
-            mine.SpawnLocalChest(new(17, 35), new SObject(74, 1));
+            mine.SpawnLocalChest(new(17, 35), new SObject("74", 1));
             mine.projectiles.Clear();
         }
 

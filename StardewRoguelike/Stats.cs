@@ -5,28 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 
 namespace StardewRoguelike
 {
     /// <summary>
-    /// The API response schema that we receive
-    /// from the uploading server.
-    /// </summary>
-    public class StatsAPIResponse
-    {
-        public int status { get; set; }
-
-        public string? result { get; set; } = null;
-
-        public string? error { get; set; } = null;
-    }
-
-    /// <summary>
-    /// Stores the statistics for a run and also has methods
-    /// for printing and uploading the statistics online.
+    /// Stores the statistics for a run and the methods for printing them.
     /// </summary>
     public class Stats
     {
@@ -133,83 +117,6 @@ namespace StardewRoguelike
 
             return lines;
         }
-
-        /// <summary>
-        /// Uploads the statistics data online.
-        /// </summary>
-        /// <returns>True if success, False otherwise.</returns>
-        public bool Upload()
-        {
-            string statsJson = JsonSerializer.Serialize(this);
-
-            ModEntry.ModMonitor.Log($"Upload request content: {statsJson}", LogLevel.Debug);
-
-            HttpRequestMessage request = new(
-                HttpMethod.Post,
-                $"{ModEntry.WebsiteBaseUrl}/api/runs"
-            )
-            {
-                Content = new StringContent(
-                    statsJson,
-                    encoding: Encoding.UTF8,
-                    mediaType: "application/json"
-                )
-            };
-
-            HttpResponseMessage response;
-            try
-            {
-                response = ModEntry.WebClient.Send(request);
-            }
-            catch (HttpRequestException e)
-            {
-                ModEntry.ModMonitor.Log($"Server error when sending request: {e.Message}", LogLevel.Error);
-                return false;
-            }
-            using var reader = new StreamReader(response.Content.ReadAsStream());
-
-            string responseText = reader.ReadToEnd();
-            ModEntry.ModMonitor.Log($"Upload response text: {responseText}", LogLevel.Trace);
-            StatsAPIResponse? runIdResponse = null;
-            try
-            {
-                runIdResponse = JsonSerializer.Deserialize<StatsAPIResponse>(responseText);
-            }
-            catch (JsonException e)
-            {
-                ModEntry.ModMonitor.Log($"JSON Error when deserializing upload response: {e.Message}", LogLevel.Error);
-                return false;
-            }
-
-            if (runIdResponse is null)
-            {
-                ModEntry.ModMonitor.Log("JSON Error when deserializing upload response: deserialized response is null", LogLevel.Error);
-                return false;
-            }
-            else if (runIdResponse.error is not null)
-            {
-                ModEntry.ModMonitor.Log($"Server error when receiving response: {runIdResponse.error}", LogLevel.Error);
-                return false;
-            }
-            else if (runIdResponse.result is not null)
-            {
-                string runId = runIdResponse.result;
-                ModEntry.ModMonitor.Log($"Run successfully uploaded, ID is '{runId}'", LogLevel.Debug);
-                var ps = new ProcessStartInfo($"{ModEntry.WebsiteBaseUrl}/claim?id={runId}")
-                {
-                    UseShellExecute = true,
-                    Verb = "open"
-                };
-                Process.Start(ps);
-                return true;
-            }
-            else
-            {
-                ModEntry.ModMonitor.Log("An unknown error occured when uploading the run.", LogLevel.Error);
-                return false;
-            }
-        }
-
         /// <summary>
         /// Event handler for checking if certain stats have changed.
         /// This handles checking for gold and HP differences.

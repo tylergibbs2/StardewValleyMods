@@ -1,11 +1,12 @@
 ﻿using StardewValley.Monsters;
 using StardewValley;
+using StardewValley.Enchantments;
 
 namespace StardewRoguelike.Enchantments
 {
     public class SlimeKillerEnchantment : BaseWeaponEnchantment
     {
-        protected override void _OnDealDamage(Monster monster, GameLocation location, Farmer who, ref int amount)
+        public override void OnCalculateDamage(Monster monster, GameLocation location, Farmer who, bool fromBomb, ref int amount)
         {
             if (monster is GreenSlime || monster is BigSlime)
                 amount = (int)(amount * 2f);

@@ -123,7 +123,7 @@ namespace StardewValley.Menus
             switch (result)
             {
                 case SpinResult.Gold:
-                    Game1.player.addItemByMenuIfNecessary(new SObject(384, 15));
+                    Game1.player.addItemByMenuIfNecessary(new SObject("384", 15));
                     break;
                 case SpinResult.Monsters:
 
@@ -131,7 +131,7 @@ namespace StardewValley.Menus
                     if (Curse.AnyFarmerHasCurse(CurseType.MoreEnemiesLessHealth))
                         monstersToSpawn += 2;
 
-                    Vector2 playerLocation = Game1.player.getTileLocation();
+                    Vector2 playerLocation = Game1.player.Tile;
 
                     while (monstersToSpawn > 0)
                     {
@@ -139,7 +139,7 @@ namespace StardewValley.Menus
                             playerLocation.X + Game1.random.Next(-6, 6),
                             playerLocation.Y + Game1.random.Next(-6, 6)
                         );
-                        if (!mine.isTileLocationTotallyClearAndPlaceable((int)randomTile.X, (int)randomTile.Y))
+                        if (!mine.CanItemBePlacedHere(new Vector2((int)randomTile.X, (int)randomTile.Y)))
                             continue;
 
                         Monster monster = mine.BuffMonsterIfNecessary(mine.getMonsterForThisLevel(mine.mineLevel, (int)randomTile.X, (int)randomTile.Y));

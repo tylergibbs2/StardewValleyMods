@@ -1,4 +1,5 @@
 using HarmonyLib;
+using StardewValley.Pathfinding;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewRoguelike.Extensions;
@@ -94,7 +95,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddFields(Invincible, Charging, ThrowingAnim);
+            NetFields.AddField(Invincible).AddField(Charging).AddField(ThrowingAnim);
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -190,9 +191,9 @@ namespace StardewRoguelike.Bosses
                 }
             }
 
-            if (!SpottedPlayer && Utility.doesPointHaveLineOfSightInMine(currentLocation, getTileLocation(), Player.getTileLocation(), 8))
+            if (!SpottedPlayer && Utility.doesPointHaveLineOfSightInMine(currentLocation, Tile, Player.Tile, 8))
             {
-                controller = new PathFindController(this, currentLocation, new(Player.getStandingX() / 64, Player.getStandingY() / 64), -1, null, 200);
+                controller = new PathFindController(this, currentLocation, new(Player.StandingPixel.X / 64, Player.StandingPixel.Y / 64), -1, null, 200);
                 SpottedPlayer = true;
                 if (controller is null || controller.pathToEndPoint is null || controller.pathToEndPoint.Count == 0)
                 {
@@ -281,7 +282,7 @@ namespace StardewRoguelike.Bosses
                         ThrowingAnim.Value = true;
                         FrostBoltsToThrow = SpawnedMages ? 5 : 3;
                         if (Roguelike.HardMode)
-                            BonesToThrow += 2;
+                            FrostBoltsToThrow += 2;
                         NextFrostBolt = 20;
                     }
                     else
@@ -341,16 +342,16 @@ namespace StardewRoguelike.Bosses
 
         public void FreezeAOE(int radius)
         {
-            Vector2 tileLocation = getTileLocation();
+            Vector2 tileLocation = Tile;
             Vector2 currentTile = new(Math.Min(currentLocation.map.Layers[0].LayerWidth - 1, Math.Max(0f, tileLocation.X - radius)), Math.Min(currentLocation.map.Layers[0].LayerHeight - 1, Math.Max(0f, tileLocation.Y - radius)));
 
             Rectangle areaOfEffect = new((int)(tileLocation.X - radius) * 64, (int)(tileLocation.Y - radius) * 64, (radius * 2 + 1) * 64, (radius * 2 + 1) * 64);
 
-            List<TemporaryAnimatedSprite> sprites = new()
+            TemporaryAnimatedSpriteList sprites = new()
             {
                 new TemporaryAnimatedSprite(23, 9999f, 6, 1, new Vector2(currentTile.X * 64f, currentTile.Y * 64f), flicker: false, (Game1.random.NextDouble() < 0.5))
                 {
-                    light = true,
+                    lightId = $"{ModEntry.ModId}_Skelly_{Game1.random.Next()}",
                     lightRadius = radius,
                     lightcolor = Color.Black,
                     alphaFade = 0.03f - radius * 0.003f,
@@ -360,9 +361,8 @@ namespace StardewRoguelike.Bosses
             MethodInfo rumbleAndFade = currentLocation.GetType().BaseType!.GetMethod("rumbleAndFade", BindingFlags.Instance | BindingFlags.NonPublic)!;
             rumbleAndFade.Invoke(currentLocation, new object[] { 300 + radius * 100 });
 
-            currentLocation.debuffPlayers(areaOfEffect, 19);
+            currentLocation.debuffPlayers(areaOfEffect, Buff.frozen);
 
-            Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
             int startingI = (int)(tileLocation.X - radius) * 64;
             int startingJ = (int)(tileLocation.Y - radius) * 64;
@@ -379,7 +379,7 @@ namespace StardewRoguelike.Bosses
                 }
             }
 
-            multiplayer.broadcastSprites(currentLocation, sprites);
+            RoguelikeUtility.MultiplayerInstance.broadcastSprites(currentLocation, sprites);
         }
 
         public void SpawnBoneCircles()
@@ -394,7 +394,7 @@ namespace StardewRoguelike.Bosses
                     for (int yOffset = -64; yOffset <= 64; yOffset += 128)
                     {
                         CircularProjectile proj = new(
-                            (int)(DamageToFarmer * Difficulty),
+                            (int)(DamageToFarmer),
                             4,
                             0,
                             0,
@@ -408,7 +408,6 @@ namespace StardewRoguelike.Bosses
                             false,
                             currentLocation,
                             this,
-                            false,
                             null!
                         );
                         currentLocation.projectiles.Add(proj);
@@ -438,7 +437,7 @@ namespace StardewRoguelike.Bosses
 
             float boneSpeed = SpawnedMages ? 10f : 8f;
             Vector2 v = Utility.getVelocityTowardPlayer(new Point((int)Position.X, (int)Position.Y), boneSpeed, Player);
-            BasicProjectile projectile = new((int)Math.Round(DamageToFarmer * Difficulty), 4, 0, 0, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), "skeletonHit", "skeletonStep", explode: false, damagesMonsters: false, currentLocation, this);
+            BasicProjectile projectile = new(DamageToFarmer, 4, 0, 0, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), "skeletonHit", null, "skeletonStep", explode: false, damagesMonsters: false, currentLocation, this);
             projectile.IgnoreLocationCollision = true;
             projectile.ignoreMeleeAttacks.Value = true;
             currentLocation.projectiles.Add(projectile);
@@ -448,7 +447,7 @@ namespace StardewRoguelike.Bosses
         {
             float boneSpeed = SpawnedMages ? 10f : 8f;
             Vector2 v = Utility.getVelocityTowardPlayer(new Point((int)Position.X, (int)Position.Y), boneSpeed, Player);
-            BasicProjectile projectile = new((int)Math.Round(DamageToFarmer * Difficulty), 9, 0, 4, 0f, v.X, v.Y, new Vector2(Position.X, Position.Y), "flameSpellHit", "flameSpell", explode: false, damagesMonsters: false, currentLocation, this);
+            BasicProjectile projectile = new(DamageToFarmer, 9, 0, 4, 0f, v.X, v.Y, new Vector2(Position.X, Position.Y), "flameSpellHit", null, "flameSpell", explode: false, damagesMonsters: false, currentLocation, this);
             projectile.IgnoreLocationCollision = true;
             projectile.ignoreMeleeAttacks.Value = true;
             currentLocation.projectiles.Add(projectile);
@@ -463,7 +462,7 @@ namespace StardewRoguelike.Bosses
 
         public override void shedChunks(int number)
         {
-            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, Sprite.SpriteHeight * 4, Sprite.SpriteWidth, Sprite.SpriteWidth), 8, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, number, (int)getTileLocation().Y, Color.White, 4f);
+            Game1.createRadialDebris(currentLocation, Sprite.textureName.Value, new Rectangle(0, Sprite.SpriteHeight * 4, Sprite.SpriteWidth, Sprite.SpriteWidth), 8, GetBoundingBox().Center.X, GetBoundingBox().Center.Y, number, (int)Tile.Y, Color.White, 4f);
         }
 
         public override int takeDamage(int damage, int xTrajectory, int yTrajectory, bool isBomb, double addedPrecision, Farmer who)
@@ -474,7 +473,7 @@ namespace StardewRoguelike.Bosses
                 currentLocation.playSound("crafting");
                 return 0;
             }
-            if (Game1.random.NextDouble() < missChance - missChance * addedPrecision)
+            if (Game1.random.NextDouble() < missChance.Value - missChance.Value * addedPrecision)
                 actualDamage = -1;
             else
             {

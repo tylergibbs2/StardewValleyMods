@@ -3,17 +3,16 @@ using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Objects;
 using System;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
     [HarmonyPatch(typeof(SObject), "cutWeed")]
     internal class NoWeedDropsPatch
     {
-        public static bool Prefix(SObject __instance, Farmer who, GameLocation? location = null)
+        public static bool Prefix(SObject __instance, Farmer who)
         {
-            if (location is null && who is not null)
-                location = who.currentLocation;
+            // 1.6 dropped the GameLocation parameter; placed objects carry their own Location.
+            GameLocation? location = __instance.Location ?? who?.currentLocation;
             if (location is null)
                 return true;
 
@@ -22,7 +21,6 @@ namespace StardewRoguelike.Patches
 			int animation = 50;
 			__instance.Fragility = 2;
 
-			Multiplayer multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
 
 			switch (__instance.ParentSheetIndex)
 			{
@@ -72,20 +70,20 @@ namespace StardewRoguelike.Patches
 			}
 
 			location.playSound(sound);
-			multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f, c));
-			multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-48, 48)), c * 0.75f)
+			RoguelikeUtility.MultiplayerInstance.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f, c));
+			RoguelikeUtility.MultiplayerInstance.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-48, 48)), c * 0.75f)
 			{
 				scale = 0.75f,
 				flipped = true
 			});
 
-			multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-48, 48)), c * 0.75f)
+			RoguelikeUtility.MultiplayerInstance.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-48, 48)), c * 0.75f)
 			{
 				scale = 0.75f,
 				delayBeforeAnimationStart = 50
 			});
 
-			multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-48, 48)), c * 0.75f)
+			RoguelikeUtility.MultiplayerInstance.broadcastSprites(location, new TemporaryAnimatedSprite(animation, __instance.TileLocation * 64f + new Vector2(Game1.random.Next(-16, 16), Game1.random.Next(-48, 48)), c * 0.75f)
 			{
 				scale = 0.75f,
 				flipped = true,
@@ -95,7 +93,7 @@ namespace StardewRoguelike.Patches
 			if (!sound.Equals("breakingGlass"))
 			{
 				if (Game1.random.NextDouble() < 0.001)
-					location.debris.Add(new Debris(new Hat(40), __instance.TileLocation * 64f + new Vector2(32f, 32f)));
+					location.debris.Add(new Debris(new Hat("40"), __instance.TileLocation * 64f + new Vector2(32f, 32f)));
 			}
 
 			if (Game1.random.NextDouble() < 0.02)

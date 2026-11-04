@@ -1,23 +1,28 @@
 using HarmonyLib;
 using StardewValley;
 using StardewValley.Locations;
+using System;
 using xTile.Dimensions;
 
 namespace StardewRoguelike.Patches
 {
-    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performAction))]
+    // 1.6 split performAction into a raw-string overload that defers to this one, so
+    // the args arrive already tokenized.
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performAction), new Type[] { typeof(string[]), typeof(Farmer), typeof(Location) })]
     internal class PerformActionPatch
     {
-        public static bool Prefix(GameLocation __instance, ref bool __result, string action, Farmer who, Location tileLocation)
+        public static bool Prefix(GameLocation __instance, ref bool __result, string[] action, Farmer who, Location tileLocation)
         {
-            if (action is not null && who.IsLocalPlayer)
+            if (action is not null && action.Length > 0 && who.IsLocalPlayer)
             {
                 bool result = false;
-                string[] actionParams = action.Split(' ');
+                string[] actionParams = action;
                 switch (actionParams[0])
                 {
                     case "Buy":
-                        __result = __instance.openShopMenu(actionParams[1]);
+                        // openShopMenu is gone in 1.6; the roguelike's own shop names
+                        // are dispatched by the mod instead.
+                        __result = actionParams.Length > 1 && Merchant.TryOpenShop(__instance, actionParams[1]);
                         return false;
                 }
 
@@ -25,7 +30,7 @@ namespace StardewRoguelike.Patches
                 {
                     result = Merchant.PerformAction(mine, actionParams[0], Game1.player, tileLocation);
                     if (!result && ChallengeFloor.IsChallengeFloor(mine))
-                        result = ChallengeFloor.PerformAction(mine, action, Game1.player, tileLocation);
+                        result = ChallengeFloor.PerformAction(mine, string.Join(' ', action), Game1.player, tileLocation);
 
                     if (result)
                     {

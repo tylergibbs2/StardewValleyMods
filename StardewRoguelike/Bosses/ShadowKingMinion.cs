@@ -84,7 +84,7 @@ namespace StardewRoguelike.Bosses
                             shot_velocity *= projectileSpeed;
                             fireEvent.Fire();
                             currentLocation.playSound(fireSound);
-                            BasicProjectile projectile = new((int)(DamageToFarmer * Difficulty), firedProjectile, 0, 0, 0f, shot_velocity.X, shot_velocity.Y, Position, "", "", explode: false, damagesMonsters: false, base.currentLocation, this);
+                            BasicProjectile projectile = new((int)(DamageToFarmer * Difficulty), firedProjectile, 0, 0, 0f, shot_velocity.X, shot_velocity.Y, Position, "", null, "", explode: false, damagesMonsters: false, base.currentLocation, this);
                             projectile.startingRotation.Value = starting_rotation;
                             projectile.height.Value = 24f;
                             projectile.debuff.Value = projectileDebuff;
