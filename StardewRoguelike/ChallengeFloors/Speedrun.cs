@@ -92,7 +92,11 @@ namespace StardewRoguelike.ChallengeFloors
             if (msCounter >= 1000)
             {
                 SecondsTaken++;
-                msCounter = 0;
+
+                // Carry the overshoot instead of discarding it: at sixty frames a
+                // second this threw away about 17ms per second, so the recorded
+                // time ran short of the real one.
+                msCounter -= 1000;
             }
             msCounter += time.ElapsedGameTime.TotalMilliseconds;
 

@@ -148,7 +148,10 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override void Update(MineShaft mine, GameTime time)
         {
-            if (!Context.IsMainPlayer || gameOver)
+            // Every other timed floor stops its clock here. Without it the
+            // countdown drains while a chest is open, dialogue is up or the player
+            // is eating, so the floor can be lost from inside a menu.
+            if (!Context.IsMainPlayer || gameOver || !Game1.shouldTimePass())
                 return;
 
             if (!spawnedMonsters)

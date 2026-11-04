@@ -58,6 +58,11 @@ namespace StardewRoguelike
         {
             Following = null;
             FollowingToolbar = null;
+
+            // Only PopItems clears these, and a run that ends while the player is
+            // dead never reaches it. Left behind, they are items from an unloaded
+            // save that the next run's first PopItems would hand to a new farmer.
+            StoredItems.Clear();
             Game1.onScreenMenus = Game1.onScreenMenus.Where(m => m is not SpectateToolbar).ToList();
         }
 
@@ -336,6 +341,12 @@ namespace StardewRoguelike
                 if (newTarget != Following)
                 {
                     Following = newTarget;
+
+                    // The outgoing toolbar is not removed by anything else, and it
+                    // keeps being updated and drawn - and keeps its Farmer alive -
+                    // for as long as spectating lasts.
+                    Game1.onScreenMenus = Game1.onScreenMenus.Where(menu => menu is not SpectateToolbar).ToList();
+
                     FollowingToolbar = new SpectateToolbar(Following);
                     Game1.onScreenMenus.Add(FollowingToolbar);
                     return;

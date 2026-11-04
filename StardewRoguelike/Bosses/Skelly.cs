@@ -282,7 +282,7 @@ namespace StardewRoguelike.Bosses
                         ThrowingAnim.Value = true;
                         FrostBoltsToThrow = SpawnedMages ? 5 : 3;
                         if (Roguelike.HardMode)
-                            BonesToThrow += 2;
+                            FrostBoltsToThrow += 2;
                         NextFrostBolt = 20;
                     }
                     else

@@ -258,6 +258,14 @@ namespace StardewRoguelike.Bosses
                 if (Health <= MaxHealth * 0.66f)
                 {
                     currentLocation.netAudio.StopPlaying("fuse");
+
+                    // Cancelling the fuse has to undo what starting it did. Without
+                    // the glow being stopped the boss stays red for the rest of the
+                    // fight, and without resetting this the explosion cooldown is
+                    // still spent, so the next hit detonates another one instantly.
+                    stopGlowing();
+                    TicksSinceLastExplosion = 0;
+
                     TicksToExplode = 0;
                     TicksToArrowVolley = 0;
 

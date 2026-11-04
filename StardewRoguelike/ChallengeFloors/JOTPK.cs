@@ -204,7 +204,10 @@ namespace StardewRoguelike.ChallengeFloors
                         if (i == 0)
                             continue;
 
-                        ticksToSpawnEnemies /= 2;
+                        // Integer division, once per extra player. Reaching zero would
+                // stop the spawner for good, since it only re-arms from its own
+                // countdown.
+                ticksToSpawnEnemies = Math.Max(1, ticksToSpawnEnemies / 2);
                     }
                 }
             }

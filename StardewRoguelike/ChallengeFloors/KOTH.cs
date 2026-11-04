@@ -60,6 +60,9 @@ namespace StardewRoguelike.ChallengeFloors
 
         private Texture2D kothBoxProgressTexture = null!;
 
+        /// <summary>The progress the bar texture was last built for.</summary>
+        private int builtProgress = -1;
+
         private readonly Texture2D kothBoxTexture;
 
         private readonly List<Rectangle> possibleBoxes = new() { };
@@ -138,6 +141,15 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void MakeBoxProgressBar(int Progress, int MaxProgress)
         {
+            // Drawn from the HUD every frame, but the timer behind it only moves
+            // every fifteen ticks. Rebuilding regardless meant sixty of these a
+            // second, each one replacing the last without releasing it.
+            if (Progress == builtProgress && kothBoxProgressTexture is not null)
+                return;
+
+            builtProgress = Progress;
+            kothBoxProgressTexture?.Dispose();
+
             kothBoxProgressTexture = new Texture2D(Game1.graphics.GraphicsDevice, 1000.ToUIScale(), 30.ToUIScale());
             Color[] data = new Color[kothBoxProgressTexture.Width * kothBoxProgressTexture.Height];
             kothBoxProgressTexture.GetData(data);
@@ -376,6 +388,11 @@ namespace StardewRoguelike.ChallengeFloors
         {
             ModEntry.Events.Display.RenderedWorld -= OnRenderedWorld;
             ModEntry.Events.Display.RenderedHud -= RenderProgressBar;
+
+            // The only textures the mod owns outright; nothing else frees them.
+            kothBoxProgressTexture?.Dispose();
+            kothBoxProgressTexture = null!;
+            kothBoxTexture?.Dispose();
         }
     }
 }
