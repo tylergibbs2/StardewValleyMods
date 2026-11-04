@@ -43,6 +43,12 @@ namespace StardewRoguelike.Bosses
         {
             List<Vector2> positions = new();
 
+            // Each point is only taken once, so asking for more than the perimeter
+            // holds would spin forever looking for one that is left. Callers ask for
+            // twenty at most against a perimeter of eighty-eight, but the cost of
+            // being wrong here is a frozen game rather than a wrong number.
+            amount = Math.Min(amount, Perimeter);
+
             while (amount > 0)
             {
                 Vector2 pos;

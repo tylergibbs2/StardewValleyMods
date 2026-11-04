@@ -186,14 +186,26 @@ namespace StardewRoguelike.Bosses
 
                     if (TicksToLayEgg == 0)
                     {
-                        do
+                        // There are ten spots and an egg is laid every two seconds,
+                        // while the only thing that frees one up is the player
+                        // breaking an egg. Once they are all taken the loop below has
+                        // no exit and the game hangs, so wait instead of searching for
+                        // a spot that does not exist.
+                        if (Eggs.Count >= EggSpawnLocations.Count)
                         {
-                            TargetEggSpot = EggSpawnLocations[Game1.random.Next(EggSpawnLocations.Count)];
-                        } while (Eggs.ContainsKey(TargetEggSpot));
+                            TicksToLayEgg = 60;
+                        }
+                        else
+                        {
+                            do
+                            {
+                                TargetEggSpot = EggSpawnLocations[Game1.random.Next(EggSpawnLocations.Count)];
+                            } while (Eggs.ContainsKey(TargetEggSpot));
 
-                        TicksToLayEgg = 120;
-                        CurrentState.Value = State.MovingToEgg;
-                        StateTickCount = 0;
+                            TicksToLayEgg = 120;
+                            CurrentState.Value = State.MovingToEgg;
+                            StateTickCount = 0;
+                        }
                     }
                 }
             }

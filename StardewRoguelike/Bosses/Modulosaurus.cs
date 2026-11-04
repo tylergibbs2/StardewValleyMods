@@ -220,7 +220,11 @@ namespace StardewRoguelike.Bosses
             else if (IsAttacking())
                 return;
 
-            int attack = 0;
+            // -1 is the sentinel the loop below tests for. Starting at 0 meant the
+            // loop was skipped whenever 0 was not in the recent history, so attack 0
+            // was chosen outright instead of being rolled for - and it was chosen
+            // even while a meteor strike was active, which the roll exists to avoid.
+            int attack = -1;
             while (attack == -1 || AttackHistory.Contains(attack))
             {
                 if (MeteorStrikeTicksLeft > 0)
@@ -333,8 +337,10 @@ namespace StardewRoguelike.Bosses
 
             FacingDirection = 2;
 
+            // Keep trying for a hundred open tiles, but give up rather than hang if
+            // the arena has few or none left to find.
             List<Vector2> randomTiles = new();
-            while (randomTiles.Count < 100)
+            for (int attempt = 0; attempt < 2000 && randomTiles.Count < 100; attempt++)
             {
                 Vector2 randomTile = currentLocation.getRandomTile();
                 if (currentLocation.isTileLocationOpen(new xTile.Dimensions.Location((int)randomTile.X, (int)randomTile.Y)))
