@@ -28,6 +28,10 @@ namespace StardewRoguelike.Netcode
         public NetChest()
         {
             NetFields = new(NetFields.GetNameForInstance(this));
+            // Claim ownership before registering anything: 1.6 names fields in
+            // network error logs after their owner, and warns for every field added
+            // without one.
+            NetFields.SetOwner(this);
             InitNetFields();
         }
 

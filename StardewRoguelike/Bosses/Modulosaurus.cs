@@ -83,9 +83,10 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
+            base.initNetFields();
             NetFields.AddField(MeteorStrikeWarningEvent);
             MeteorStrikeWarningEvent.onEvent += MeteorStrikeWarning;
-            base.initNetFields();
+
         }
 
         public override void update(GameTime time, GameLocation location)

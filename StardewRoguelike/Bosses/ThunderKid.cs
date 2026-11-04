@@ -93,11 +93,12 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
+            base.initNetFields();
             NetFields.AddField(LightningStrikeEvent).AddField(LightningStrikeWarningEvent).AddField(OnAttackedNetEvent).AddField(Charging);
             LightningStrikeEvent.onEvent += LightningStrike;
             LightningStrikeWarningEvent.onEvent += LightningStrikeWarning;
             OnAttackedNetEvent.onEvent += OnAttacked;
-            base.initNetFields();
+
         }
 
         public override void update(GameTime time, GameLocation location)

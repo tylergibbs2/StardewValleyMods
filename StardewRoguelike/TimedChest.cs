@@ -15,17 +15,14 @@ namespace StardewRoguelike
 
         public long SecondsLeft { get; set; }
 
-        public TimedChest() : base()
-        {
-            initNetFields();
-        }
+        // No initNetFields() here: Item's constructor already calls it virtually,
+        // and calling it again registers every field a second time.
+        public TimedChest() : base() { }
 
         public TimedChest(long mustOpenBy, List<Item> items, Vector2 tileLocation) : base(items, tileLocation)
         {
             MustOpenBy.Value = mustOpenBy;
             SecondsLeft = MustOpenBy.Value - ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
-
-            initNetFields();
         }
 
         protected override void initNetFields()

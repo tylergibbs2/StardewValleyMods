@@ -166,8 +166,9 @@ namespace StardewRoguelike.Bosses
 
         protected override void initNetFields()
         {
-            NetFields.AddField(Encountered);
             base.initNetFields();
+            NetFields.AddField(Encountered);
+
         }
 
         public override void reloadSprite(bool onlyAppearance = false)
