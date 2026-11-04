@@ -89,16 +89,19 @@ jobs:
           entry=$(jq -c --arg mod "$MOD" '.[$mod] // empty' .github/nexus-mods.json)
           [ -n "$entry" ] || { echo "::error::$MOD has no entry in .github/nexus-mods.json"; exit 1; }
 
+          page_id=$(jq -r '.page_id // empty' <<<"$entry")
           mod_id=$(jq -r '.mod_id // empty' <<<"$entry")
           file_id=$(jq -r '.file_id // empty' <<<"$entry")
 
-          if [ -z "$file_id" ]; then
-            echo "::error::$MOD has no file_id in .github/nexus-mods.json."
-            echo "::error::Get it from the mod page's Files tab with 'Advanced' enabled, then commit it."
-            exit 1
-          fi
+          for field in page_id mod_id file_id; do
+            if [ -z "${!field}" ]; then
+              echo "::error::$MOD has no $field in .github/nexus-mods.json (see the _comment there for how to derive it)."
+              exit 1
+            fi
+          done
 
           {
+            echo "page_id=$page_id"
             echo "mod_id=$mod_id"
             echo "file_id=$file_id"
           } >> "$GITHUB_OUTPUT"
@@ -191,5 +194,5 @@ jobs:
             echo
             echo "- tag: \`${{ steps.meta.outputs.tag }}\`"
             echo "- release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}"
-            echo "- nexus: https://www.nexusmods.com/stardewvalley/mods/${{ steps.nexus.outputs.mod_id }}"
+            echo "- nexus: https://www.nexusmods.com/stardewvalley/mods/${{ steps.nexus.outputs.page_id }}"
           } >> "$GITHUB_STEP_SUMMARY"
