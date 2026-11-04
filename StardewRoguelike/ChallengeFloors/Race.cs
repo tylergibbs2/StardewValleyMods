@@ -52,7 +52,10 @@ namespace StardewRoguelike.ChallengeFloors
 
             // find adjacent free tile to spawn the chest
             Vector2 spawnLocation = ChallengeFloor.GetSpawnLocation(mine);
-            Vector2 chestSpot = Vector2.Zero;
+            // Falls back to the spawn tile itself: left at zero the reward chest is
+            // placed at the top-left corner of the map, where the player cannot
+            // reach it, and the floor is won with nothing to show for it.
+            Vector2 chestSpot = spawnLocation;
             for (int i = -1; i <= 1; i++)
             {
                 for (int j = -1; j <= 1; j++)

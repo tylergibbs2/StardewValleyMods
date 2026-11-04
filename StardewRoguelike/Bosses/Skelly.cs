@@ -394,7 +394,7 @@ namespace StardewRoguelike.Bosses
                     for (int yOffset = -64; yOffset <= 64; yOffset += 128)
                     {
                         CircularProjectile proj = new(
-                            (int)(DamageToFarmer * Difficulty),
+                            (int)(DamageToFarmer),
                             4,
                             0,
                             0,
@@ -437,7 +437,7 @@ namespace StardewRoguelike.Bosses
 
             float boneSpeed = SpawnedMages ? 10f : 8f;
             Vector2 v = Utility.getVelocityTowardPlayer(new Point((int)Position.X, (int)Position.Y), boneSpeed, Player);
-            BasicProjectile projectile = new((int)Math.Round(DamageToFarmer * Difficulty), 4, 0, 0, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), "skeletonHit", null, "skeletonStep", explode: false, damagesMonsters: false, currentLocation, this);
+            BasicProjectile projectile = new(DamageToFarmer, 4, 0, 0, (float)Math.PI / 16f, v.X, v.Y, new Vector2(Position.X, Position.Y), "skeletonHit", null, "skeletonStep", explode: false, damagesMonsters: false, currentLocation, this);
             projectile.IgnoreLocationCollision = true;
             projectile.ignoreMeleeAttacks.Value = true;
             currentLocation.projectiles.Add(projectile);
@@ -447,7 +447,7 @@ namespace StardewRoguelike.Bosses
         {
             float boneSpeed = SpawnedMages ? 10f : 8f;
             Vector2 v = Utility.getVelocityTowardPlayer(new Point((int)Position.X, (int)Position.Y), boneSpeed, Player);
-            BasicProjectile projectile = new((int)Math.Round(DamageToFarmer * Difficulty), 9, 0, 4, 0f, v.X, v.Y, new Vector2(Position.X, Position.Y), "flameSpellHit", null, "flameSpell", explode: false, damagesMonsters: false, currentLocation, this);
+            BasicProjectile projectile = new(DamageToFarmer, 9, 0, 4, 0f, v.X, v.Y, new Vector2(Position.X, Position.Y), "flameSpellHit", null, "flameSpell", explode: false, damagesMonsters: false, currentLocation, this);
             projectile.IgnoreLocationCollision = true;
             projectile.ignoreMeleeAttacks.Value = true;
             currentLocation.projectiles.Add(projectile);

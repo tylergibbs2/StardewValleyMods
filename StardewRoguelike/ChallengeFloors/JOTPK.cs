@@ -53,6 +53,11 @@ namespace StardewRoguelike.ChallengeFloors
             base.InitNetFields();
 
             NetFields.AddField(floorSecondsLeft);
+
+            // Declared as a NetBool but never registered, so it stayed false on
+            // farmhands: ShouldSpawnLadder answered no for them and the music never
+            // changed. Only the host's explicit createLadderAt hid it.
+            NetFields.AddField(gameOver);
         }
 
         public void RenderHud(object? sender, RenderedHudEventArgs e)

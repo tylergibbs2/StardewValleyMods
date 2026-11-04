@@ -14,7 +14,11 @@ namespace StardewRoguelike.Extensions
         {
             float spawnChance = 0.022f;
 
-            while (amount > 0)
+            // Each pass sweeps the map and places a monster on a small chance per
+            // tile, so a map offering no tile that is both clear and far enough from
+            // the start would sweep forever. Give up instead of hanging.
+            int sweeps = 0;
+            while (amount > 0 && sweeps++ < 200)
             {
                 for (int i = 0; i < mine.map.GetLayer("Back").LayerWidth; i++)
                 {

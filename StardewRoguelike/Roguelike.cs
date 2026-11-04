@@ -452,7 +452,9 @@ namespace StardewRoguelike
             int amountToRemove = 0;
             int merchantInterval = Constants.ScalingOrder[1] - Constants.ScalingOrder[0];
 
-            for (int i = MineShaft.activeMines.Count - 1; i == 0; i--)
+            // Was "i == 0", so with more than one active mine the loop never ran
+            // and this whole method did nothing in multiplayer.
+            for (int i = MineShaft.activeMines.Count - 1; i >= 0; i--)
             {
                 bool allPlayersFound = playersAccountedFor == playersToAccountFor;
                 if (allPlayersFound && floorsSinceLastPlayer < merchantInterval)
@@ -473,6 +475,11 @@ namespace StardewRoguelike
             while (amountToRemove > 0 && MineShaft.activeMines.Count >= instancesToKeep)
             {
                 DiscardMine(MineShaft.activeMines[0]);
+
+                // Nothing decremented this before. It did not matter while the loop
+                // above never ran, but on its own it would discard every mine down to
+                // the keep-count instead of the number actually worked out.
+                amountToRemove--;
             }
         }
 

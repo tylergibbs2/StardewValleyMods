@@ -220,7 +220,7 @@ namespace StardewRoguelike
                 Merchant.AddStock(stock, new Boots(bootId), buyPrice: CalculateBuyPrice(Boots[bootId].Item1, Boots[bootId].Item2, priceAdjustment, random), limitedQuantity: Boots[bootId].Item3);
 
             foreach (string specialFoodId in chosenSpecialFood)
-                Merchant.AddStock(stock, new SObject(specialFoodId, SpecialFood[specialFoodId].Item3), buyPrice: CalculateBuyPrice(SpecialFood[specialFoodId].Item1, SpecialFood[specialFoodId].Item2, random: random), limitedQuantity: SpecialFood[specialFoodId].Item3);
+                Merchant.AddStock(stock, new SObject(specialFoodId, SpecialFood[specialFoodId].Item3), buyPrice: CalculateBuyPrice(SpecialFood[specialFoodId].Item1, SpecialFood[specialFoodId].Item2, priceAdjustment, random), limitedQuantity: SpecialFood[specialFoodId].Item3);
         }
     }
 }
