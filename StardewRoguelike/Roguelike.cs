@@ -659,6 +659,11 @@ namespace StardewRoguelike
             ModEntry.Invincible = true;
             Game1.player.health = Game1.player.maxHealth;
 
+            // Single player death restores this too. Without it a player who died of
+            // exhaustion comes back with negative stamina, and UpdateTicked sets
+            // their health straight back to zero on the next tick.
+            Game1.player.Stamina = Game1.player.MaxStamina;
+
             DelayedAction.functionAfterDelay(() =>
             {
                 Game1.screenGlow = false;

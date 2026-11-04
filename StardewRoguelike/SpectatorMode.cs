@@ -68,7 +68,12 @@ namespace StardewRoguelike
 
         public static void ExitSpectatorMode(int? level = null)
         {
-            if (!Context.IsMultiplayer)
+            // Deliberately not guarded on Context.IsMultiplayer. That is
+            // otherFarmers.Count > 0, so it turns false the moment the other player
+            // disconnects - which is a moment when someone may well be spectating,
+            // with their whole inventory held in StoredItems. Returning early there
+            // skipped PopItems and the items were gone for good.
+            if (!Game1.player.get_FarmerIsSpectating().Value && StoredItems.Count == 0)
                 return;
 
             Game1.player.get_FarmerIsSpectating().Value = false;
