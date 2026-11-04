@@ -17,8 +17,9 @@ namespace StardewNametags
             int width = (int)font.MeasureString(farmer.Name).X;
             int height = (int)font.MeasureString(farmer.Name).Y;
 
-            int x = farmer.getStandingX() - width / 2 - Game1.viewport.X;
-            int y = farmer.getStandingY() - (farmer.GetBoundingBox().Height * 2 + height * 2) - 16 - Game1.viewport.Y;
+            Point standingPixel = farmer.StandingPixel;
+            int x = standingPixel.X - width / 2 - Game1.viewport.X;
+            int y = standingPixel.Y - (farmer.GetBoundingBox().Height * 2 + height * 2) - 16 - Game1.viewport.Y;
 
             float drawLayer = farmer.getDrawLayer();
 
