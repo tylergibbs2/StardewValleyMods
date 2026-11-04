@@ -1,0 +1,21 @@
+{
+  "_comment": [
+    "Maps a mod folder to its Nexus Mods page. Only mods listed here can be released by",
+    ".github/workflows/release.yml -- the workflow's mod dropdown is built from this list.",
+    "",
+    "mod_id  is the number in the mod page URL, e.g. nexusmods.com/stardewvalley/mods/14379",
+    "file_id is the ID of the EXISTING file on that page that new versions are added to.",
+    "        Find it on the mod page's Files tab with the 'Advanced' toggle on, or in the",
+    "        edit menu of Manage Files. The upload action adds a version to this file; it",
+    "        cannot create a new mod page or a new file.",
+    "",
+    "Keys starting with an underscore are ignored."
+  ],
+
+  "ColdPets":          { "mod_id": 14379, "file_id": null },
+  "DefaultFarmer":     { "mod_id": 12421, "file_id": null },
+  "SeasonalSaveSlots": { "mod_id": 14382, "file_id": null },
+  "StardewHitboxes":   { "mod_id": 12264, "file_id": null },
+  "StardewNametags":   { "mod_id": 12158, "file_id": null },
+  "StardewRoguelike":  { "mod_id": 13614, "file_id": null }
+}

@@ -1,0 +1,195 @@
+name: Release mod
+
+# Pick a mod from the dropdown and this builds it, publishes a GitHub release following the
+# repo's existing convention, and adds the zip as a new version on the mod's Nexus page.
+#
+# The version is read from the mod's manifest.json, so bump that (and its release notes) and
+# merge first -- this workflow never edits the version, it only ships what is on the branch.
+#
+# Which mods appear in the dropdown is governed by .github/nexus-mods.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mod:
+        description: Mod to release (version comes from its manifest.json)
+        required: true
+        type: choice
+        options:
+          - ColdPets
+          - DefaultFarmer
+          - SeasonalSaveSlots
+          - StardewHitboxes
+          - StardewNametags
+          - StardewRoguelike
+      dry_run:
+        description: Build only -- no tag, no GitHub release, no Nexus upload
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need existing tags to detect a re-release
+
+      - name: Read mod metadata
+        id: meta
+        env:
+          MOD: ${{ inputs.mod }}
+        run: |
+          set -euo pipefail
+
+          manifest="$MOD/manifest.json"
+          [ -f "$manifest" ] || { echo "::error::no manifest at $manifest"; exit 1; }
+
+          # some manifests are UTF-8 with a BOM, which jq will not parse
+          clean=$(mktemp)
+          sed $'1s/^\xEF\xBB\xBF//' "$manifest" > "$clean"
+
+          name=$(jq -r '.Name' "$clean")
+          version=$(jq -r '.Version' "$clean")
+          [ -n "$version" ] && [ "$version" != "null" ] || { echo "::error::no Version in $manifest"; exit 1; }
+
+          {
+            echo "name=$name"
+            echo "version=$version"
+            echo "tag=$MOD/v$version"
+            echo "title=$name $version"
+            echo "zip=_releases/$MOD $version.zip"
+            echo "anchor=${version//./}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Releasing $name $version from $MOD/"
+
+      - name: Check this version is not already released
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::tag $TAG already exists -- bump the version in manifest.json first"
+            exit 1
+          fi
+
+      - name: Look up the Nexus mod page
+        id: nexus
+        if: ${{ !inputs.dry_run }}
+        env:
+          MOD: ${{ inputs.mod }}
+        run: |
+          set -euo pipefail
+
+          entry=$(jq -c --arg mod "$MOD" '.[$mod] // empty' .github/nexus-mods.json)
+          [ -n "$entry" ] || { echo "::error::$MOD has no entry in .github/nexus-mods.json"; exit 1; }
+
+          mod_id=$(jq -r '.mod_id // empty' <<<"$entry")
+          file_id=$(jq -r '.file_id // empty' <<<"$entry")
+
+          if [ -z "$file_id" ]; then
+            echo "::error::$MOD has no file_id in .github/nexus-mods.json."
+            echo "::error::Get it from the mod page's Files tab with 'Advanced' enabled, then commit it."
+            exit 1
+          fi
+
+          {
+            echo "mod_id=$mod_id"
+            echo "file_id=$file_id"
+          } >> "$GITHUB_OUTPUT"
+
+      # clones Stardew Valley + SMAPI reference assemblies to a path ModBuildConfig
+      # auto-detects, so the mod compiles without a game install
+      - name: Add build environment
+        uses: Pathoschild/SMAPI-ModBuildWorkflow/add-build-environment@v1
+
+      - name: Build mod
+        env:
+          MOD: ${{ inputs.mod }}
+        run: |
+          set -euo pipefail
+          dotnet build "$MOD/$MOD.csproj" \
+            --configuration Release \
+            -p:EnableModDeploy=false \
+            -p:ModZipPath="$GITHUB_WORKSPACE/_releases"
+
+      - name: Check the zip was produced
+        env:
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          set -euo pipefail
+          [ -f "$ZIP" ] || { echo "::error::expected $ZIP, got: $(ls _releases 2>/dev/null || echo 'nothing')"; exit 1; }
+          echo "Built $ZIP"
+          unzip -l "$ZIP"
+
+      - name: Upload build artifact (dry run)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.mod }}-${{ steps.meta.outputs.version }}
+          path: ${{ steps.meta.outputs.zip }}
+
+      # every publishing step below is guarded on dry_run, so a dry run ends here
+      - name: Note dry run
+        if: ${{ inputs.dry_run }}
+        run: echo "::notice::Dry run -- built ${{ steps.meta.outputs.zip }} and published nothing."
+
+      # creates the tag at this commit as a side effect, so tags never need pushing by hand
+      - name: Publish GitHub release
+        id: release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MOD: ${{ inputs.mod }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          TITLE: ${{ steps.meta.outputs.title }}
+          ANCHOR: ${{ steps.meta.outputs.anchor }}
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          set -euo pipefail
+
+          notes="See the [release notes](https://github.com/${GITHUB_REPOSITORY}/blob/master/${MOD}/docs/release-notes.md#${ANCHOR}) for the changelog."
+
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TITLE" \
+            --notes "$notes" \
+            "$ZIP"
+
+          # kept verbatim so Nexus shows exactly what the GitHub release shows
+          {
+            echo "notes<<__NOTES__"
+            echo "$notes"
+            echo "__NOTES__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload to Nexus Mods
+        if: ${{ !inputs.dry_run }}
+        uses: Nexus-Mods/upload-action@v1.0.0-beta.11
+        with:
+          api_key: ${{ secrets.NEXUS_API_KEY }}
+          mod_id: ${{ steps.nexus.outputs.mod_id }}
+          file_id: ${{ steps.nexus.outputs.file_id }}
+          filename: ${{ steps.meta.outputs.zip }}
+          version: ${{ steps.meta.outputs.version }}
+          display_name: ${{ steps.meta.outputs.title }}
+          changelog: ${{ steps.release.outputs.notes }}
+          category: main
+          archive_existing_version: true
+          update_mod_version: true
+
+      - name: Summary
+        if: ${{ !inputs.dry_run }}
+        run: |
+          {
+            echo "### Released ${{ steps.meta.outputs.title }}"
+            echo
+            echo "- tag: \`${{ steps.meta.outputs.tag }}\`"
+            echo "- release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}"
+            echo "- nexus: https://www.nexusmods.com/stardewvalley/mods/${{ steps.nexus.outputs.mod_id }}"
+          } >> "$GITHUB_STEP_SUMMARY"
