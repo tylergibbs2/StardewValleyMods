@@ -211,16 +211,16 @@ namespace StardewHitboxes
             DrawHitbox(b, character.GetBoundingBox(), color);
         }
 
-        public static void DrawHitbox(SpriteBatch b, TerrainFeature terrainFeature, Vector2 tileLocation)
+        public static void DrawHitbox(SpriteBatch b, TerrainFeature terrainFeature)
         {
             Color color = ConvertFromHex(Config.TerrainFeatureHitboxColor);
-            DrawHitbox(b, terrainFeature.getBoundingBox(tileLocation), color);
+            DrawHitbox(b, terrainFeature.getBoundingBox(), color);
         }
 
-        public static void DrawHitbox(SpriteBatch b, StardewValley.Object stardewObject, Vector2 tileLocation)
+        public static void DrawHitbox(SpriteBatch b, StardewValley.Object stardewObject)
         {
             Color color = ConvertFromHex(Config.ObjectsHitboxColor);
-            DrawHitbox(b, stardewObject.getBoundingBox(tileLocation), color);
+            DrawHitbox(b, stardewObject.GetBoundingBox(), color);
         }
 
         public static void DrawHitbox(SpriteBatch b, Rectangle rect, Color color)

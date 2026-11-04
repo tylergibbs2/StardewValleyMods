@@ -1,10 +1,10 @@
 ﻿{
   "Name": "StardewHitboxes",
   "Author": "tylergibbs2",
-  "Version": "1.1.2",
+  "Version": "1.2.0",
   "Description": "Hitboxes for characters.",
   "UniqueID": "tylergibbs2.StardewHitboxes",
   "EntryDll": "StardewHitboxes.dll",
-  "MinimumApiVersion": "3.12",
+  "MinimumApiVersion": "4.0.0",
   "UpdateKeys": [ "GitHub:tylergibbs2/StardewHitboxes" ]
 }
