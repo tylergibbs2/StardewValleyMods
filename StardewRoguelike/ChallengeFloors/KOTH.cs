@@ -61,7 +61,30 @@ namespace StardewRoguelike.ChallengeFloors
         /// <summary>The progress the bar texture was last built for.</summary>
         private int builtProgress = -1;
 
-        private readonly Texture2D kothBoxTexture;
+        private Texture2D? kothBoxTexture;
+
+        /// <summary>
+        /// The single white pixel the capture box is stretched from.
+        ///
+        /// Built on demand, because Dispose doubles as "the player left the floor".
+        /// A floor entered, left and entered again re-subscribes the draw handlers to
+        /// an object whose textures have already been freed; the progress bar beside
+        /// this one already rebuilt itself, and this one did not, so it would have
+        /// been drawn from a disposed texture.
+        /// </summary>
+        private Texture2D BoxTexture
+        {
+            get
+            {
+                if (kothBoxTexture is null || kothBoxTexture.IsDisposed)
+                {
+                    kothBoxTexture = new(Game1.graphics.GraphicsDevice, 1, 1);
+                    kothBoxTexture.SetData(new[] { Color.White });
+                }
+
+                return kothBoxTexture;
+            }
+        }
 
         private readonly List<Rectangle> possibleBoxes = new() { };
 
@@ -71,11 +94,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         private readonly int enemiesToSpawnMax = 3;
 
-        public KOTH() : base()
-        {
-            kothBoxTexture = new(Game1.graphics.GraphicsDevice, 1, 1);
-            kothBoxTexture.SetData(new[] { Color.White });
-        }
+        public KOTH() : base() { }
 
         protected override void InitNetFields()
         {
@@ -125,7 +144,7 @@ namespace StardewRoguelike.ChallengeFloors
                 return;
 
             e.SpriteBatch.Draw(
-                kothBoxTexture,
+                BoxTexture,
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(kothBox.X, kothBox.Y)),
                 kothBox.Value,
                 Color.DarkGray * 0.4f,
@@ -388,9 +407,12 @@ namespace StardewRoguelike.ChallengeFloors
             ModEntry.Events.Display.RenderedHud -= RenderProgressBar;
 
             // The only textures the mod owns outright; nothing else frees them.
+            // Both are nulled, so that a re-entry rebuilds them instead of drawing
+            // from what was just freed.
             kothBoxProgressTexture?.Dispose();
             kothBoxProgressTexture = null!;
             kothBoxTexture?.Dispose();
+            kothBoxTexture = null;
         }
     }
 }
