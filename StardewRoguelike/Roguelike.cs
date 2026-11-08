@@ -467,12 +467,22 @@ namespace StardewRoguelike
         /// Method called when the player goes down a ladder.
         /// Performs some resets and increments the level counter
         /// </summary>
+        private static readonly PerScreen<bool> ScreenDescendPending = new(() => false);
+
         /// <summary>
-        /// Set when an exit choice has been committed and the group is clear to go
-        /// down. Polled from UpdateTicked, because a farmhand's choice has to reach
-        /// the host and come back before the next floor can be generated against it.
+        /// Set when this screen's exit choice has been committed and the player is
+        /// clear to go down. Polled from UpdateTicked, because a farmhand's choice has
+        /// to reach the host and come back before the next floor can be generated
+        /// against it.
+        ///
+        /// Per-screen: UpdateTicked runs once per screen, so a shared flag would send
+        /// the other split-screen player down a floor they never chose.
         /// </summary>
-        public static bool DescendPending { get; set; }
+        public static bool DescendPending
+        {
+            get => ScreenDescendPending.Value;
+            set => ScreenDescendPending.Value = value;
+        }
 
         /// <summary>Advances a floor and warps there.</summary>
         public static void Descend()
