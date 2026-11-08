@@ -57,14 +57,33 @@ namespace StardewRoguelike.Patches
                     break;
 
                 case FloorKind.Vault:
-                    newMine.get_MineShaftChestFloor().Value = true;
-                    ChestFloor.SpawnChest(newMine);
+                    // Treasure is a family, the way a fight is. Most of it is the
+                    // plain chest floor; the rest are the loot floors that had no
+                    // way of being reached once the plan stopped asking for them.
+                    ChallengeFloor.ChallengeType? treasure = RunRoute.VaultFor(requestedLevel);
+
+                    if (treasure is null)
+                    {
+                        newMine.get_MineShaftChestFloor().Value = true;
+                        ChestFloor.SpawnChest(newMine);
+                    }
+                    else
+                    {
+                        newMine.get_MineShaftIsChallengeFloor().Value = true;
+                        newMine.get_MineShaftChallengeFloor().Value = ChallengeFloor.Create(treasure.Value);
+                    }
+
                     break;
 
                 case FloorKind.Arena:
                     newMine.get_MineShaftIsChallengeFloor().Value = true;
                     newMine.get_MineShaftChallengeFloor().Value =
                         ChallengeFloor.Create(RunRoute.ArenaFor(requestedLevel));
+                    break;
+
+                case FloorKind.Cauldron:
+                    // Placed further down, for the same reason as the shrine: the
+                    // map does not exist yet here.
                     break;
 
                 case FloorKind.Shrine:
@@ -118,6 +137,9 @@ namespace StardewRoguelike.Patches
             // entrance exist before this point.
             if (kind == FloorKind.Shrine)
                 TerrainFeatures.PerkShrine.PlaceIn(newMine);
+
+            if (kind == FloorKind.Cauldron)
+                TerrainFeatures.CleansingCauldron.PlaceIn(newMine);
 
             if (newMine.get_MineShaftIsChallengeFloor().Value)
                 newMine.get_MineShaftChallengeFloor().Value.Initialize(newMine);

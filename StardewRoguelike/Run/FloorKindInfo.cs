@@ -16,6 +16,7 @@ namespace StardewRoguelike.Run
         {
             FloorKind.Normal => I18n.ExitChoice_Normal(),
             FloorKind.DarkMineshaft => I18n.ExitChoice_DarkMineshaft(),
+            FloorKind.Cauldron => I18n.ExitChoice_Cauldron(),
             FloorKind.Arena => I18n.ExitChoice_Arena(),
             FloorKind.Vault => I18n.ExitChoice_Vault(),
             FloorKind.Forge => I18n.ExitChoice_Forge(),
@@ -56,6 +57,7 @@ namespace StardewRoguelike.Run
         {
             FloorKind.Normal => I18n.ExitChoice_NormalDesc(),
             FloorKind.DarkMineshaft => I18n.ExitChoice_DarkMineshaftDesc(),
+            FloorKind.Cauldron => I18n.ExitChoice_CauldronDesc(),
             FloorKind.Arena => I18n.ExitChoice_ArenaDesc(),
             FloorKind.Vault => I18n.ExitChoice_VaultDesc(),
             FloorKind.Forge => I18n.ExitChoice_ForgeDesc(),
@@ -80,8 +82,15 @@ namespace StardewRoguelike.Run
         public static Texture2D IconTexture(FloorKind kind) => kind switch
         {
             FloorKind.DarkMineshaft => Game1.objectSpriteSheet,
+
+            // Its own art, which is the only picture of a cauldron the mod has and
+            // says what the floor is better than anything on the cursor sheet.
+            FloorKind.Cauldron => Game1.content.Load<Texture2D>(CauldronTexture),
             _ => Game1.mouseCursors
         };
+
+        /// <summary>The cauldron's own sheet, which the terrain feature draws from.</summary>
+        private const string CauldronTexture = "TerrainFeatures\\CleansingCauldron";
 
         /// <summary>A source rectangle on the kind's icon sheet to stand for it.</summary>
         /// <remarks>
@@ -98,6 +107,7 @@ namespace StardewRoguelike.Run
             FloorKind.Normal => new Rectangle(30, 428, 10, 10),     // pickaxe
             FloorKind.DarkMineshaft =>
                 Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, FireQuartz, 16, 16),
+            FloorKind.Cauldron => new Rectangle(0, 0, 48, 48),
             FloorKind.Arena => new Rectangle(120, 428, 10, 10),     // sword
             FloorKind.Vault => new Rectangle(127, 412, 10, 11),     // chest
             FloorKind.Forge => new Rectangle(70, 428, 10, 10),      // iron bar

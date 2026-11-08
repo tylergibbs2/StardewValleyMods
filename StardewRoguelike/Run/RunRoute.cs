@@ -188,6 +188,15 @@ namespace StardewRoguelike.Run
             return all[index];
         }
 
+        /// <summary>Which treasure floor a Vault at <paramref name="level"/> leads to.</summary>
+        public static ChallengeFloor.ChallengeType? VaultFor(int level)
+        {
+            if (DebugCommands.ForcedChestFloor)
+                return null;
+
+            return RunPlan.VaultAt(TakenBefore(level, FloorKind.Vault));
+        }
+
         /// <summary>How many Arenas the group took before reaching this one.</summary>
         /// <remarks>
         /// Read back off the route, so it is the same number on every machine and on
@@ -197,11 +206,22 @@ namespace StardewRoguelike.Run
         /// </remarks>
         private static int ArenasBefore(int level)
         {
+            return TakenBefore(level, FloorKind.Arena);
+        }
+
+        /// <summary>How many floors of one kind the group took before this level.</summary>
+        /// <remarks>
+        /// Read back off the route, so it is the same number on every machine and on
+        /// a farmhand that joined mid-run. It is this that makes the bags deal one
+        /// floor per floor of that kind played, rather than one per floor walked past.
+        /// </remarks>
+        private static int TakenBefore(int level, FloorKind kind)
+        {
             int count = 0;
 
             for (int earlier = 1; earlier < level; earlier++)
             {
-                if (Store.TryGetValue(earlier, out int chosen) && (FloorKind)chosen == FloorKind.Arena)
+                if (Store.TryGetValue(earlier, out int chosen) && (FloorKind)chosen == kind)
                     count++;
             }
 

@@ -38,6 +38,15 @@
         /// Last on purpose: the value is what the route is stored as, so the ones
         /// above it have to keep the numbers they already have.
         /// </summary>
-        DarkMineshaft
+        DarkMineshaft,
+
+        /// <summary>
+        /// A cauldron. Takes a curse away, and gives nothing else.
+        ///
+        /// The other half of the shrine: one sells a perk for a curse and this buys
+        /// the curse back, so taking a curse is a decision that can be undone at the
+        /// cost of a floor rather than a mark carried to the end of the run.
+        /// </summary>
+        Cauldron
     }
 }

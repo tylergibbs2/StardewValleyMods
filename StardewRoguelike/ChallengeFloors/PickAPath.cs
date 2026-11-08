@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
@@ -115,6 +115,11 @@ namespace StardewRoguelike.ChallengeFloors
             Location = mine;
 
             var validRoomTypes = new List<RoomType>((IEnumerable<RoomType>)Enum.GetValues(typeof(RoomType)));
+
+            // The same curse teller that came off the merchant floors, in a different
+            // coat. A curse is what a shrine charges for a perk; somewhere else that
+            // sells them for gold makes the price look like one more thing on a shelf.
+            validRoomTypes.Remove(RoomType.CurseTeller);
 
             RoomType otherRoom = validRoomTypes[Roguelike.FloorRng.Next(validRoomTypes.Count)];
 

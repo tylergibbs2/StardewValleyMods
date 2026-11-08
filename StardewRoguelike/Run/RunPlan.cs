@@ -43,6 +43,32 @@ namespace StardewRoguelike.Run
         /// </summary>
         private const int DarkMinimumLevel = 5;
 
+        /// <summary>
+        /// A cauldron is not offered before this level.
+        ///
+        /// Nothing to cleanse before the first boss: curses come from shrines, and a
+        /// floor whose whole purpose is undoing one is a wasted exit until the player
+        /// has had the chance to take one.
+        /// </summary>
+        private const int CauldronMinimumLevel = 5;
+
+        /// <summary>
+        /// The treasure floors a Vault exit can lead to.
+        ///
+        /// Three of these had no way of being reached at all: the plan only ever
+        /// asked for a combat floor, and the dwarf's chests, the gambling chests and
+        /// the two doors are none of them combat. They are loot, so they belong
+        /// behind the exit that promises loot, in the same way the eight combat
+        /// floors sit behind the one that promises a fight.
+        /// </summary>
+        private static readonly ChallengeFloor.ChallengeType?[] VaultFloors =
+        {
+            null,                                      // the plain chest floor
+            ChallengeFloor.ChallengeType.DwarfChests,
+            ChallengeFloor.ChallengeType.GambaChests,
+            ChallengeFloor.ChallengeType.PickAPath
+        };
+
         /// <summary>The combat floors an Arena exit can lead to.</summary>
         private static readonly ChallengeFloor.ChallengeType[] ArenaChallenges =
         {
@@ -64,6 +90,7 @@ namespace StardewRoguelike.Run
         {
             (FloorKind.Normal, 3),
             (FloorKind.DarkMineshaft, 2),
+            (FloorKind.Cauldron, 2),
             (FloorKind.Arena, 3),
             (FloorKind.Vault, 2),
             (FloorKind.Spring, 2),
@@ -88,6 +115,7 @@ namespace StardewRoguelike.Run
             builtForSeed = -1;
             arenaOrderSeed = -1;
             shrineOrderSeed = -1;
+            vaultOrderSeed = -1;
         }
 
         /// <summary>
@@ -119,6 +147,61 @@ namespace StardewRoguelike.Run
             shrineOrders[level] = order;
 
             return order;
+        }
+
+        /// <summary>
+        /// Which treasure floor the run's <paramref name="index"/>th Vault leads to.
+        ///
+        /// Dealt from a bag and counted in vaults taken, for the same reasons the
+        /// arenas are: rolling each one would have a player meet two or three of the
+        /// four in a run, and a bag that advanced per floor rather than per vault
+        /// would be a roll again in all but name.
+        /// </summary>
+        public static ChallengeFloor.ChallengeType? VaultAt(int index)
+        {
+            if (index < 0)
+                index = 0;
+
+            BuildVaultOrder(index);
+
+            return vaultOrder[index];
+        }
+
+        private static readonly List<ChallengeFloor.ChallengeType?> vaultOrder = new();
+
+        private static int vaultOrderSeed = -1;
+
+        /// <summary>Keeps the treasure order off every other stream.</summary>
+        private const int VaultStream = 0x7A17;
+
+        private static void BuildVaultOrder(int upTo)
+        {
+            int seed = Roguelike.FloorRngSeed;
+
+            if (vaultOrderSeed == seed && upTo < vaultOrder.Count)
+                return;
+
+            vaultOrder.Clear();
+            vaultOrderSeed = seed;
+
+            Random rng = new(seed ^ VaultStream);
+
+            while (vaultOrder.Count <= upTo)
+            {
+                List<ChallengeFloor.ChallengeType?> bag = new(VaultFloors);
+
+                do
+                {
+                    for (int i = bag.Count - 1; i > 0; i--)
+                    {
+                        int j = rng.Next(i + 1);
+                        (bag[i], bag[j]) = (bag[j], bag[i]);
+                    }
+                }
+                while (vaultOrder.Count > 0 && bag[0] == vaultOrder[^1]);
+
+                vaultOrder.AddRange(bag);
+            }
         }
 
         /// <summary>The orders built so far, by level.</summary>
@@ -384,6 +467,7 @@ namespace StardewRoguelike.Run
         {
             FloorKind.Forge => level > ForgeMinimumLevel,
             FloorKind.DarkMineshaft => level > DarkMinimumLevel,
+            FloorKind.Cauldron => level > CauldronMinimumLevel,
             _ => true
         };
 
