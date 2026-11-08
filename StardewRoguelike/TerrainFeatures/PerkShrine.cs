@@ -17,30 +17,25 @@ namespace StardewRoguelike.TerrainFeatures
     /// </summary>
     internal class PerkShrine : TerrainFeature
     {
-        private string textureName = "TerrainFeatures\\CleansingCauldron";
-
-        private Lazy<Texture2D> texture = null!;
+        /// <summary>
+        /// The Wicked Statue, drawn straight from the game's big craftable sheet.
+        ///
+        /// Vanilla art rather than anything the mod ships: it is already the game's
+        /// own dark statue, which is exactly what a shrine selling power for a curse
+        /// should look like, and it means no new sprite to draw or asset to load. The
+        /// mod's other statues work the same way - the healing bear on a pick-a-path
+        /// floor is built from townInterior tiles.
+        /// </summary>
+        private const int WickedStatue = 83;
 
         private bool used = false;
 
-        public PerkShrine() : base(false)
-        {
-            ResetTexture();
-        }
-
-        protected void ResetTexture()
-        {
-            texture = new(new Func<Texture2D>(LoadTexture));
-        }
-
-        protected Texture2D LoadTexture()
-        {
-            return Game1.content.Load<Texture2D>(textureName);
-        }
+        /// <summary>Nothing to tick: the shrine only reacts to being used.</summary>
+        public PerkShrine() : base(needsTick: false) { }
 
         public override Rectangle getBoundingBox()
         {
-            return new((int)Tile.X * 64, (int)(Tile.Y + 1) * 64, 192, 128);
+            return new((int)Tile.X * 64, (int)Tile.Y * 64, 64, 64);
         }
 
         /// <summary>
@@ -74,24 +69,21 @@ namespace StardewRoguelike.TerrainFeatures
             }
         }
 
-        /// <summary>Whether the shrine's three by two footprint fits at this tile.</summary>
+        /// <summary>
+        /// Whether the shrine fits at this tile.
+        ///
+        /// It stands on one tile and is drawn two tall, so the tile above only has to
+        /// be free of another shrine, not walkable.
+        /// </summary>
         private static bool HasRoomFor(MineShaft mine, Vector2 tile)
         {
-            for (int x = 0; x < 3; x++)
-            {
-                for (int y = 0; y < 2; y++)
-                {
-                    Vector2 covered = new(tile.X + x, tile.Y + y);
+            if (mine.terrainFeatures.ContainsKey(tile))
+                return false;
 
-                    if (mine.terrainFeatures.ContainsKey(covered))
-                        return false;
+            if (!mine.isTileClearForMineObjects(tile))
+                return false;
 
-                    if (!mine.isTileClearForMineObjects(covered))
-                        return false;
-                }
-            }
-
-            return true;
+            return !mine.terrainFeatures.ContainsKey(new Vector2(tile.X, tile.Y - 1));
         }
 
         public override bool performUseAction(Vector2 tileLocation)
@@ -112,8 +104,6 @@ namespace StardewRoguelike.TerrainFeatures
                 Curse.AddCurse(curse.Value);
 
             used = true;
-            textureName += "Empty";
-            ResetTexture();
             Game1.playSound("debuffSpell");
 
             // A choice rather than a random grant, which is what the merchant floors
@@ -140,18 +130,21 @@ namespace StardewRoguelike.TerrainFeatures
 
         public override void draw(SpriteBatch spriteBatch)
         {
-            Vector2 position = Game1.GlobalToLocal(Game1.viewport, new Vector2(Tile.X * 64f, Tile.Y * 64f));
+            // Drawn from the tile above, since a big craftable is two tiles tall and
+            // stands on the lower one.
+            Vector2 position = Game1.GlobalToLocal(
+                Game1.viewport, new Vector2(Tile.X * 64f, (Tile.Y - 1) * 64f));
 
             spriteBatch.Draw(
-                texture.Value,
+                Game1.bigCraftableSpriteSheet,
                 position,
-                texture.Value.Bounds,
-                Color.White,
+                StardewValley.Object.getSourceRectForBigCraftable(WickedStatue),
+                used ? Color.Gray * 0.6f : Color.White,
                 0f,
                 Vector2.Zero,
                 4f,
                 SpriteEffects.None,
-                (Tile.Y * 64f + 128f) / 10000f);
+                (Tile.Y * 64f + 32f) / 10000f);
         }
     }
 }
