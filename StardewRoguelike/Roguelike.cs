@@ -436,19 +436,6 @@ namespace StardewRoguelike
         }
 
         /// <summary>
-        /// Event handler for when the player returns to title.
-        /// Used for multiplayer, so players can't keep going up by
-        /// disconnecting and reconnecting.
-        /// </summary>
-        /// <param name="sender">always null in SMAPI</param>
-        /// <param name="e">The event's arguments</param>
-        public static void ReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
-        {
-            if (CurrentLevel != 0)
-                CurrentLevel--;
-        }
-
-        /// <summary>
         /// Event handler for when the in-game time changes.
         /// After 11pm, reset the time to 6am so the player never sleeps
         /// </summary>

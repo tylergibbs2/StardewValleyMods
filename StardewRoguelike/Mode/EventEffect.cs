@@ -22,7 +22,6 @@ namespace StardewRoguelike.Mode
             ModEntry entry = ModEntry.Instance;
 
             events.GameLoop.SaveLoaded += Roguelike.SaveLoaded;
-            events.GameLoop.ReturnedToTitle += Roguelike.ReturnedToTitle;
             events.GameLoop.TimeChanged += Roguelike.TimeChanged;
 
             events.GameLoop.UpdateTicked += ModEntry.ActiveStats.WatchChanges;
@@ -49,7 +48,6 @@ namespace StardewRoguelike.Mode
             ModEntry entry = ModEntry.Instance;
 
             events.GameLoop.SaveLoaded -= Roguelike.SaveLoaded;
-            events.GameLoop.ReturnedToTitle -= Roguelike.ReturnedToTitle;
             events.GameLoop.TimeChanged -= Roguelike.TimeChanged;
 
             events.GameLoop.UpdateTicked -= ModEntry.ActiveStats.WatchChanges;
