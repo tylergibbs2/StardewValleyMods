@@ -141,6 +141,13 @@ namespace StardewRoguelike.Bosses
 
         public readonly NetBool Encountered = new();
 
+        /// <summary>
+        /// Fired by the host when phase two opens, so each machine can shove its own
+        /// player. A Farmer's velocity is a plain field that only their own machine
+        /// reads, so the host cannot knock a farmhand back by setting it directly.
+        /// </summary>
+        private readonly NetEvent0 ShockwaveEvent = new();
+
         private readonly int ExplosionCooldownTicks = 300;
 
         private readonly int Width;
@@ -198,7 +205,8 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddField(Encountered).AddField(CurrentPhase);
+            NetFields.AddField(Encountered).AddField(CurrentPhase).AddField(ShockwaveEvent);
+            ShockwaveEvent.onEvent += Shockwave;
 
         }
 
@@ -216,6 +224,7 @@ namespace StardewRoguelike.Bosses
         public override void update(GameTime time, GameLocation location)
         {
             base.update(time, location);
+            ShockwaveEvent.Poll();
 
             if (Health > 0 && !MapChangesEnabled && Encountered.Value)
                 EnableMapChanges();
@@ -418,6 +427,28 @@ namespace StardewRoguelike.Bosses
             }
         }
 
+        /// <summary>
+        /// Throws the local player clear of the boss. Runs on every machine, each
+        /// handling only its own player.
+        ///
+        /// This was a loop over currentLocation.farmers on the host that called
+        /// setTrajectory on each of them, which was wrong twice over: the trajectory
+        /// was computed from Game1.player's bounding box rather than the farmer being
+        /// pushed, so everyone was flung along the host's vector and anyone on the
+        /// far side of the boss was thrown into it; and a Farmer's velocity is a
+        /// plain field read only by their own machine, so the host setting it on a
+        /// farmhand did nothing at all.
+        /// </summary>
+        private void Shockwave()
+        {
+            Farmer who = Game1.player;
+            if (who.currentLocation != currentLocation)
+                return;
+
+            Vector2 trajectory = Utility.getAwayFromPositionTrajectory(who.GetBoundingBox(), Position);
+            who.setTrajectory(trajectory * 2);
+        }
+
         /// <summary>Arms whatever <paramref name="phase"/> opens with.</summary>
         private void EnterPhase(Phase phase)
         {
@@ -425,12 +456,11 @@ namespace StardewRoguelike.Bosses
             {
                 case Phase.Swarm:
                     Halt();
+
+                    // playSound reaches everyone in the location on its own; the
+                    // knockback has to be asked for, machine by machine.
                     currentLocation.playSound("explosion");
-                    foreach (Farmer farmer in currentLocation.farmers)
-                    {
-                        Vector2 trajectory = Utility.getAwayFromPositionTrajectory(Game1.player.GetBoundingBox(), Position);
-                        farmer.setTrajectory(trajectory * 2);
-                    }
+                    ShockwaveEvent.Fire();
 
                     TicksToJinxCircle = 120;
                     TicksToSpawnBadMinions = 180;
