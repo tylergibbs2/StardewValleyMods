@@ -139,6 +139,14 @@ namespace StardewRoguelike
         /// </summary>
         public static void SetupAudio()
         {
+            if (Game1.soundBank is null || Game1.audioEngine is null)
+            {
+                ModEntry.ModMonitor.Log(
+                    "No sound bank yet; the mod's music and sounds will not be available.",
+                    StardewModdingAPI.LogLevel.Warn);
+                return;
+            }
+
             foreach (var (name, category, filename, loop) in CustomAudio)
             {
                 string filePath = Path.Combine(ModEntry.Instance.Helper.DirectoryPath, "assets", "Audio", filename);
@@ -157,6 +165,10 @@ namespace StardewRoguelike
 
                 Game1.soundBank.AddCue(cue);
             }
+
+            ModEntry.ModMonitor.Log(
+                $"loaded {CustomAudio.Count} custom cues into the sound bank",
+                StardewModdingAPI.LogLevel.Debug);
         }
 
         /// <summary>
