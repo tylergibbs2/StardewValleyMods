@@ -193,5 +193,8 @@
   "ExitChoice.Boss": "Boss",
   "ExitChoice.BossDesc": "A boss fights here.",
   "ExitChoice.BossIn": "Boss in {{count}} floors",
-  "ExitChoice.BossNext": "The boss is next"
+  "ExitChoice.BossNext": "The boss is next",
+  "ExitChoice.Shrine": "Shrine",
+  "ExitChoice.ShrineDesc": "Take a curse. Choose a perk.",
+  "Shrine.NothingToOffer": "You already have every perk."
 }

@@ -22,6 +22,9 @@ namespace StardewRoguelike.Run
         /// <summary>The hot spring. Heals, and does nothing else.</summary>
         Spring,
 
+        /// <summary>A shrine. Takes a curse, gives a perk.</summary>
+        Shrine,
+
         /// <summary>A merchant floor. Forced every sixth floor; never offered as a choice.</summary>
         Merchant,
 

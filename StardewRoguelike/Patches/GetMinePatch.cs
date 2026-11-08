@@ -66,6 +66,10 @@ namespace StardewRoguelike.Patches
                         ChallengeFloor.Create(RunPlan.ArenaFor(requestedLevel));
                     break;
 
+                case FloorKind.Shrine:
+                    TerrainFeatures.PerkShrine.PlaceIn(newMine);
+                    break;
+
                 case FloorKind.Spring:
                     newMine.get_MineShaftIsChallengeFloor().Value = true;
                     newMine.get_MineShaftChallengeFloor().Value =

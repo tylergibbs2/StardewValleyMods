@@ -442,10 +442,18 @@ namespace StardewRoguelike
             return Game1.player.MaxItems == 12;
         }
 
+        /// <summary>
+        /// Whether Gil stands on this merchant floor.
+        ///
+        /// He no longer does. Gil was the perk vendor - the Perks action sits on his
+        /// tiles - so while he was here a perk arrived every sixth floor whatever the
+        /// player did, and the choice of what to do with a floor could not touch how
+        /// fast a build came together. Perks come from shrines now, which are routed
+        /// to and paid for with a curse. The debug flag still brings him back.
+        /// </summary>
         public static bool ShouldSpawnGil(int level)
         {
-            int perkCount = Perks.GetActivePerks().Count;
-            return (level > 1 && perkCount < Constants.MaximumPerkCount) || DebugCommands.ForcedGil;
+            return DebugCommands.ForcedGil;
         }
 
         public static void SetupForLocalPlayer(MineShaft mine)

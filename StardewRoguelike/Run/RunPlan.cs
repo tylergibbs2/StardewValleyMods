@@ -50,6 +50,7 @@ namespace StardewRoguelike.Run
             (FloorKind.Arena, 3),
             (FloorKind.Vault, 2),
             (FloorKind.Spring, 2),
+            (FloorKind.Shrine, 2),
             (FloorKind.Forge, 1)
         };
 
@@ -169,6 +170,11 @@ namespace StardewRoguelike.Run
 
             // Back-to-back springs waste a choice; one is enough.
             FloorKind.Spring => NoRecentOffer(FloorKind.Spring, level, 1),
+
+            // Perks come from here now that the merchants no longer sell them, so a
+            // shrine has to come round often enough to build with - but not so often
+            // that a player can take every perk without ever picking anything else.
+            FloorKind.Shrine => NoRecentOffer(FloorKind.Shrine, level, 2),
 
             _ => true
         };

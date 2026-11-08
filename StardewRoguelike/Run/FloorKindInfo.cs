@@ -17,6 +17,7 @@ namespace StardewRoguelike.Run
             FloorKind.Vault => I18n.ExitChoice_Vault(),
             FloorKind.Forge => I18n.ExitChoice_Forge(),
             FloorKind.Spring => I18n.ExitChoice_Spring(),
+            FloorKind.Shrine => I18n.ExitChoice_Shrine(),
             FloorKind.Merchant => I18n.ExitChoice_Merchant(),
             _ => I18n.ExitChoice_Boss()
         };
@@ -28,6 +29,7 @@ namespace StardewRoguelike.Run
             FloorKind.Vault => I18n.ExitChoice_VaultDesc(),
             FloorKind.Forge => I18n.ExitChoice_ForgeDesc(),
             FloorKind.Spring => I18n.ExitChoice_SpringDesc(),
+            FloorKind.Shrine => I18n.ExitChoice_ShrineDesc(),
             FloorKind.Merchant => I18n.ExitChoice_MerchantDesc(),
             _ => I18n.ExitChoice_BossDesc()
         };
@@ -49,6 +51,7 @@ namespace StardewRoguelike.Run
             FloorKind.Vault => new Rectangle(127, 412, 10, 11),     // chest
             FloorKind.Forge => new Rectangle(70, 428, 10, 10),      // iron bar
             FloorKind.Spring => new Rectangle(0, 428, 10, 10),      // health cross
+            FloorKind.Shrine => new Rectangle(150, 428, 10, 10),    // potion
             FloorKind.Merchant => new Rectangle(147, 412, 10, 11),  // chest, open
             _ => new Rectangle(140, 428, 10, 10)                    // skull
         };
