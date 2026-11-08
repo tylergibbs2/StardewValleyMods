@@ -21,6 +21,20 @@ namespace StardewRoguelike.UI
         private const int OptionHeight = 112;
         private const int OptionGap = 16;
 
+        /// <summary>Where the icon sits inside an option, and where its text starts.</summary>
+        private const int IconInset = 24;
+        private const int TextInset = 96;
+
+        /// <summary>
+        /// Room for the title scroll and the line under it.
+        ///
+        /// Measured rather than guessed: drawStringWithScrollCenteredAt centres on x
+        /// only and takes y as the top of the scroll, so a fixed offset put the line
+        /// underneath it inside the scroll art.
+        /// </summary>
+        private static int HeaderHeight =>
+            24 + SpriteText.getHeightOfString(I18n.ExitChoice_Title()) + 44;
+
         private readonly int level;
         private readonly FloorKind[] offers;
         private readonly List<ClickableComponent> options = new();
@@ -33,8 +47,8 @@ namespace StardewRoguelike.UI
             this.level = level;
             offers = RunPlan.OffersFor(level);
 
-            width = 720;
-            height = offers.Length * (OptionHeight + OptionGap) + 160;
+            width = 800;
+            height = HeaderHeight + offers.Length * (OptionHeight + OptionGap) + 48;
 
             SetUpPositions();
         }
@@ -50,7 +64,7 @@ namespace StardewRoguelike.UI
                 options.Add(new ClickableComponent(
                     new Rectangle(
                         xPositionOnScreen + 32,
-                        yPositionOnScreen + 112 + i * (OptionHeight + OptionGap),
+                        yPositionOnScreen + HeaderHeight + i * (OptionHeight + OptionGap),
                         width - 64,
                         OptionHeight),
                     offers[i].ToString())
@@ -118,6 +132,20 @@ namespace StardewRoguelike.UI
             Roguelike.DescendPending = true;
         }
 
+        /// <summary>
+        /// Draws text, shrinking it if it would not fit in <paramref name="room"/>.
+        ///
+        /// English fits at full size; this is for the translations, where the same
+        /// line can be half again as long and would otherwise run off the option.
+        /// </summary>
+        private static void DrawFitted(SpriteBatch b, string text, SpriteFont font, Vector2 at, int room, Color color)
+        {
+            float measured = font.MeasureString(text).X;
+            float scale = measured > room ? room / measured : 1f;
+
+            Utility.drawTextWithShadow(b, text, font, at, color, scale);
+        }
+
         public override void draw(SpriteBatch b)
         {
             b.Draw(Game1.fadeToBlackRect, Game1.graphics.GraphicsDevice.Viewport.Bounds, Color.Black * 0.6f);
@@ -137,7 +165,9 @@ namespace StardewRoguelike.UI
             Vector2 horizonSize = Game1.smallFont.MeasureString(horizon);
             Utility.drawTextWithShadow(
                 b, horizon, Game1.smallFont,
-                new Vector2(xPositionOnScreen + width / 2 - horizonSize.X / 2, yPositionOnScreen + 76),
+                new Vector2(
+                    xPositionOnScreen + width / 2 - horizonSize.X / 2,
+                    yPositionOnScreen + HeaderHeight - 40),
                 Game1.textColor * 0.75f);
 
             for (int i = 0; i < options.Count; i++)
@@ -151,19 +181,21 @@ namespace StardewRoguelike.UI
                     hovered && !committed ? Color.Wheat : Color.White);
 
                 FloorKind kind = offers[i];
-                Utility.drawTextWithShadow(
-                    b, FloorKindInfo.Name(kind), Game1.dialogueFont,
-                    new Vector2(option.bounds.X + 96, option.bounds.Y + 20), Game1.textColor);
+                int textRoom = option.bounds.Width - TextInset - 24;
 
-                Utility.drawTextWithShadow(
-                    b, FloorKindInfo.Description(kind), Game1.smallFont,
-                    new Vector2(option.bounds.X + 96, option.bounds.Y + 60), Game1.textColor * 0.8f);
+                DrawFitted(b, FloorKindInfo.Name(kind), Game1.dialogueFont,
+                    new Vector2(option.bounds.X + TextInset, option.bounds.Y + 20),
+                    textRoom, Game1.textColor);
+
+                DrawFitted(b, FloorKindInfo.Description(kind), Game1.smallFont,
+                    new Vector2(option.bounds.X + TextInset, option.bounds.Y + 60),
+                    textRoom, Game1.textColor * 0.8f);
 
                 Rectangle icon = FloorKindInfo.Icon(kind);
                 b.Draw(
                     Game1.mouseCursors,
-                    new Vector2(option.bounds.X + 24, option.bounds.Y + 24),
-                    icon, Color.White, 0f, Vector2.Zero, 64f / icon.Width, SpriteEffects.None, 1f);
+                    new Vector2(option.bounds.X + IconInset, option.bounds.Y + 24),
+                    icon, Color.White, 0f, Vector2.Zero, 56f / icon.Width, SpriteEffects.None, 1f);
             }
 
             if (committed)
