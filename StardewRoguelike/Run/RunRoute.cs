@@ -2,6 +2,7 @@
 using StardewModdingAPI;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Network;
 using System.Collections.Generic;
 using System.Linq;
@@ -156,6 +157,14 @@ namespace StardewRoguelike.Run
 
             return taken;
         }
+
+        /// <summary>Whether <paramref name="mine"/> is a floor the shrine stands on.</summary>
+        /// <remarks>
+        /// Asked from three places that each have to leave a shrine floor alone, so it
+        /// is answered once here rather than spelled out at each of them.
+        /// </remarks>
+        public static bool IsShrineFloor(MineShaft mine) =>
+            KindFor(Roguelike.GetLevelFromMineshaft(mine)) == FloorKind.Shrine;
 
         /// <summary>Whether the group has already settled <paramref name="level"/>.</summary>
         public static bool IsSettled(int level) =>

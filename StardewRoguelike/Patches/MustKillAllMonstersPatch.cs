@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using StardewRoguelike.Run;
 using StardewValley.Locations;
 
@@ -25,7 +25,7 @@ namespace StardewRoguelike.Patches
             if (__result)
                 return;
 
-            __result = RunRoute.KindFor(Roguelike.GetLevelFromMineshaft(__instance)) == FloorKind.Shrine;
+            __result = RunRoute.IsShrineFloor(__instance);
         }
     }
 }

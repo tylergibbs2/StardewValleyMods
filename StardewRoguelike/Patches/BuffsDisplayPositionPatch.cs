@@ -40,9 +40,6 @@ namespace StardewRoguelike.Patches
         private static readonly MethodBase? ResetIcons =
             AccessTools.Method(typeof(BuffsDisplay), "resetIcons");
 
-        /// <summary>When the icons were last described, so it is said rarely.</summary>
-        private static double lastReport;
-
         public static bool Prefix(BuffsDisplay __instance)
         {
             int x = Game1.uiViewport.Width - RightMargin - BarWidth;
@@ -58,9 +55,7 @@ namespace StardewRoguelike.Patches
             __instance.width = BarWidth;
             __instance.height = BarHeight;
 
-            int before = FirstIconX(__instance);
-
-            if (changed || __instance.dirty)
+            if (changed)
                 ResetIcons?.Invoke(__instance, null);
 
             // The rectangles are written here rather than through
@@ -78,17 +73,7 @@ namespace StardewRoguelike.Patches
                 slot++;
             }
 
-            Report(__instance, changed, before, FirstIconX(__instance));
             return false;
-        }
-
-        /// <summary>Where the first icon sits, or int.MinValue when there are none.</summary>
-        private static int FirstIconX(BuffsDisplay display)
-        {
-            foreach (ClickableTextureComponent icon in Icons(display))
-                return icon.bounds.X;
-
-            return int.MinValue;
         }
 
         private static IEnumerable<ClickableTextureComponent> Icons(BuffsDisplay display)
@@ -103,31 +88,5 @@ namespace StardewRoguelike.Patches
                 yield return (ClickableTextureComponent)entry.Key;
         }
 
-        /// <summary>
-        /// Says what the arrangement did, at most once every few seconds.
-        ///
-        /// Reports the icon position either side of the call rather than afterwards
-        /// alone: the icons keep ending up at the back buffer's origin however they
-        /// are placed, and before/after says whether this patch is failing to move
-        /// them or something is moving them back.
-        /// </summary>
-        private static void Report(BuffsDisplay display, bool changed, int before, int after)
-        {
-            double now = Game1.currentGameTime?.TotalGameTime.TotalSeconds ?? 0;
-            if (now - lastReport < 3 || before == int.MinValue)
-                return;
-
-            lastReport = now;
-
-            ModEntry.ModMonitor.Log(
-                $"buff icons: box={display.xPositionOnScreen},{display.yPositionOnScreen} " +
-                $"{display.width}x{display.height} ui={Game1.uiViewport.Width} " +
-                $"changed={changed} dirty={display.dirty} resetFound={ResetIcons is not null} " +
-                $"firstIcon {before} -> {after} (wanted {display.xPositionOnScreen + BarWidth - IconSize - IconGap}) " +
-                $"display#{System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(display)} " +
-                $"isGame1={ReferenceEquals(display, Game1.buffsDisplay)} " +
-                $"inHud={Game1.onScreenMenus.Contains(display)}",
-                StardewModdingAPI.LogLevel.Debug);
-        }
     }
 }

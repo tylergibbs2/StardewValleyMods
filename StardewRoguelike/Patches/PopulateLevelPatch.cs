@@ -74,7 +74,7 @@ namespace StardewRoguelike.Patches
             // everything a mineshaft gives and a perk on top, which is what made the
             // two indistinguishable in the first place. Resource clumps are already
             // out, since the base game keeps them off a floor that has to be cleared.
-            bool isShrineFloor = RunRoute.KindFor(level) == FloorKind.Shrine;
+            bool isShrineFloor = RunRoute.IsShrineFloor(__instance);
             if (isShrineFloor)
             {
                 stoneChance = 0;

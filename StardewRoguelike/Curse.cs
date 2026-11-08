@@ -377,10 +377,19 @@ namespace StardewRoguelike
             }
         }
 
-        // Only works for Game1.player
+        /// <summary>Whether the local player carries <paramref name="curseType"/>.</summary>
+        /// <remarks>
+        /// Read off the synced list, which is what every other machine sees and what
+        /// <see cref="EnsureCurseBuffs"/> builds the buff from. It used to read the
+        /// buff, which made the derived thing the source of truth: a buff that went
+        /// missing for a tick - a reset, a Farmer.ClearBuffs, an unlucky order - said
+        /// the curse was gone while the list still held it, so AddCurse would put a
+        /// second copy in the list and hand out a second GlassCannonEnchantment with
+        /// it. The list is the curse; the buff is how it is shown.
+        /// </remarks>
         public static bool HasCurse(CurseType curseType)
         {
-            return Game1.player.hasBuff(GetBuffId(curseType));
+            return Game1.player.get_FarmerCurses().Contains((int)curseType);
         }
 
         public static bool HasAnyCurse()
@@ -404,7 +413,7 @@ namespace StardewRoguelike
             return false;
         }
 
-        public static CurseType? GetRandomUniqueCurse(Random random = null)
+        public static CurseType? GetRandomUniqueCurse(Random? random = null)
         {
             random ??= Game1.random;
 
@@ -488,7 +497,7 @@ namespace StardewRoguelike
             switch (curseType)
             {
                 case CurseType.GlassCannon:
-                    GlassCannonEnchantment toRemove = null;
+                    GlassCannonEnchantment? toRemove = null;
                     foreach (BaseEnchantment enchantment in Game1.player.enchantments)
                     {
                         if (enchantment is GlassCannonEnchantment glassCannon)
@@ -540,7 +549,7 @@ namespace StardewRoguelike
 
         public static void RemoveAllCurses()
         {
-            foreach (CurseType curseType in Enum.GetValues(typeof(CurseType)))
+            foreach (CurseType curseType in Enum.GetValues<CurseType>())
                 RemoveCurse(curseType);
         }
     }

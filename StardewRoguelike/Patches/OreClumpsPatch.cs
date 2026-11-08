@@ -1,5 +1,6 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
+using StardewRoguelike.Run;
 using StardewValley;
 using StardewValley.Locations;
 using System;
@@ -11,6 +12,12 @@ namespace StardewRoguelike.Patches
     {
 		public static bool Prefix(MineShaft __instance)
         {
+			// A shrine floor is a fight rather than a dig. This is a separate entry
+			// point from populateLevel, so zeroing the stone chances there left the
+			// gold standing.
+			if (RunRoute.IsShrineFloor(__instance))
+				return false;
+
 			Random mineRandom = __instance.mineRandom;
 
 			if (!(mineRandom.NextDouble() < 0.55))
