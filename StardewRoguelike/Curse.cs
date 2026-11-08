@@ -9,6 +9,7 @@ using StardewValley;
 using StardewValley.Buffs;
 using StardewValley.Enchantments;
 using StardewValley.Locations;
+using StardewValley.Menus;
 using StardewValley.Monsters;
 using System;
 using System.Collections.Generic;
@@ -389,14 +390,32 @@ namespace StardewRoguelike
         /// </remarks>
         public static void LogBuffDisplayState()
         {
-            int curseBuffs = Game1.player.buffs.AppliedBuffs.Values.Count(buff => buff is Curse);
+            BuffsDisplay display = Game1.buffsDisplay;
+
+            // The icons are built and counted, so what is left to know is where they
+            // land. The dictionary holding them is private, hence the reflection.
+            var icons = HarmonyLib.AccessTools.Field(typeof(BuffsDisplay), "buffs")
+                .GetValue(display) as System.Collections.IDictionary;
+
+            List<string> placed = new();
+            if (icons is not null)
+            {
+                foreach (System.Collections.DictionaryEntry entry in icons)
+                {
+                    ClickableTextureComponent icon = (ClickableTextureComponent)entry.Key;
+                    Buff buff = (Buff)entry.Value!;
+                    placed.Add($"{buff.id}@{icon.bounds.X},{icon.bounds.Y} {icon.bounds.Width}x{icon.bounds.Height}");
+                }
+            }
+
+            Microsoft.Xna.Framework.Rectangle device = Game1.game1.GraphicsDevice.Viewport.Bounds;
 
             ModEntry.ModMonitor.Log(
-                $"curse display: curses={Game1.player.get_FarmerCurses().Count} " +
-                $"curseBuffs={curseBuffs} buffs={Game1.player.buffs.AppliedBuffs.Count} " +
-                $"icons={Game1.buffsDisplay.getNumBuffs()} dirty={Game1.buffsDisplay.dirty} " +
-                $"hud={Game1.displayHUD} canMove={Game1.player.CanMove} " +
-                $"timePasses={Game1.shouldTimePass()}",
+                $"curse display: box={display.xPositionOnScreen},{display.yPositionOnScreen} " +
+                $"{display.width}x{display.height} " +
+                $"ui={Game1.uiViewport.Width}x{Game1.uiViewport.Height} " +
+                $"device={device.Width}x{device.Height} uiScale={Game1.options.uiScale} " +
+                $"zoom={Game1.options.zoomLevel} icons=[{string.Join(" | ", placed)}]",
                 LogLevel.Debug);
         }
 

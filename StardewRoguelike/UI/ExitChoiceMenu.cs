@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using StardewRoguelike.Run;
@@ -55,7 +55,7 @@ namespace StardewRoguelike.UI
         public ExitChoiceMenu(int level) : base(0, 0, 0, 0, showUpperRightCloseButton: false)
         {
             this.level = level;
-            offers = RunPlan.OffersFor(level);
+            offers = RunRoute.OffersFor(level);
 
             width = 800;
             height = HeaderHeight + offers.Length * (OptionHeight + OptionGap) - OptionGap + 64;

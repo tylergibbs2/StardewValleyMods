@@ -1,4 +1,4 @@
-using StardewRoguelike.ChallengeFloors;
+﻿using StardewRoguelike.ChallengeFloors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,8 +24,15 @@ namespace StardewRoguelike.Run
         /// <summary>How many exits a floor offers, when it offers a choice at all.</summary>
         public const int OfferCount = 3;
 
-        /// <summary>Forges are a power spike, so they are kept apart.</summary>
-        private const int ForgeMinimumInterval = 10;
+        /// <summary>
+        /// Forges are a power spike, so they are kept apart.
+        ///
+        /// Here it only keeps them out of the opening floors, where there is no weapon
+        /// worth enchanting yet. The spacing between one forge and the next is
+        /// <see cref="RunRoute.ForgeInterval"/>, which counts the forges the group
+        /// actually took rather than the ones it was shown.
+        /// </summary>
+        public const int ForgeMinimumLevel = 10;
 
         /// <summary>The combat floors an Arena exit can lead to.</summary>
         private static readonly ChallengeFloor.ChallengeType[] ArenaChallenges =
@@ -69,7 +76,14 @@ namespace StardewRoguelike.Run
         /// <summary>Throws the cache away so the next read rebuilds from the seed.</summary>
         public static void Invalidate() => builtForSeed = -1;
 
-        /// <summary>The kinds offered as exits leading to <paramref name="level"/>.</summary>
+        /// <summary>
+        /// Every kind the seed will consider for <paramref name="level"/>, best first.
+        ///
+        /// The whole pool rather than the three that get shown, so that
+        /// <see cref="RunRoute.OffersFor"/> has spares to promote when it drops a kind
+        /// the group has already taken this boss cycle. Without them a late floor in a
+        /// cycle would be left offering one exit, which is not a choice.
+        /// </summary>
         public static FloorKind[] OffersFor(int level) => Get(level).Offers;
 
         /// <summary>Which combat floor an Arena at <paramref name="level"/> leads to.</summary>
@@ -92,9 +106,11 @@ namespace StardewRoguelike.Run
         /// Fills the cache up to <paramref name="upTo"/>, rebuilding from level one if
         /// the seed has changed since it was last built.
         ///
-        /// Always from level one, never from wherever the player happens to be: the
-        /// spacing rules look back at earlier levels, so a partial build would give
-        /// different answers depending on where it started.
+        /// Always from level one, never from wherever the player happens to be. A
+        /// level is planned from one draw after another off a single stream, so where
+        /// that stream has got to is what decides the answer, and starting it part way
+        /// through would give a different one on a machine that had visited fewer
+        /// floors.
         /// </summary>
         private static void Build(int upTo)
         {
@@ -145,7 +161,7 @@ namespace StardewRoguelike.Run
                 .ToList();
 
             List<FloorKind> offers = new();
-            while (offers.Count < OfferCount && pool.Count > 0)
+            while (pool.Count > 0)
             {
                 FloorKind picked = Draw(pool, rng);
                 offers.Add(picked);
@@ -153,46 +169,47 @@ namespace StardewRoguelike.Run
             }
 
             // There has to be a floor worth playing rather than only a heal and a
-            // chest, or a hurt player with no gold is left with nothing to pick.
-            if (!offers.Contains(FloorKind.Normal) && !offers.Contains(FloorKind.Arena))
-                offers[^1] = FloorKind.Normal;
+            // chest, or a hurt player with no gold is left with nothing to pick. Only
+            // the head of the list is shown, so that is where one has to be.
+            Promote(offers);
 
             entry.Offers = offers.ToArray();
             entry.Arena = ArenaChallenges[rng.Next(ArenaChallenges.Length)];
         }
 
-        private static bool Allowed(FloorKind kind, int level) => kind switch
+        /// <summary>
+        /// Moves a mining or combat floor into the shown part of the list, if the draw
+        /// did not put one there.
+        /// </summary>
+        private static void Promote(List<FloorKind> offers)
         {
-            // Spaced out, and never in the opening floors where there is no weapon
-            // worth enchanting yet.
-            FloorKind.Forge => level > ForgeMinimumInterval
-                               && NoRecentOffer(FloorKind.Forge, level, ForgeMinimumInterval),
-
-            // Back-to-back springs waste a choice; one is enough.
-            FloorKind.Spring => NoRecentOffer(FloorKind.Spring, level, 1),
-
-            // Perks come from here now that the merchants no longer sell them, so a
-            // shrine has to come round often enough to build with - but not so often
-            // that a player can take every perk without ever picking anything else.
-            FloorKind.Shrine => NoRecentOffer(FloorKind.Shrine, level, 2),
-
-            _ => true
-        };
-
-        private static bool NoRecentOffer(FloorKind kind, int level, int within)
-        {
-            for (int back = 1; back <= within; back++)
+            for (int i = 0; i < Math.Min(OfferCount, offers.Count); i++)
             {
-                int earlier = level - back;
-                if (earlier < 1 || earlier >= entries.Count)
-                    continue;
-
-                if (entries[earlier].Offers.Contains(kind))
-                    return false;
+                if (offers[i] == FloorKind.Normal || offers[i] == FloorKind.Arena)
+                    return;
             }
 
-            return true;
+            int found = offers.FindIndex(kind => kind == FloorKind.Normal || kind == FloorKind.Arena);
+            if (found < 0)
+                return;
+
+            int last = Math.Min(OfferCount, offers.Count) - 1;
+            (offers[last], offers[found]) = (offers[found], offers[last]);
         }
+
+        /// <remarks>
+        /// Spacing used to live here, as a look back over what earlier levels had been
+        /// offered. It no longer does: how often a kind comes round is decided by what
+        /// the group took, in <see cref="RunRoute.OffersFor"/>, and a plan that also
+        /// held kinds back left some floors with one exit on them. A level is now
+        /// planned without reference to any other, which is what the cache was
+        /// rebuilding from level one to guarantee.
+        /// </remarks>
+        private static bool Allowed(FloorKind kind, int level) => kind switch
+        {
+            FloorKind.Forge => level > ForgeMinimumLevel,
+            _ => true
+        };
 
         private static FloorKind Draw(List<(FloorKind Kind, int Weight)> pool, Random rng)
         {

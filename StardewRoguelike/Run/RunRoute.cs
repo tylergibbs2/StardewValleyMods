@@ -1,8 +1,10 @@
-using Netcode;
+﻿using Netcode;
 using StardewModdingAPI;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Network;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace StardewRoguelike.Run
 {
@@ -18,6 +20,15 @@ namespace StardewRoguelike.Run
     {
         /// <summary>The message farmhands send to have the host record their choice.</summary>
         public const string MessageType = "RouteChoice";
+
+        /// <summary>How many levels have to pass between one forge and the next.</summary>
+        /// <remarks>
+        /// Counted from the forges the group took, not the ones it was offered, since
+        /// it is taking one that spikes the run's power. A forge is also at most one
+        /// per boss cycle by the rule every kind is under, so this is what stops two
+        /// cycles in a row ending in an enchantment.
+        /// </remarks>
+        private const int ForgeInterval = 10;
 
         public class ChoicePayload
         {
@@ -53,8 +64,77 @@ namespace StardewRoguelike.Run
             // Nobody committed - a debug warp, or a floor reached some way that skips
             // the exit menu. Fall back to the plan's first offer so the floor still
             // generates the same way on every machine.
-            FloorKind[] offers = RunPlan.OffersFor(level);
+            FloorKind[] offers = OffersFor(level);
             return offers.Length > 0 ? offers[0] : FloorKind.Normal;
+        }
+
+        /// <summary>The kinds actually offered at the exit leading to <paramref name="level"/>.</summary>
+        /// <remarks>
+        /// What the plan would offer, less whatever the group has already taken since
+        /// the last boss. A cycle that allows three springs is a cycle with one
+        /// decision in it repeated; dropping what has been used makes each choice
+        /// spend itself, so a cycle reads as a route rather than four draws from the
+        /// same bag.
+        ///
+        /// The plan hands over its whole pool, so dropping a kind promotes the next
+        /// one rather than shortening the menu. If even that is exhausted - a long
+        /// cycle, or a level where the spacing rules allow little - the plan's own
+        /// head is used, because an exit with nothing on it is a dead end.
+        /// </remarks>
+        public static FloorKind[] OffersFor(int level)
+        {
+            FloorKind[] planned = RunPlan.OffersFor(level);
+            if (planned.Length <= 1)
+                return planned;
+
+            HashSet<FloorKind> blocked = TakenThisCycle(level);
+
+            if (RecentlyForged(level))
+                blocked.Add(FloorKind.Forge);
+
+            FloorKind[] fresh = planned
+                .Where(kind => !blocked.Contains(kind))
+                .Take(RunPlan.OfferCount)
+                .ToArray();
+
+            return fresh.Length > 0 ? fresh : planned.Take(RunPlan.OfferCount).ToArray();
+        }
+
+        /// <summary>Whether a forge was taken too recently to offer another.</summary>
+        private static bool RecentlyForged(int level)
+        {
+            for (int back = 1; back <= ForgeInterval; back++)
+            {
+                int earlier = level - back;
+                if (earlier < 1)
+                    break;
+
+                if (Store.TryGetValue(earlier, out int chosen) && (FloorKind)chosen == FloorKind.Forge)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>The kinds the group has chosen since the last boss floor.</summary>
+        /// <remarks>
+        /// Read back off the route rather than counted forward, so it gives the same
+        /// answer on a farmhand that joined mid-run as on the host.
+        /// </remarks>
+        private static HashSet<FloorKind> TakenThisCycle(int level)
+        {
+            HashSet<FloorKind> taken = new();
+
+            for (int earlier = level - 1; earlier >= 1; earlier--)
+            {
+                if (BossFloor.IsBossFloor(earlier))
+                    break;
+
+                if (Store.TryGetValue(earlier, out int chosen))
+                    taken.Add((FloorKind)chosen);
+            }
+
+            return taken;
         }
 
         /// <summary>Whether the group has already settled <paramref name="level"/>.</summary>
