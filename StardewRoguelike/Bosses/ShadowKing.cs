@@ -146,7 +146,23 @@ namespace StardewRoguelike.Bosses
         private readonly int Width;
         private readonly int Height;
 
-        private int AttackPhase = 0;
+        /// <summary>
+        /// Which fight the boss is currently having. Health thresholds advance it
+        /// one way only; <see cref="SetPhase"/> is the only thing that writes it.
+        /// </summary>
+        private enum Phase
+        {
+            /// <summary>Arrow volleys, and a fuse lit by taking a hit.</summary>
+            Volleys,
+
+            /// <summary>Minion waves and jinx circles, still with the fuse.</summary>
+            Swarm,
+
+            /// <summary>Everything at once, faster, and no longer explodes.</summary>
+            Frenzy
+        }
+
+        private readonly NetEnum<Phase> CurrentPhase = new(Phase.Volleys);
 
         private int TicksSinceLastExplosion = 0;
         private int TicksToExplode = 0;
@@ -182,7 +198,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddField(Encountered);
+            NetFields.AddField(Encountered).AddField(CurrentPhase);
 
         }
 
@@ -259,10 +275,8 @@ namespace StardewRoguelike.Bosses
                 TicksSinceLastExplosion++;
             }
 
-            if (AttackPhase == 0)
+            if (CurrentPhase.Value == Phase.Volleys)
             {
-                // do phase 1 stuff
-
                 if (withinPlayerThreshold(6) && TicksToExplode == 0 && TicksToArrowVolley == 0)
                     TicksToArrowVolley = Game1.random.Next(60 * 5, 60 * 7);
 
@@ -277,39 +291,11 @@ namespace StardewRoguelike.Bosses
                         FireArrowCone();
                 }
 
-                // Phase 2 transition
                 if (Health <= MaxHealth * 0.66f)
-                {
-                    currentLocation.netAudio.StopPlaying("fuse");
-
-                    // Cancelling the fuse has to undo what starting it did. Without
-                    // the glow being stopped the boss stays red for the rest of the
-                    // fight, and without resetting this the explosion cooldown is
-                    // still spent, so the next hit detonates another one instantly.
-                    stopGlowing();
-                    TicksSinceLastExplosion = 0;
-
-                    TicksToExplode = 0;
-                    TicksToArrowVolley = 0;
-
-                    Halt();
-                    currentLocation.playSound("explosion");
-                    foreach (Farmer farmer in currentLocation.farmers)
-                    {
-                        Vector2 trajectory = Utility.getAwayFromPositionTrajectory(Game1.player.GetBoundingBox(), Position);
-                        farmer.setTrajectory(trajectory * 2);
-                    }
-
-                    TicksToJinxCircle = 120;
-                    TicksToSpawnBadMinions = 180;
-
-                    AttackPhase = 1;
-                }
+                    SetPhase(Phase.Swarm);
             }
-            else if (AttackPhase == 1)
+            else if (CurrentPhase.Value == Phase.Swarm)
             {
-                // do phase 2 stuff
-
                 if (TicksToSpawnBadMinions == 0)
                     TicksToSpawnBadMinions = 60 * Game1.random.Next(10, 13);
 
@@ -338,17 +324,10 @@ namespace StardewRoguelike.Bosses
                 }
 
                 if (Health <= MaxHealth * 0.25f)
-                {
-                    TicksToSpawnGoodMinions = 120;
-
-                    speed = 4;
-                    AttackPhase = 2;
-                }
+                    SetPhase(Phase.Frenzy);
             }
-            else if (AttackPhase == 2)
+            else if (CurrentPhase.Value == Phase.Frenzy)
             {
-                // do phase 3 stuff
-
                 if (TicksToSpawnGoodMinions == 0)
                     TicksToSpawnGoodMinions = 60 * Game1.random.Next(8, 11);
 
@@ -399,15 +378,80 @@ namespace StardewRoguelike.Bosses
             }
         }
 
+        /// <summary>
+        /// Moves to <paramref name="next"/>, running the phase being left and the
+        /// phase being entered in that order.
+        ///
+        /// The transitions used to be written inline at the end of whichever branch
+        /// noticed the health threshold, which meant each one carried its own copy
+        /// of the previous phase's teardown. Two bugs came out of that list being
+        /// incomplete - a boss left glowing red for the rest of the fight, and a
+        /// spent explosion cooldown that let the next hit detonate instantly - so
+        /// the teardown lives in one place per phase now.
+        /// </summary>
+        private void SetPhase(Phase next)
+        {
+            if (CurrentPhase.Value == next)
+                return;
+
+            ExitPhase(CurrentPhase.Value);
+            CurrentPhase.Value = next;
+            EnterPhase(next);
+        }
+
+        /// <summary>Cancels everything <paramref name="phase"/> can leave running.</summary>
+        private void ExitPhase(Phase phase)
+        {
+            switch (phase)
+            {
+                case Phase.Volleys:
+                    // The fuse owns three pieces of state between them: the sound,
+                    // the red glow it lit, and the cooldown it spent. Dropping the
+                    // phase has to drop all three.
+                    currentLocation.netAudio.StopPlaying("fuse");
+                    stopGlowing();
+                    TicksSinceLastExplosion = 0;
+                    TicksToExplode = 0;
+
+                    TicksToArrowVolley = 0;
+                    break;
+            }
+        }
+
+        /// <summary>Arms whatever <paramref name="phase"/> opens with.</summary>
+        private void EnterPhase(Phase phase)
+        {
+            switch (phase)
+            {
+                case Phase.Swarm:
+                    Halt();
+                    currentLocation.playSound("explosion");
+                    foreach (Farmer farmer in currentLocation.farmers)
+                    {
+                        Vector2 trajectory = Utility.getAwayFromPositionTrajectory(Game1.player.GetBoundingBox(), Position);
+                        farmer.setTrajectory(trajectory * 2);
+                    }
+
+                    TicksToJinxCircle = 120;
+                    TicksToSpawnBadMinions = 180;
+                    break;
+
+                case Phase.Frenzy:
+                    TicksToSpawnGoodMinions = 120;
+                    speed = 4;
+                    break;
+            }
+        }
+
         private void StartExplosion()
         {
-            if (AttackPhase == 0)
+            if (CurrentPhase.Value == Phase.Volleys)
             {
                 TicksToExplode = 120;
                 ExplosionDamage = 25;
                 ExplosionRadius = 3;
             }
-            else if (AttackPhase == 1)
+            else if (CurrentPhase.Value == Phase.Swarm)
             {
                 TicksToExplode = 90;
                 ExplosionDamage = 40;
@@ -592,7 +636,7 @@ namespace StardewRoguelike.Bosses
             if (isBomb)
                 return 0;
 
-            if ((AttackPhase == 0 || AttackPhase == 1) && TicksSinceLastExplosion > ExplosionCooldownTicks && TicksToExplode == 0)
+            if (CurrentPhase.Value != Phase.Frenzy && TicksSinceLastExplosion > ExplosionCooldownTicks && TicksToExplode == 0)
                 StartExplosion();
 
             int result = base.takeDamage(damage, xTrajectory, yTrajectory, isBomb, addedPrecision, who);
