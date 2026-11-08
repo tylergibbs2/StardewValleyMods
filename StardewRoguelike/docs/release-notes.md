@@ -2,6 +2,43 @@
 
 # Release notes
 
+## 1.2.1
+
+Released on 7 November 2026 for SMAPI 4.0.0 or later.
+
+This release corrects faults in multiplayer games and split-screen games.
+
+- Fix: The mod removed the water maps from the map pool after the first dark floor. The maps did not come back until you started the game again.
+- Fix: Ozul the Shadow King kept the arena warps and the blocked tiles after his death.
+- Fix: Only the host could make Ozul the Shadow King explode. An attack from a farmhand did nothing.
+- Fix: Ozul the Shadow King pushed each player in the wrong direction. The push did not move a farmhand.
+- Fix: A farmhand did too much damage to Odys the Hivemother. The mod did not decrease the damage during the egg stages.
+- Fix: A farmhand did not see the egg animation of Odys the Hivemother.
+- Fix: A farmhand read the wrong completion state on some challenge floors.
+- Fix: The host did not send the generation seed to a farmhand. Perks, merchant stock and curses used a different seed on each machine.
+- Fix: Two split-screen players shared their perks, their spectator inventory and their curse timers.
+- Adjust: The seed controls two sequences: one for the floors, one for the offers to each player. A run from an earlier version does not repeat with the same seed.
+
+## 1.2.0
+
+Released on 3 November 2026 for SMAPI 4.0.0 or later.
+
+This release adds support for Stardew Valley 1.6. The mod no longer takes over
+the game. You can play a normal save with the mod installed.
+
+- Add: Support for Stardew Valley 1.6 and SMAPI 4.0.
+- Add: A mode switch. The mod applies its changes at the start of a run, and removes them when you go back to the title screen.
+- Remove: The run upload button and the `rdebug uploadstats` command. The online leaderboard is no longer available.
+- Fix: The mod replaced four vanilla tilesheets with art from version 1.5.6. The clock and the money counter showed the wrong image. The mod now overlays only the areas that it uses.
+- Fix: Players spawned outside the map in the boss arenas. The mod could not find the ladder.
+- Fix: Arc the Skeleton Mage did too much projectile damage. The mod applied the difficulty multiplier two times.
+- Fix: Some monster, egg and boulder spawn loops stopped the game.
+- Fix: A boss could stop its attacks. One boss attack never occurred.
+- Fix: A co-op death could remove your inventory or cause a loop.
+- Fix: The mod kept textures and run data in memory after the end of a run.
+- Fix: You could not sell ore at two of the three merchants.
+- Fix: The lobby ladder, the dialogue of Mr Qi and the dwarf gates did not work correctly.
+
 ## 1.1.1
 
 Released on 8 October 2023 for SMAPI 3.15.0 or later.
