@@ -35,7 +35,13 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override List<string> GetMusicTracks(MineShaft mine)
         {
-            if (eggsFound.Value == 0 || floorSecondsLeft.Value == 0)
+            // eggsFound is a sound test for "the hunt has begun": the timer cannot
+            // start until somebody takes the golden egg, and that egg is worth three
+            // points. Whether it is over is asked of the floor's own state, rather
+            // than of the clock - the clock reaches zero a second before Update
+            // notices and ends the floor, and the music went quiet in that second
+            // while the hunt was still being played.
+            if (eggsFound.Value == 0 || IsOver)
                 return new() { "none" };
 
             return new() { "event1" };
