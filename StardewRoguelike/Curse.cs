@@ -9,7 +9,6 @@ using StardewValley;
 using StardewValley.Buffs;
 using StardewValley.Enchantments;
 using StardewValley.Locations;
-using StardewValley.Menus;
 using StardewValley.Monsters;
 using System;
 using System.Collections.Generic;
@@ -376,47 +375,6 @@ namespace StardewRoguelike
                 if (!Game1.player.hasBuff(GetBuffId(curseType)))
                     Game1.player.applyBuff(new Curse(curseType));
             }
-        }
-
-        /// <summary>
-        /// Reports what the buff display has made of the player's curses.
-        /// </summary>
-        /// <remarks>
-        /// Temporary. The buff itself checks out - it lands in AppliedBuffs with an
-        /// icon and with visible set - so the only step left that can swallow it is
-        /// BuffsDisplay, which rebuilds its icons from the player's buffs when it is
-        /// marked dirty and is only told to do so while the player can move and time
-        /// is passing.
-        /// </remarks>
-        public static void LogBuffDisplayState()
-        {
-            BuffsDisplay display = Game1.buffsDisplay;
-
-            // The icons are built and counted, so what is left to know is where they
-            // land. The dictionary holding them is private, hence the reflection.
-            var icons = HarmonyLib.AccessTools.Field(typeof(BuffsDisplay), "buffs")
-                .GetValue(display) as System.Collections.IDictionary;
-
-            List<string> placed = new();
-            if (icons is not null)
-            {
-                foreach (System.Collections.DictionaryEntry entry in icons)
-                {
-                    ClickableTextureComponent icon = (ClickableTextureComponent)entry.Key;
-                    Buff buff = (Buff)entry.Value!;
-                    placed.Add($"{buff.id}@{icon.bounds.X},{icon.bounds.Y} {icon.bounds.Width}x{icon.bounds.Height}");
-                }
-            }
-
-            Microsoft.Xna.Framework.Rectangle device = Game1.game1.GraphicsDevice.Viewport.Bounds;
-
-            ModEntry.ModMonitor.Log(
-                $"curse display: box={display.xPositionOnScreen},{display.yPositionOnScreen} " +
-                $"{display.width}x{display.height} " +
-                $"ui={Game1.uiViewport.Width}x{Game1.uiViewport.Height} " +
-                $"device={device.Width}x{device.Height} uiScale={Game1.options.uiScale} " +
-                $"zoom={Game1.options.zoomLevel} icons=[{string.Join(" | ", placed)}]",
-                LogLevel.Debug);
         }
 
         // Only works for Game1.player

@@ -274,9 +274,6 @@ namespace StardewRoguelike
             Perks.EnsurePerkBuff();
             Curse.EnsureCurseBuffs();
 
-            if (e.IsOneSecond && Curse.HasAnyCurse())
-                Curse.LogBuffDisplayState();
-
             // Kept alive by refreshing a very short duration each tick, so it lapses
             // as soon as the player stops qualifying for it.
             //
