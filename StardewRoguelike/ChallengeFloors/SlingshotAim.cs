@@ -9,6 +9,7 @@ using StardewValley.Menus;
 using StardewValley.Monsters;
 using StardewValley.Objects;
 using StardewValley.Tools;
+using System;
 using System.Collections.Generic;
 
 namespace StardewRoguelike.ChallengeFloors
@@ -33,6 +34,33 @@ namespace StardewRoguelike.ChallengeFloors
         /// early instead.
         /// </summary>
         internal const int PatrolMargin = 1;
+
+        /// <summary>
+        /// How far the player can stray from the middle of the frame before the
+        /// camera starts following them.
+        ///
+        /// Three tiles, so shuffling about while lining up a shot does not slide the
+        /// whole arena around, but walking down the floor does bring the far end into
+        /// view.
+        /// </summary>
+        private const float DeadZone = 3 * 64f;
+
+        /// <summary>
+        /// How much of the distance to its mark the camera closes each tick.
+        ///
+        /// Low enough to read as a glide rather than a cut: about two thirds of the
+        /// way there in a sixth of a second. It is also what makes taking the camera
+        /// in the first place bearable, since it slides over from wherever the player
+        /// was standing rather than jumping.
+        /// </summary>
+        private const float Smoothing = 0.12f;
+
+        /// <summary>Where the camera is now, in world pixels, before rounding.</summary>
+        private float cameraX;
+        private float cameraY;
+
+        /// <summary>Whether the camera is this floor's rather than the player's.</summary>
+        private bool holdingCamera;
 
         private readonly Vector2 upperLeftCorner = new(Arena.Left, Arena.Top);
 
@@ -236,7 +264,66 @@ namespace StardewRoguelike.ChallengeFloors
                 return;
             }
 
-            FrameArena();
+            // Picked up from where the camera already is, so the first frame of
+            // holding it changes nothing and the glide below does the moving.
+            if (!holdingCamera)
+            {
+                cameraX = Game1.viewport.X + Game1.viewport.Width / 2f;
+                cameraY = Game1.viewport.Y + Game1.viewport.Height / 2f;
+                holdingCamera = true;
+            }
+
+            Game1.viewportFreeze = true;
+
+            cameraX += (DesiredCentreX() - cameraX) * Smoothing;
+            cameraY += (DesiredCentreY() - cameraY) * Smoothing;
+
+            Game1.viewport.Location = new xTile.Dimensions.Location(
+                (int)(cameraX - Game1.viewport.Width / 2f),
+                (int)(cameraY - Game1.viewport.Height / 2f));
+        }
+
+        /// <summary>
+        /// Where the camera wants to be across the floor.
+        ///
+        /// It follows the player, but only once they have pushed out of the middle of
+        /// the frame, and never far enough to let an end of the arena off the screen.
+        /// The targets are the thing that has to stay visible; the player is the thing
+        /// that has to stay findable.
+        /// </summary>
+        private float DesiredCentreX()
+        {
+            float playerX = Game1.player.Position.X + 32f;
+            float centre = cameraX;
+
+            if (playerX > centre + DeadZone)
+                centre = playerX - DeadZone;
+            else if (playerX < centre - DeadZone)
+                centre = playerX + DeadZone;
+
+            float half = Game1.viewport.Width / 2f;
+            float leftMost = Arena.Left * 64f + half;
+            float rightMost = Arena.Right * 64f - half;
+
+            // A frame wider than the arena has nowhere to pan to, so it sits on the
+            // middle of it.
+            if (leftMost > rightMost)
+                return (Arena.Left + Arena.Right) * 32f;
+
+            return Math.Clamp(centre, leftMost, rightMost);
+        }
+
+        /// <summary>
+        /// And where it wants to be up and down, which is fixed.
+        ///
+        /// The band of targets is only a tile or so shorter than the frame, so there
+        /// is no room to follow the player vertically without pushing the top of the
+        /// band off the screen. It sits on the foot of the arena: targets in the upper
+        /// half, the ground the player shoots from in the lower.
+        /// </summary>
+        private static float DesiredCentreY()
+        {
+            return Arena.Bottom * 64f;
         }
 
         private static bool HoldingSlingshot()
@@ -250,30 +337,13 @@ namespace StardewRoguelike.ChallengeFloors
             return false;
         }
 
-        /// <summary>
-        /// Parks the camera so the whole shooting field is on screen.
-        ///
-        /// Re-applied every tick rather than set once: warping, a death or anything
-        /// else that moves the player will put the camera back on them, and the point
-        /// of this floor is that the targets are all visible at once rather than
-        /// found by walking around after them.
-        ///
-        /// Centred on the foot of the arena rather than its middle, so that the band
-        /// of targets sits in the upper half of the screen and the ground the player
-        /// shoots from sits in the lower. Centring on the middle put the targets in
-        /// the centre of the frame and the player below its edge.
-        /// </summary>
-        private static void FrameArena()
-        {
-            Game1.viewportFreeze = true;
-            Game1.viewport.Location = new xTile.Dimensions.Location(
-                Arena.Center.X * 64 - Game1.viewport.Width / 2,
-                Arena.Bottom * 64 - Game1.viewport.Height / 2);
-        }
-
         /// <summary>Hands the camera back to the player.</summary>
-        private static void ReleaseCamera()
+        private void ReleaseCamera()
         {
+            if (!holdingCamera)
+                return;
+
+            holdingCamera = false;
             Game1.viewportFreeze = false;
         }
 
