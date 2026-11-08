@@ -65,6 +65,14 @@ namespace StardewRoguelike.Run
             if (BossFloor.IsBossFloor(level))
                 return FloorKind.Boss;
 
+            // Named outright, so it wins over the older per-kind flags below.
+            if (DebugCommands.ForcedFloorKindIndex != -1)
+            {
+                FloorKind[] kinds = Enum.GetValues<FloorKind>();
+
+                return kinds[Math.Clamp(DebugCommands.ForcedFloorKindIndex, 0, kinds.Length - 1)];
+            }
+
             // The rdebug force flags used to be read by each ShouldDoXFloor predicate.
             // They are overrides on the resolved kind now, so one place answers what a
             // floor is and the debug commands keep working.
