@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Enchantments;
+using StardewValley.Inventories;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,42 @@ namespace StardewRoguelike.Patches
         public static bool Prefix(ref int __result)
         {
             __result = 0;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Lets the forge work with no cinder shards at all.
+    ///
+    /// Zeroing the cost was never enough on its own. The menu asks
+    /// Items.ContainsId("(O)848", cost) both to decide what to say and to decide
+    /// whether to craft, and that method looks the item up before it looks at the
+    /// count - so a cost of zero is still refused by a player carrying none. The
+    /// forge floor hands out no shards and the run has no other source, so the floor
+    /// only ever worked for someone who happened to have some already.
+    ///
+    /// Scoped as tightly as it can be: this floor's own menu, and that one item.
+    /// </summary>
+    internal class FreeForgeShardsPatch : Patch
+    {
+        private const string CinderShard = "(O)848";
+
+        protected override PatchDescriptor GetPatchDescriptor() => new(
+            typeof(Inventory),
+            nameof(Inventory.ContainsId),
+            new[] { typeof(string), typeof(int) });
+
+        public static bool Prefix(string itemId, ref bool __result)
+        {
+            if (Game1.activeClickableMenu is not LimitedForgeMenu)
+                return true;
+
+            // Compared both ways rather than through ItemRegistry, since this runs
+            // on every inventory lookup the menu makes.
+            if (itemId != CinderShard && itemId != "848")
+                return true;
+
+            __result = true;
             return false;
         }
     }
@@ -63,45 +100,8 @@ namespace StardewRoguelike.Patches
     {
         protected override PatchDescriptor GetPatchDescriptor() => new(new List<string>() { "SpaceCore.Interface.NewForgeMenu", "StardewValley.Menus.ForgeMenu" }, "draw");
 
-        /// <summary>When the forge last said what it thought, so it is said rarely.</summary>
-        private static double lastReport;
-
-        /// <summary>
-        /// Says what the forge makes of the two things in its slots.
-        ///
-        /// Temporary. The free forge patch zeroes GetForgeCost and the menu still
-        /// says there are not enough cinder shards, so this reports what the cost
-        /// actually came out as and what the shard check made of it.
-        /// </summary>
-        private static void Report(ForgeMenu menu)
-        {
-            Item? left = menu.leftIngredientSpot?.item;
-            Item? right = menu.rightIngredientSpot?.item;
-
-            if (left is null || right is null)
-                return;
-
-            double now = Game1.currentGameTime?.TotalGameTime.TotalSeconds ?? 0;
-            if (now - lastReport < 3)
-                return;
-
-            lastReport = now;
-
-            int cost = menu.GetForgeCost(left, right);
-            object? state = AccessTools.Field(typeof(ForgeMenu), "_craftState")?.GetValue(menu);
-
-            ModEntry.ModMonitor.Log(
-                $"forge: left={left.QualifiedItemId} right={right.QualifiedItemId} " +
-                $"cost={cost} shards={Game1.player.Items.CountId("(O)848")} " +
-                $"hasShards={Game1.player.Items.ContainsId("(O)848", cost)} " +
-                $"valid={menu.IsValidCraft(left, right)} state={state}",
-                StardewModdingAPI.LogLevel.Debug);
-        }
-
         public static void Postfix(ForgeMenu __instance, SpriteBatch b)
         {
-            Report(__instance);
-
             if (__instance is not LimitedForgeMenu limitedForgeMenu)
                 return;
 
