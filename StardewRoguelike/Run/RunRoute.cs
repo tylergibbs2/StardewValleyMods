@@ -21,6 +21,21 @@ namespace StardewRoguelike.Run
         /// <summary>The message farmhands send to have the host record their choice.</summary>
         public const string MessageType = "RouteChoice";
 
+        /// <summary>
+        /// The floors that ask nothing of the player: walk in, take the reward, leave.
+        ///
+        /// One of these per boss cycle. Two makes half the run between bosses a
+        /// collection round, and a cycle that costs nothing is a cycle with no reason
+        /// to weigh one exit against another. The forge is not among them, although it
+        /// is just as quiet: it has its own interval, and counting it here left a fifth
+        /// of all exits with a single option, since a cycle is only four floors.
+        /// </summary>
+        private static readonly FloorKind[] Friendly =
+        {
+            FloorKind.Spring,
+            FloorKind.Vault
+        };
+
         /// <summary>How many levels have to pass between one forge and the next.</summary>
         /// <remarks>
         /// Counted from the forges the group took, not the ones it was offered, since
@@ -88,6 +103,11 @@ namespace StardewRoguelike.Run
                 return planned;
 
             HashSet<FloorKind> blocked = TakenThisCycle(level);
+
+            // One quiet floor per cycle, so taking either of them spends both.
+            if (Friendly.Any(blocked.Contains))
+                foreach (FloorKind kind in Friendly)
+                    blocked.Add(kind);
 
             if (RecentlyForged(level))
                 blocked.Add(FloorKind.Forge);

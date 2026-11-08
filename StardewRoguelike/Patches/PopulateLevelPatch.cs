@@ -70,6 +70,17 @@ namespace StardewRoguelike.Patches
             else
                 gemStoneChance = 0.005 + (Game1.player.team.AverageLuckLevel() / 200.0);
 
+            // A shrine floor is a fight rather than a dig. Leaving the ore in gave it
+            // everything a mineshaft gives and a perk on top, which is what made the
+            // two indistinguishable in the first place. Resource clumps are already
+            // out, since the base game keeps them off a floor that has to be cleared.
+            bool isShrineFloor = RunRoute.KindFor(level) == FloorKind.Shrine;
+            if (isShrineFloor)
+            {
+                stoneChance = 0;
+                gemStoneChance = 0;
+            }
+
             int monstersSpawned = 0;
 
             if (level == 8)
@@ -281,10 +292,9 @@ namespace StardewRoguelike.Patches
 
             // A shrine floor has to be cleared before it lets anyone past, so it is
             // stocked for a fight rather than for a walk to the statue.
-            int minimumMonsters =
-                RunRoute.KindFor(Roguelike.GetLevelFromMineshaft(__instance)) == FloorKind.Shrine
-                    ? Constants.MinimumMonstersPerShrineFloor
-                    : Constants.MinimumMonstersPerFloor;
+            int minimumMonsters = isShrineFloor
+                ? Constants.MinimumMonstersPerShrineFloor
+                : Constants.MinimumMonstersPerFloor;
 
             if (monstersSpawned < minimumMonsters)
             {
