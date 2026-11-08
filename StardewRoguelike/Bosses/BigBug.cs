@@ -100,7 +100,14 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddField(SpawnEggEvent).AddField(despawnEggEvent).AddField(OnAttackedEvent);
+
+            // CurrentState and CurrentMinionState were declared as NetEnums but never
+            // registered, so they never left the host. Farmhands read Normal all
+            // fight: takeDamage skipped the halving that makes the boss tough while
+            // it is laying, and updateAnimation - which runs on every machine - never
+            // showed the laying pose.
+            NetFields.AddField(SpawnEggEvent).AddField(despawnEggEvent).AddField(OnAttackedEvent)
+                .AddField(CurrentState).AddField(CurrentMinionState);
             SpawnEggEvent.onEvent += SpawnEgg;
             despawnEggEvent.onEvent += DespawnEgg;
             OnAttackedEvent.onEvent += OnAttacked;
