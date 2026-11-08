@@ -30,7 +30,40 @@ namespace StardewRoguelike.Bosses
 
         private int TicksToAttack = 300;
 
-        private readonly List<int> AttackHistory = new();
+        /// <summary>
+        /// Everything the boss can open with. Each one drives its own chain of
+        /// timers below; the meteor strike additionally chains into one of the
+        /// other three when it lands.
+        /// </summary>
+        private enum Attack
+        {
+            InterweavingFireballs,
+            MeteorStrike,
+            FireBreath,
+            ShotgunFireballs,
+            LavaLurk
+        }
+
+        private static readonly Attack[] AllAttacks =
+        {
+            Attack.InterweavingFireballs, Attack.MeteorStrike, Attack.FireBreath,
+            Attack.ShotgunFireballs, Attack.LavaLurk
+        };
+
+        /// <summary>
+        /// What may start while a meteor strike is still coming down. Leaving out
+        /// the first two is why the roll exists at all.
+        /// </summary>
+        private static readonly Attack[] DuringMeteorStrike =
+        {
+            Attack.FireBreath, Attack.ShotgunFireballs, Attack.LavaLurk
+        };
+
+        /// <summary>The two most recent attacks, which the next pick avoids.</summary>
+        private readonly List<Attack> AttackHistory = new();
+
+        /// <summary>The attack last started. Reported, not read.</summary>
+        private readonly NetEnum<Attack> CurrentAttack = new(Attack.InterweavingFireballs);
 
         private int TicksOfTotalFireBreath = 0;
         private int TicksUntilNextFireBreath = 0;
@@ -84,7 +117,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddField(MeteorStrikeWarningEvent);
+            NetFields.AddField(MeteorStrikeWarningEvent).AddField(CurrentAttack);
             MeteorStrikeWarningEvent.onEvent += MeteorStrikeWarning;
 
         }
@@ -220,63 +253,64 @@ namespace StardewRoguelike.Bosses
             else if (IsAttacking())
                 return;
 
-            // -1 is the sentinel the loop below tests for. Starting at 0 meant the
-            // loop was skipped whenever 0 was not in the recent history, so attack 0
-            // was chosen outright instead of being rolled for - and it was chosen
-            // even while a meteor strike was active, which the roll exists to avoid.
-            int attack = -1;
-            while (attack == -1 || AttackHistory.Contains(attack))
+            // AttackHistory holds at most two, and the smaller pool has three, so
+            // there is always something left to pick and this always terminates.
+            Attack[] pool = MeteorStrikeTicksLeft > 0 ? DuringMeteorStrike : AllAttacks;
+
+            Attack attack;
+            do
             {
-                if (MeteorStrikeTicksLeft > 0)
-                    attack = Game1.random.Next(2, 5);
-                else
-                    attack = Game1.random.Next(0, 5);
-            }
+                attack = pool[Game1.random.Next(pool.Length)];
+            } while (AttackHistory.Contains(attack));
 
-            if (attack == 0)
+            CurrentAttack.Value = attack;
+
+            switch (attack)
             {
-                attackState.Value = 1;
-                firing.Value = true;
-                currentLocation.playSound("croak");
+                case Attack.InterweavingFireballs:
+                    attackState.Value = 1;
+                    firing.Value = true;
+                    currentLocation.playSound("croak");
 
-                TicksUntilInterweavingFireballs = 45;
-            }
-            else if (attack == 1)
-            {
-                attackState.Value = 1;
-                currentLocation.playSound("croak");
+                    TicksUntilInterweavingFireballs = 45;
+                    break;
 
-                TicksUntilMeteorStrike = 120;
-            }
-            else if (attack == 2)
-            {
-                firing.Value = false;
-                attackState.Value = 1;
-                currentLocation.playSound("croak");
+                case Attack.MeteorStrike:
+                    attackState.Value = 1;
+                    currentLocation.playSound("croak");
 
-                TicksUntilNextFireBreath = 30;
-                TicksOfTotalFireBreath = 3 * 60;
+                    TicksUntilMeteorStrike = 120;
+                    break;
 
-                if (Player is not null)
-                    faceGeneralDirection(Player.Position);
-            }
-            else if (attack == 3)
-            {
-                attackState.Value = 1;
-                firing.Value = true;
-                currentLocation.playSound("croak");
+                case Attack.FireBreath:
+                    firing.Value = false;
+                    attackState.Value = 1;
+                    currentLocation.playSound("croak");
 
-                TicksUntilShotgunFireballs = 45;
-            }
-            else if (attack == 4)
-            {
-                currentLocation.playSound("croak");
+                    TicksUntilNextFireBreath = 30;
+                    TicksOfTotalFireBreath = 3 * 60;
 
-                DoLavaLurkAttack();
-                if (Roguelike.HardMode)
+                    if (Player is not null)
+                        faceGeneralDirection(Player.Position);
+                    break;
+
+                case Attack.ShotgunFireballs:
+                    attackState.Value = 1;
+                    firing.Value = true;
+                    currentLocation.playSound("croak");
+
+                    TicksUntilShotgunFireballs = 45;
+                    break;
+
+                case Attack.LavaLurk:
+                    currentLocation.playSound("croak");
+
                     DoLavaLurkAttack();
+                    if (Roguelike.HardMode)
+                        DoLavaLurkAttack();
 
-                TicksToAttack = 3 * 60;
+                    TicksToAttack = 3 * 60;
+                    break;
             }
 
             AttackHistory.Add(attack);
