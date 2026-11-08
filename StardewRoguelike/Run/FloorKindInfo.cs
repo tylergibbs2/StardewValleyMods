@@ -1,7 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Menus;
+using StardewValley.Tools;
 
 namespace StardewRoguelike.Run
 {
@@ -80,11 +82,37 @@ namespace StardewRoguelike.Run
             if (treasure == ChallengeFloor.ChallengeType.PickAPath)
                 return I18n.ExitChoice_VaultDoors();
 
-            Item? item = ChestFloor.ItemFor(level);
+            ChestFloor.Offer offer = ChestFloor.OfferFor(level);
 
-            return item is null
-                ? Description(FloorKind.Vault)
-                : I18n.ExitChoice_VaultHolds(item: item.DisplayName);
+            if (offer.Item is null)
+                return Description(FloorKind.Vault);
+
+            // The name carries whatever is on it, so a cursed weapon says so before
+            // the player has walked a floor for it.
+            string name = Named(offer.Item);
+
+            return offer.Price switch
+            {
+                ChestPrice.Curse => I18n.ExitChoice_VaultPriceCurse(item: name),
+                ChestPrice.Health => I18n.ExitChoice_VaultPriceHealth(
+                    item: name, amount: PricedChest.HealthCost(Game1.player)),
+                _ => I18n.ExitChoice_VaultPriceGold(item: name, amount: offer.Gold)
+            };
+        }
+
+        /// <summary>An item's name, with what has been put on it.</summary>
+        private static string Named(Item item)
+        {
+            if (item is not MeleeWeapon weapon)
+                return item.DisplayName;
+
+            foreach (BaseEnchantment enchantment in weapon.enchantments)
+            {
+                if (enchantment is Enchantments.CursedEnchantment)
+                    return $"{enchantment.GetDisplayName()} {item.DisplayName}";
+            }
+
+            return item.DisplayName;
         }
 
         public static string Description(FloorKind kind) => kind switch

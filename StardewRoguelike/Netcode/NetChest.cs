@@ -70,8 +70,19 @@ namespace StardewRoguelike.Netcode
             if (Spawned)
                 return;
 
+            // A plain treasure floor makes an offer rather than rolling: the item
+            // comes off the seed, so the exit a floor above could name it, and it
+            // comes with a price.
+            ChestFloor.Offer? offer = ChestFloor.IsChestFloor(mine) && IndeterminateItemChest.Value
+                ? ChestFloor.OfferFor(Roguelike.GetLevelFromMineshaft(mine))
+                : null;
+
             List<Item> items;
-            if (IndeterminateItemChest.Value && Items.Count == 0)
+            if (offer is not null)
+            {
+                items = offer.Value.Item is null ? new() : new() { offer.Value.Item };
+            }
+            else if (IndeterminateItemChest.Value && Items.Count == 0)
             {
                 items = new();
                 List<string> playerItems = new();
@@ -97,7 +108,14 @@ namespace StardewRoguelike.Netcode
                 items = Items.ToList();
 
             Chest chest;
-            if (IsTimedChest.Value)
+            if (offer is not null)
+            {
+                chest = new PricedChest(items, TileLocation.Value, offer.Value.Price, offer.Value.Gold)
+                {
+                    Tint = Color.White
+                };
+            }
+            else if (IsTimedChest.Value)
             {
                 chest = new TimedChest(MustOpenBy.Value, items, TileLocation.Value)
                 {

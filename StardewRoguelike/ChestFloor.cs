@@ -1,6 +1,8 @@
 ﻿using StardewRoguelike.Extensions;
 using StardewValley;
 using StardewValley.Objects;
+using StardewValley.Enchantments;
+using StardewRoguelike.Enchantments;
 using StardewValley.Tools;
 using System;
 using System.Collections.Generic;
@@ -22,35 +24,42 @@ namespace StardewRoguelike
         /// <param name="mine">The mine.</param>
         public static void SpawnChest(MineShaft mine)
         {
-            int level = Roguelike.GetLevelFromMineshaft(mine);
-            Item? item = ItemFor(level);
-
-            // Handed the item rather than left to pick one, so the chest holds what
-            // the exit menu said it held. A chest that rolled its own contents on
-            // arrival could not be named from the floor above.
-            if (item is null)
-                mine.SpawnLocalChest(new(9, 9));
-            else
-                mine.SpawnLocalChest(new(9, 9), item);
+            // Left indeterminate on purpose. Each player works the offer out on
+            // their own machine, from the same seed but against their own
+            // inventory, so two players at one chest are owed different things -
+            // and the exit menu, which is also local, names what that player will
+            // actually find.
+            mine.SpawnLocalChest(new(9, 9));
         }
 
+        /// <summary>What a treasure chest on a level holds, and what it wants for it.</summary>
+        public readonly record struct Offer(Item? Item, ChestPrice Price, int Gold);
+
         /// <summary>
-        /// What a plain chest on <paramref name="level"/> is holding, for this player.
+        /// The offer a plain treasure chest on <paramref name="level"/> is making.
         /// </summary>
         /// <remarks>
+        /// Always from the shelf ahead, so it is always worth having. What varies is
+        /// the price and whether the thing is cursed, which is what makes opening it
+        /// a decision - a chest that merely rolled a quality was either a certainty
+        /// or a disappointment, and neither is worth walking a floor for.
+        ///
         /// Worked out from the seed, so asking twice gives the same answer and the
-        /// exit can say what is down there. What the player already carries is still
-        /// struck off, which is theirs alone - two players opening one chest are owed
-        /// different things, the same way they are at a shrine.
+        /// floor above can say what is waiting.
         /// </remarks>
-        public static Item? ItemFor(int level)
+        public static Offer OfferFor(int level)
         {
+            Random random = Run.RunPlan.ChestRandomFor(level);
+
+            ChestPrice price = (ChestPrice)random.Next(3);
+            int gold = GoldPrice(level, random);
+
             List<string> carried = new();
 
-            foreach (Item item in Game1.player.Items)
+            foreach (Item held in Game1.player.Items)
             {
-                if (item is MeleeWeapon or Ring or Boots)
-                    carried.Add(item.DisplayName);
+                if (held is MeleeWeapon or Ring or Boots)
+                    carried.Add(held.DisplayName);
             }
 
             if (Game1.player.boots.Value is not null)
@@ -60,10 +69,38 @@ namespace StardewRoguelike
             if (Game1.player.rightRing.Value is not null)
                 carried.Add(Game1.player.rightRing.Value.DisplayName);
 
-            Random random = Run.RunPlan.ChestRandomFor(level);
+            Item item = Merchant.GetNextMerchantFloor(level).PickAnyRandomAvoiding(carried, random);
 
-            return Merchant.GetChestMerchantFloor(level, random)
-                .PickAnyRandomAvoiding(carried, random);
+            Curse(item, random);
+
+            return new Offer(item, price, gold);
+        }
+
+        /// <summary>How likely a weapon in a chest comes with something on it.</summary>
+        private const double CurseChance = 0.4;
+
+        /// <summary>Puts one of the cursed enchantments on a weapon, sometimes.</summary>
+        private static void Curse(Item item, Random random)
+        {
+            if (item is not MeleeWeapon weapon || random.NextDouble() >= CurseChance)
+                return;
+
+            BaseEnchantment enchantment = random.Next(3) switch
+            {
+                0 => new HeavyEnchantment(),
+                1 => new HollowEnchantment(),
+                _ => new BrittleEnchantment()
+            };
+
+            weapon.AddEnchantment(enchantment);
+        }
+
+        /// <summary>What a chest asks in gold, which grows with the shelf it draws from.</summary>
+        private static int GoldPrice(int level, Random random)
+        {
+            int tier = (level / 6) + 1;
+
+            return 250 * tier + random.Next(0, 3) * 50;
         }
 
         /// <summary>
