@@ -15,9 +15,19 @@ namespace StardewRoguelike.ChallengeFloors
 {
     internal class SlingshotAim : ChallengeBase
     {
-        private readonly Vector2 upperLeftCorner = new(8, 12);
+        /// <summary>
+        /// The tiles targets live in, and the area the camera frames.
+        ///
+        /// Both halves of keeping the floor playable hang off this one rectangle: the
+        /// camera is parked on its centre, and the targets are turned back at its
+        /// edges. Widen it and the targets get harder to see; narrow it and they
+        /// bunch up.
+        /// </summary>
+        internal static readonly Rectangle Arena = new(8, 12, 21, 5);
 
-        private readonly Vector2 bottomRightCorner = new(28, 16);
+        private readonly Vector2 upperLeftCorner = new(Arena.Left, Arena.Top);
+
+        private readonly Vector2 bottomRightCorner = new(Arena.Right, Arena.Bottom);
 
         private readonly NetInt floorSecondsLeft = new(30);
 
@@ -121,6 +131,7 @@ namespace StardewRoguelike.ChallengeFloors
         public override void Dispose()
         {
             ModEntry.Events.Display.RenderedHud -= RenderHud;
+            ReleaseCamera();
         }
 
         public void SpawnWave(MineShaft mine)
@@ -196,8 +207,35 @@ namespace StardewRoguelike.ChallengeFloors
             mine.SpawnLocalChest(new(28, 24), chestItems);
         }
 
+        /// <summary>
+        /// Parks the camera on the arena so the whole shooting field is on screen.
+        ///
+        /// Re-applied every tick rather than set once: warping, a death or anything
+        /// else that moves the player will put the camera back on them, and the point
+        /// of this floor is that the targets are all visible at once rather than
+        /// found by walking around after them.
+        /// </summary>
+        private static void FrameArena()
+        {
+            Game1.viewportFreeze = true;
+            Game1.viewport.Location = new xTile.Dimensions.Location(
+                Arena.Center.X * 64 - Game1.viewport.Width / 2,
+                Arena.Center.Y * 64 - Game1.viewport.Height / 2);
+        }
+
+        /// <summary>Hands the camera back to the player.</summary>
+        private static void ReleaseCamera()
+        {
+            Game1.viewportFreeze = false;
+        }
+
         public override void Update(MineShaft mine, GameTime time)
         {
+            // Before the host gate: the camera is this machine's business, and the
+            // host runs this for mines it is not standing in.
+            if (Game1.currentLocation == mine)
+                FrameArena();
+
             if (!Context.IsMainPlayer || !Game1.shouldTimePass() || IsOver)
                 return;
 
@@ -334,6 +372,14 @@ namespace StardewRoguelike.ChallengeFloors
                         movingTicksLeft = initialMovingTicks;
                     }
                 }
+
+                // Turn at the edges as well as on the timer. Without this the patrol
+                // walks targets out of the framed arena and they cannot be seen, let
+                // alone shot.
+                if (Position.X <= SlingshotAim.Arena.Left * 64f)
+                    isMovingRight = true;
+                else if (Position.X >= SlingshotAim.Arena.Right * 64f)
+                    isMovingRight = false;
 
                 if (isMovingRight)
                 {
