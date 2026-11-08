@@ -314,11 +314,29 @@ namespace StardewRoguelike
         /// </summary>
         public static Texture2D GetPerkIconTexture(PerkType perkType)
         {
+            // Flurry is the perk that wants a dagger in your hand, so it is drawn as
+            // one. Nothing on the object sheet says "a run of quick blows" - it was a
+            // spicy eel, which says dinner.
+            if (perkType == PerkType.Flurry)
+                return Game1.content.Load<Texture2D>(WeaponsTexture);
+
             return KeystoneIcon(perkType) is null ? Game1.mouseCursors : Game1.objectSpriteSheet;
         }
 
+        /// <summary>The weapon sheet, for the one perk that is about a weapon.</summary>
+        private const string WeaponsTexture = "TileSheets\\weapons";
+
+        /// <summary>The blade Flurry is drawn as.</summary>
+        private const int CrystalDagger = 21;
+
         public static Rectangle GetPerkSourceRect(PerkType perkType)
         {
+            if (perkType == PerkType.Flurry)
+            {
+                return Game1.getSourceRectForStandardTileSheet(
+                    GetPerkIconTexture(perkType), CrystalDagger, 16, 16);
+            }
+
             if (KeystoneIcon(perkType) is int index)
                 return Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, index, 16, 16);
 
@@ -332,7 +350,6 @@ namespace StardewRoguelike
             PerkType.Momentum => 253,    // triple shot espresso
             PerkType.Spite => 769,       // void essence
             PerkType.LastStand => 881,   // bone fragment
-            PerkType.Flurry => 226,      // spicy eel
             PerkType.Prospector => 386,  // iridium ore
             PerkType.Ricochet => 441,    // explosive ammo
             PerkType.Bombardier => 287,  // bomb
