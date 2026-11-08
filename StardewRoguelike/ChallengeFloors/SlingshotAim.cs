@@ -25,8 +25,6 @@ namespace StardewRoguelike.ChallengeFloors
 
         private int tickCounter = 0;
 
-        private bool gameOver = false;
-
         private bool spawnedFirstWave = false;
 
         private bool shotProjectile = false;
@@ -158,7 +156,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void GameOver(MineShaft mine)
         {
-            gameOver = true;
+            Finish();
             mine.characters.RemoveWhere(c => c is Monster);
 
             if (wavesKilled.Value == 0)
@@ -200,7 +198,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override void Update(MineShaft mine, GameTime time)
         {
-            if (!Context.IsMainPlayer || !Game1.shouldTimePass() || gameOver)
+            if (!Context.IsMainPlayer || !Game1.shouldTimePass() || IsOver)
                 return;
 
             if (!spawnedFirstWave)

@@ -16,8 +16,6 @@ namespace StardewRoguelike.ChallengeFloors
 
         private bool spawnedMonsters = false;
 
-        private readonly NetBool gameOver = new(false);
-
         private int tickCounter = 0;
 
         private readonly NetInt floorSecondsLeft = new(60);
@@ -28,7 +26,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddField(floorSecondsLeft).AddField(gameOver);
+            NetFields.AddField(floorSecondsLeft);
         }
 
         public void SpawnMonsters(MineShaft mine)
@@ -107,7 +105,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override bool ShouldSpawnLadder(MineShaft mine)
         {
-            return gameOver.Value;
+            return IsOver;
         }
 
         public void RenderTimer(object? sender, RenderedHudEventArgs e)
@@ -154,7 +152,7 @@ namespace StardewRoguelike.ChallengeFloors
             // Every other timed floor stops its clock here. Without it the
             // countdown drains while a chest is open, dialogue is up or the player
             // is eating, so the floor can be lost from inside a menu.
-            if (!Context.IsMainPlayer || gameOver.Value || !Game1.shouldTimePass())
+            if (!Context.IsMainPlayer || IsOver || !Game1.shouldTimePass())
                 return;
 
             if (!spawnedMonsters)
@@ -165,12 +163,12 @@ namespace StardewRoguelike.ChallengeFloors
             {
                 if (mine.EnemyCount == 0)
                 {
-                    gameOver.Value = true;
+                    Finish();
                     Win(mine);
                 }
                 else if (floorSecondsLeft.Value == 0)
                 {
-                    gameOver.Value = true;
+                    Finish();
                     Lose(mine);
                 }
                 else

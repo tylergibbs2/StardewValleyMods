@@ -14,8 +14,6 @@ namespace StardewRoguelike.ChallengeFloors
 {
     internal class JOTPK : ChallengeBase
     {
-        private readonly NetBool gameOver = new(false);
-
         private readonly NetInt floorSecondsLeft = new(45);
 
         private bool spawnedFirstMonster = false;
@@ -35,7 +33,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override List<string> GetMusicTracks(MineShaft mine)
         {
-            if (floorSecondsLeft.Value >= 45 || gameOver.Value)
+            if (floorSecondsLeft.Value >= 45 || IsOver)
                 return new() { "none" };
 
             return new() { "Cowboy_OVERWORLD" };
@@ -53,11 +51,6 @@ namespace StardewRoguelike.ChallengeFloors
             base.InitNetFields();
 
             NetFields.AddField(floorSecondsLeft);
-
-            // Declared as a NetBool but never registered, so it stayed false on
-            // farmhands: ShouldSpawnLadder answered no for them and the music never
-            // changed. Only the host's explicit createLadderAt hid it.
-            NetFields.AddField(gameOver);
         }
 
         public void RenderHud(object? sender, RenderedHudEventArgs e)
@@ -106,7 +99,7 @@ namespace StardewRoguelike.ChallengeFloors
             ModEntry.Events.Display.RenderedHud -= RenderHud;
         }
 
-        public override bool ShouldSpawnLadder(MineShaft mine) => gameOver.Value;
+        public override bool ShouldSpawnLadder(MineShaft mine) => IsOver;
 
         public static Vector2 GetRandomTileInRect(Rectangle rect)
         {
@@ -161,7 +154,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             mine.characters.RemoveWhere(c => c is Monster);
 
-            gameOver.Value = true;
+            Finish();
             mine.createLadderAt(new(20, 20));
 
             mine.playSound("discoverMineral");
@@ -171,7 +164,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override void Update(MineShaft mine, GameTime time)
         {
-            if (!Context.IsMainPlayer || !Game1.shouldTimePass() || gameOver.Value)
+            if (!Context.IsMainPlayer || !Game1.shouldTimePass() || IsOver)
                 return;
 
             if (!spawnedFirstMonster)

@@ -48,8 +48,6 @@ namespace StardewRoguelike.ChallengeFloors
                 return null;
         }
 
-        private readonly NetString state = new("active");
-
         private readonly NetInt boxTimer = new(0);
 
         private int stateTimer = 0;
@@ -83,7 +81,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddField(state).AddField(boxTimer).AddField(kothBox);
+            NetFields.AddField(boxTimer).AddField(kothBox);
         }
 
         public override void Initialize(MineShaft mine)
@@ -170,7 +168,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void RenderProgressBar(object? sender, RenderedHudEventArgs e)
         {
-            if (state.Value == "over")
+            if (IsOver)
                 ModEntry.Events.Display.RenderedHud -= RenderProgressBar;
 
             MakeBoxProgressBar(boxTimer.Value, MaxBoxTimer);
@@ -302,7 +300,7 @@ namespace StardewRoguelike.ChallengeFloors
             base.PlayerEntered(mine);
             Game1.chatBox.addMessage(I18n.ChallengeFloor_KOTH_WelcomeMessage(), Color.Gold);
 
-            if (state.Value != "over")
+            if (!IsOver)
             {
                 ModEntry.Events.Display.RenderedWorld += OnRenderedWorld;
                 ModEntry.Events.Display.RenderedHud += RenderProgressBar;
@@ -317,7 +315,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override bool ShouldSpawnLadder(MineShaft mine)
         {
-            return state.Value == "over";
+            return IsOver;
         }
 
         public override void Update(MineShaft mine, GameTime time)
@@ -341,12 +339,12 @@ namespace StardewRoguelike.ChallengeFloors
                 }
             }
 
-            if (state.Value == "over" && !ladderSpawned)
+            if (IsOver && !ladderSpawned)
             {
                 kothBox.Value = Rectangle.Empty;
                 SpawnRewardChest(mine);
             }
-            else if (state.Value == "over" && ladderSpawned)
+            else if (IsOver && ladderSpawned)
                 return;
 
             bool contains = false;
@@ -375,7 +373,7 @@ namespace StardewRoguelike.ChallengeFloors
                 boxTimer.Value = 0;
                 mine.playSound("discoverMineral");
                 if (possibleBoxes.Count == 0)
-                    state.Value = "over";
+                    Finish();
                 else
                 {
                     kothBox.Value = possibleBoxes[0];

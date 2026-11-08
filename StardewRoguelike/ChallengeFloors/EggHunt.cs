@@ -19,8 +19,6 @@ namespace StardewRoguelike.ChallengeFloors
 
         private readonly static Vector2 GoldenEggTile = new(39, 32);
 
-        private readonly NetBool gameOver = new(false);
-
         private int tickCounter = 0;
 
         private bool didSpawnEggs = false;
@@ -51,10 +49,10 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddField(eggsFound).AddField(eggsOnMap).AddField(floorSecondsLeft).AddField(gameOver);
+            NetFields.AddField(eggsFound).AddField(eggsOnMap).AddField(floorSecondsLeft);
         }
 
-        public override bool ShouldSpawnLadder(MineShaft mine) => gameOver.Value;
+        public override bool ShouldSpawnLadder(MineShaft mine) => IsOver;
 
         public void SpawnEggs(int amount)
         {
@@ -186,7 +184,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             eggsOnMap.Clear();
 
-            gameOver.Value = true;
+            Finish();
             mine.createLadderAt(GoldenEggTile);
 
             int totalEggsFound = eggsFound.Value <= 3 ? 0 : eggsFound.Value - 3;  // don't count the first gold egg
@@ -228,7 +226,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override void Update(MineShaft mine, GameTime time)
         {
-            if (!Context.IsMainPlayer || !Game1.shouldTimePass() || gameOver.Value)
+            if (!Context.IsMainPlayer || !Game1.shouldTimePass() || IsOver)
                 return;
 
             if (!spawnedGoldEgg)

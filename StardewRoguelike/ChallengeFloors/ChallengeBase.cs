@@ -25,7 +25,40 @@ namespace StardewRoguelike.ChallengeFloors
 
         public NetFields NetFields { get; }
 
-        protected virtual void InitNetFields() { }
+        /// <summary>Whether a floor's challenge is still running or has been settled.</summary>
+        public enum ChallengeState
+        {
+            /// <summary>Still being set up, or still being played.</summary>
+            Running,
+
+            /// <summary>Settled, won or lost. Whatever the floor gates on this is open.</summary>
+            Over
+        }
+
+        private readonly NetEnum<ChallengeState> challengeState = new(ChallengeState.Running);
+
+        /// <summary>
+        /// Whether the challenge has been settled.
+        ///
+        /// Every floor that gates something on being finished used to keep its own
+        /// answer to this, and they all disagreed about how: three plain bools, a
+        /// NetBool, a NetString compared against "over", and one called
+        /// canSpawnLadder. The plain ones were invisible to farmhands, which
+        /// ShouldSpawnLadder is asked on, and JOTPK carries a comment about the bug
+        /// that caused. One field, net-synced, so everyone reads the same answer.
+        /// </summary>
+        protected bool IsOver => challengeState.Value == ChallengeState.Over;
+
+        /// <summary>
+        /// Marks the challenge settled. Called by the host, which is the only side
+        /// that runs the Update loops deciding a floor is won or lost.
+        /// </summary>
+        protected void Finish() => challengeState.Value = ChallengeState.Over;
+
+        protected virtual void InitNetFields()
+        {
+            NetFields.AddField(challengeState);
+        }
 
         public virtual List<string> MapPaths { get; } = null!;
 
