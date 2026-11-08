@@ -172,12 +172,32 @@ namespace StardewRoguelike.Run
         public static ChallengeFloor.ChallengeType ArenaFor(int level)
         {
             if (DebugCommands.ForcedChallengeIndex == -1)
-                return RunPlan.ArenaFor(level);
+                return RunPlan.ArenaAt(ArenasBefore(level));
 
             ChallengeFloor.ChallengeType[] all = Enum.GetValues<ChallengeFloor.ChallengeType>();
             int index = Math.Clamp(DebugCommands.ForcedChallengeIndex, 0, all.Length - 1);
 
             return all[index];
+        }
+
+        /// <summary>How many Arenas the group took before reaching this one.</summary>
+        /// <remarks>
+        /// Read back off the route, so it is the same number on every machine and on
+        /// a farmhand that joined mid-run. It is this that makes the bag in
+        /// <see cref="RunPlan.ArenaAt"/> deal one combat floor per Arena played
+        /// rather than one per floor walked past.
+        /// </remarks>
+        private static int ArenasBefore(int level)
+        {
+            int count = 0;
+
+            for (int earlier = 1; earlier < level; earlier++)
+            {
+                if (Store.TryGetValue(earlier, out int chosen) && (FloorKind)chosen == FloorKind.Arena)
+                    count++;
+            }
+
+            return count;
         }
 
         /// <summary>Whether <paramref name="mine"/> is a floor the shrine stands on.</summary>

@@ -64,7 +64,6 @@ namespace StardewRoguelike.Run
         private sealed class Entry
         {
             public FloorKind[] Offers = Array.Empty<FloorKind>();
-            public ChallengeFloor.ChallengeType Arena;
         }
 
         /// <summary>The seed the cache below was built for; -1 when nothing is built.</summary>
@@ -74,7 +73,86 @@ namespace StardewRoguelike.Run
         private static readonly List<Entry> entries = new() { new Entry() };
 
         /// <summary>Throws the cache away so the next read rebuilds from the seed.</summary>
-        public static void Invalidate() => builtForSeed = -1;
+        public static void Invalidate()
+        {
+            builtForSeed = -1;
+            arenaOrderSeed = -1;
+        }
+
+        /// <summary>
+        /// Which combat floor the run's <paramref name="index"/>th Arena leads to,
+        /// counting from zero.
+        ///
+        /// Drawn from a bag rather than rolled, so all eight come round before any of
+        /// them comes round twice. Rolling each one independently meant a run that
+        /// took eight arenas saw about five of the eight kinds, with repeats, and
+        /// stood a one in three chance of never meeting a given one at all.
+        ///
+        /// Counted in arenas rather than in floors on purpose. A bag that advanced
+        /// once per level would be sampled eight times out of thirty by a player who
+        /// takes some other exit most of the time, which is a roll again in all but
+        /// name.
+        /// </summary>
+        public static ChallengeFloor.ChallengeType ArenaAt(int index)
+        {
+            if (index < 0)
+                index = 0;
+
+            BuildArenaOrder(index);
+
+            return arenaOrder[index];
+        }
+
+        /// <summary>The order the combat floors come in; see <see cref="ArenaAt"/>.</summary>
+        private static readonly List<ChallengeFloor.ChallengeType> arenaOrder = new();
+
+        /// <summary>The seed the order above was built for; -1 when nothing is built.</summary>
+        private static int arenaOrderSeed = -1;
+
+        /// <summary>
+        /// Keeps the arena order on a different stream from the offers, so that
+        /// changing how one is drawn does not shuffle the other.
+        /// </summary>
+        private const int ArenaStream = 0x5A1D;
+
+        private static void BuildArenaOrder(int upTo)
+        {
+            int seed = Roguelike.FloorRngSeed;
+
+            if (arenaOrderSeed == seed && upTo < arenaOrder.Count)
+                return;
+
+            // Rebuilt from the start rather than extended, so the order already dealt
+            // out cannot change when more of it is needed.
+            arenaOrder.Clear();
+            arenaOrderSeed = seed;
+
+            Random rng = new(seed ^ ArenaStream);
+
+            while (arenaOrder.Count <= upTo)
+            {
+                List<ChallengeFloor.ChallengeType> bag = new(ArenaChallenges);
+
+                // A bag that opens with what the last one closed on reads as a repeat
+                // however fairly it was dealt, so it is shuffled again.
+                do
+                {
+                    Shuffle(bag, rng);
+                }
+                while (arenaOrder.Count > 0 && bag[0] == arenaOrder[^1]);
+
+                arenaOrder.AddRange(bag);
+            }
+        }
+
+        private static void Shuffle(List<ChallengeFloor.ChallengeType> bag, Random rng)
+        {
+            for (int i = bag.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                (bag[i], bag[j]) = (bag[j], bag[i]);
+            }
+        }
 
         /// <summary>
         /// Every kind the seed will consider for <paramref name="level"/>, best first.
@@ -85,9 +163,6 @@ namespace StardewRoguelike.Run
         /// cycle would be left offering one exit, which is not a choice.
         /// </summary>
         public static FloorKind[] OffersFor(int level) => Get(level).Offers;
-
-        /// <summary>Which combat floor an Arena at <paramref name="level"/> leads to.</summary>
-        public static ChallengeFloor.ChallengeType ArenaFor(int level) => Get(level).Arena;
 
         /// <summary>Whether <paramref name="level"/> is forced and offers no choice.</summary>
         public static bool IsForced(int level) =>
@@ -174,7 +249,6 @@ namespace StardewRoguelike.Run
             Promote(offers);
 
             entry.Offers = offers.ToArray();
-            entry.Arena = ArenaChallenges[rng.Next(ArenaChallenges.Length)];
         }
 
         /// <summary>
