@@ -21,6 +21,16 @@ namespace StardewRoguelike.Run
         /// <summary>Seconds on a floor before its exit is placed for the player.</summary>
         private const int SecondsBeforeExitIsGiven = 45;
 
+        /// <summary>
+        /// The same, on a floor whose reward is gated behind clearing it.
+        ///
+        /// A shrine will not trade until the last monster is dead, so handing over
+        /// the exit on the usual timer offers a way out before the thing the floor
+        /// was chosen for is available. The exit still arrives eventually, because
+        /// being unable to leave a floor is worse than leaving one early.
+        /// </summary>
+        private const int SecondsBeforeExitIsGivenWhenGated = 150;
+
         /// <summary>How far from the entrance the placed exit has to be.</summary>
         private const float MinimumDistanceFromStart = 8f;
 
@@ -47,10 +57,26 @@ namespace StardewRoguelike.Run
             if (entry == 0)
                 return;
 
+            // A gated floor keeps its exit back until it is cleared, or until the
+            // longer backstop runs out.
+            bool gated = RunRoute.KindFor(Roguelike.GetLevelFromMineshaft(mine)) == FloorKind.Shrine;
+            if (gated && mine.EnemyCount == 0)
+            {
+                PlaceExit(mine);
+                return;
+            }
+
+            int wait = gated ? SecondsBeforeExitIsGivenWhenGated : SecondsBeforeExitIsGiven;
+
             long now = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
-            if (now - entry < SecondsBeforeExitIsGiven)
+            if (now - entry < wait)
                 return;
 
+            PlaceExit(mine);
+        }
+
+        private static void PlaceExit(MineShaft mine)
+        {
             if (!TryFindExitTile(mine, out Point tile))
                 return;
 

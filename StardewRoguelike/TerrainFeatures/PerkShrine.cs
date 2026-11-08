@@ -30,8 +30,33 @@ namespace StardewRoguelike.TerrainFeatures
 
         private bool used = false;
 
-        /// <summary>Nothing to tick: the shrine only reacts to being used.</summary>
-        public PerkShrine() : base(needsTick: false) { }
+        /// <summary>Whether the floor has been told the shrine woke up.</summary>
+        private bool announced = false;
+
+        /// <summary>Ticks so it can notice the last monster dying.</summary>
+        public PerkShrine() : base(needsTick: true) { }
+
+        /// <summary>
+        /// Whether the shrine will trade.
+        ///
+        /// The floor has to be cleared first, so a shrine is the reward for the fight
+        /// rather than something to run past on the way to the exit.
+        /// </summary>
+        private bool Ready => Location is MineShaft mine && mine.EnemyCount == 0;
+
+        public override bool tickUpdate(GameTime time)
+        {
+            // Said once, when the last monster dies, so the player is not left
+            // guessing why the statue has changed colour.
+            if (!used && !announced && Ready)
+            {
+                announced = true;
+                Game1.chatBox?.addMessage(I18n.Shrine_Ready(), Color.Gold);
+                Location?.localSound("secret1");
+            }
+
+            return false;
+        }
 
         public override Rectangle getBoundingBox()
         {
@@ -94,6 +119,14 @@ namespace StardewRoguelike.TerrainFeatures
             if (used)
                 return false;
 
+            if (!Ready)
+            {
+                // A line in the chat rather than a dialogue box: being told no should
+                // not stop the floor while something is still chasing you.
+                Game1.chatBox?.addMessage(I18n.Shrine_Dormant(), Color.Gold);
+                return false;
+            }
+
             if (Perks.HasAllPerks())
             {
                 Game1.drawObjectDialogue(I18n.Shrine_NothingToOffer());
@@ -121,6 +154,23 @@ namespace StardewRoguelike.TerrainFeatures
             return true;
         }
 
+        /// <summary>
+        /// Dark while it will not trade, lit once it will, grey once it has.
+        ///
+        /// The colour is the only thing telling the player the shrine is waiting on
+        /// something, so the dormant state is clearly darker rather than subtly so.
+        /// </summary>
+        private Color Tint()
+        {
+            if (used)
+                return Color.Gray * 0.55f;
+
+            if (!Ready)
+                return Color.SlateGray * 0.7f;
+
+            return Color.White;
+        }
+
         public override bool isPassable(Character? c = null)
         {
             return false;
@@ -142,7 +192,7 @@ namespace StardewRoguelike.TerrainFeatures
                 Game1.bigCraftableSpriteSheet,
                 position,
                 StardewValley.Object.getSourceRectForBigCraftable(WickedStatue),
-                used ? Color.Gray * 0.6f : Color.White,
+                Tint(),
                 0f,
                 Vector2.Zero,
                 4f,

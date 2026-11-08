@@ -195,6 +195,8 @@
   "ExitChoice.BossIn": "Boss in {{count}} floors",
   "ExitChoice.BossNext": "The boss is next",
   "ExitChoice.Shrine": "Shrine",
-  "ExitChoice.ShrineDesc": "Take a curse. Choose a perk.",
-  "Shrine.NothingToOffer": "You already have every perk."
+  "ExitChoice.ShrineDesc": "Clear the floor. Take a curse, choose a perk.",
+  "Shrine.NothingToOffer": "You already have every perk.",
+  "Shrine.Dormant": "The shrine is dormant while monsters remain on this floor.",
+  "Shrine.Ready": "The shrine is ready."
 }
