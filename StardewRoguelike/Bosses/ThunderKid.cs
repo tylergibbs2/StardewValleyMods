@@ -226,7 +226,13 @@ namespace StardewRoguelike.Bosses
                 return;
             }
 
-            typeof(ThunderKid).BaseType!.GetField("lastFireball", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(this, 1000f);
+            // SquidKid throws a fireball whenever this reaches zero, and this boss
+            // has its own attacks, so it is held high to keep the inherited one from
+            // firing. Set directly: the field was private when this was written and
+            // 1.6 made it public, so reflecting for it with NonPublic alone found
+            // nothing and the null-forgiving ! turned that into a NullReferenceException
+            // on the first tick of the fight.
+            lastFireball = 1000f;
             base.behaviorAtGameTick(time);
             if (Health <= 0)
                 return;
