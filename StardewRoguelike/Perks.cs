@@ -73,7 +73,14 @@ namespace StardewRoguelike
             PerkType.TurtleShell, PerkType.Leech
         };
 
-        public static PerkMenu? CurrentMenu = null;
+        private static readonly PerScreen<PerkMenu?> ScreenCurrentMenu = new(() => null);
+
+        /// <summary>The perk choice offered to the player on this screen.</summary>
+        public static PerkMenu? CurrentMenu
+        {
+            get => ScreenCurrentMenu.Value;
+            set => ScreenCurrentMenu.Value = value;
+        }
 
         private static readonly int TotalPerkCount = CommonPerks.Count + UncommonPerks.Count + RarePerks.Count;
 

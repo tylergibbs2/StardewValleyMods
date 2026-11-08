@@ -9,6 +9,7 @@ using StardewRoguelike.Extensions;
 using StardewRoguelike.Patches;
 using StardewRoguelike.UI;
 using StardewRoguelike.VirtualProperties;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
@@ -36,13 +37,43 @@ namespace StardewRoguelike
             new(3, 9)
         };
 
-        public static ShopMenu? CurrentShop { get; set; } = null;
+        private static readonly PerScreen<ShopMenu?> ScreenCurrentShop = new(() => null);
+        private static readonly PerScreen<ShopMenu?> ScreenCurrentSeedShop = new(() => null);
+        private static readonly PerScreen<HatBoard?> ScreenCurrentHatBoard = new(() => null);
+        private static readonly PerScreen<CurseType?> ScreenCurseToAdd = new(() => null);
 
-        public static ShopMenu? CurrentSeedShop { get; set; } = null;
+        /// <summary>
+        /// The merchant floor's menus and its curse on offer, for the player on this
+        /// screen.
+        ///
+        /// Per-screen rather than static: these are built once per player, from
+        /// PlayerWarped, and two split-screen players would otherwise keep one set
+        /// between them - the second to walk in would replace the first's shop, and
+        /// take the curse they had been offered with it.
+        /// </summary>
+        public static ShopMenu? CurrentShop
+        {
+            get => ScreenCurrentShop.Value;
+            set => ScreenCurrentShop.Value = value;
+        }
 
-        public static HatBoard? CurrentHatBoard { get; set; } = null;
+        public static ShopMenu? CurrentSeedShop
+        {
+            get => ScreenCurrentSeedShop.Value;
+            set => ScreenCurrentSeedShop.Value = value;
+        }
 
-        internal static CurseType? CurseToAdd { get; set; } = null;
+        public static HatBoard? CurrentHatBoard
+        {
+            get => ScreenCurrentHatBoard.Value;
+            set => ScreenCurrentHatBoard.Value = value;
+        }
+
+        internal static CurseType? CurseToAdd
+        {
+            get => ScreenCurseToAdd.Value;
+            set => ScreenCurseToAdd.Value = value;
+        }
 
         public static string GetMapPath(MineShaft mine)
         {

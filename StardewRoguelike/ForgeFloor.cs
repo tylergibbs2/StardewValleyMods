@@ -1,3 +1,4 @@
+using StardewModdingAPI.Utilities;
 using StardewRoguelike.UI;
 using StardewRoguelike.VirtualProperties;
 using StardewValley.Locations;
@@ -15,7 +16,14 @@ namespace StardewRoguelike
 
         public static readonly double ForgeFloorChance = 0.15;
 
-        public static LimitedForgeMenu? CurrentForge = null;
+        private static readonly PerScreen<LimitedForgeMenu?> ScreenCurrentForge = new(() => null);
+
+        /// <summary>The forge the player on this screen has open.</summary>
+        public static LimitedForgeMenu? CurrentForge
+        {
+            get => ScreenCurrentForge.Value;
+            set => ScreenCurrentForge.Value = value;
+        }
 
         public static bool ShouldDoForgeFloor(int level)
         {
