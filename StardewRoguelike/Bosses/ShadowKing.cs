@@ -101,6 +101,15 @@ namespace StardewRoguelike.Bosses
 
         private bool MapChangesEnabled = false;
 
+        /// <summary>
+        /// What each blocked tile looked like before the seal overwrote it, so the
+        /// teardown can put it back. An index of -1 means there was no tile there.
+        /// </summary>
+        private readonly List<(Vector2 Tile, int Index, string SheetId)> ReplacedTiles = new();
+
+        /// <summary>The warps the seal added, so the teardown removes only those.</summary>
+        private readonly List<Warp> AddedWarps = new();
+
         private readonly int[] TilesToBlockIds = new int[] { 104, 106, 103, 120, 122, 119 };
 
         private readonly List<Vector2> TilesToBlock = new()
@@ -195,6 +204,13 @@ namespace StardewRoguelike.Bosses
             if (Health > 0 && !MapChangesEnabled && Encountered.Value)
                 EnableMapChanges();
 
+            // The other half of the reconcile. Health is net-synced, so every client
+            // that sealed its own copy of the arena through the branch above also
+            // unseals it; only the machine that landed the killing blow runs
+            // takeDamage, and the warps are local map state on each of them.
+            if (Health <= 0 && MapChangesEnabled)
+                DisableMapChanges();
+
             if (OldEncountered != Encountered.Value)
                 RevealBoss();
 
@@ -210,11 +226,18 @@ namespace StardewRoguelike.Bosses
         {
             base.behaviorAtGameTick(time);
 
-            if (!MapChangesEnabled && withinPlayerThreshold(16))
-                EnableMapChanges();
-
+            // Before the arena is sealed, not after. behaviorAtGameTick has no health
+            // check of its own - Monster.update calls it whenever the monster is still
+            // in the location's character list - and death clears MapChangesEnabled,
+            // so sealing from below this guard would re-seal the arena around a dead
+            // boss and add another nine warps every tick the player stood nearby.
+            // Only vanilla removing the monster on the same frame it dies kept that
+            // from happening, which is not a promise this method should rely on.
             if (Health <= 0)
                 return;
+
+            if (!MapChangesEnabled && withinPlayerThreshold(16))
+                EnableMapChanges();
 
             // Explode on hit
             if (TicksToExplode > 0)
@@ -504,25 +527,63 @@ namespace StardewRoguelike.Bosses
             Encountered.Value = true;
             currentLocation.playSound("boulderBreak");
 
+            ReplacedTiles.Clear();
             for (int i = 0; i < TilesToBlock.Count; i++)
             {
                 int tileId = TilesToBlockIds[i];
                 Vector2 tile = TilesToBlock[i];
 
+                ReplacedTiles.Add((
+                    tile,
+                    currentLocation.getTileIndexAt((int)tile.X, (int)tile.Y, "Buildings"),
+                    currentLocation.getTileSheetIDAt((int)tile.X, (int)tile.Y, "Buildings")
+                ));
+
                 currentLocation.setMapTile((int)tile.X, (int)tile.Y, tileId, "Buildings", currentLocation.map.TileSheets[0].Id);
             }
 
+            AddedWarps.Clear();
             foreach (Vector2 warpTile in TilesToWarp)
-                currentLocation.warps.Add(new((int)warpTile.X, (int)warpTile.Y, currentLocation.Name, (int)WarpDestination.X, (int)WarpDestination.Y, flipFarmer: false));
+            {
+                Warp warp = new((int)warpTile.X, (int)warpTile.Y, currentLocation.Name, (int)WarpDestination.X, (int)WarpDestination.Y, flipFarmer: false);
+                AddedWarps.Add(warp);
+                currentLocation.warps.Add(warp);
+            }
 
             ((MineShaft)currentLocation).get_MineShaftCustomDestination().Value = WarpDestination;
 
             MapChangesEnabled = true;
         }
 
+        /// <summary>
+        /// Undoes <see cref="EnableMapChanges"/>. Safe to call on any machine and
+        /// safe to call twice; it only touches what the seal itself added.
+        ///
+        /// This used to flip the flag and create the exit ladder without removing
+        /// anything, so the warp traps on the entrance corridor and the blocked
+        /// tiles outlived the fight and kept teleporting players back into a dead
+        /// boss's arena for as long as the level stayed loaded.
+        /// </summary>
         public void DisableMapChanges()
         {
-            ((MineShaft)currentLocation).createLadderAt(WarpDestination);
+            if (!MapChangesEnabled)
+                return;
+
+            foreach (Warp warp in AddedWarps)
+                currentLocation.warps.Remove(warp);
+            AddedWarps.Clear();
+
+            foreach ((Vector2 tile, int index, string sheetId) in ReplacedTiles)
+            {
+                if (index < 0)
+                    currentLocation.removeMapTile((int)tile.X, (int)tile.Y, "Buildings");
+                else
+                    currentLocation.setMapTile((int)tile.X, (int)tile.Y, index, "Buildings", sheetId);
+            }
+            ReplacedTiles.Clear();
+
+            ((MineShaft)currentLocation).get_MineShaftCustomDestination().Value = Vector2.Zero;
+
             MapChangesEnabled = false;
         }
 
@@ -538,6 +599,13 @@ namespace StardewRoguelike.Bosses
             if (Health <= 0)
             {
                 DisableMapChanges();
+
+                // The exit, as opposed to undoing the seal: this is the one part of
+                // death that must happen once rather than once per machine, so it
+                // stays here instead of in DisableMapChanges, which every client
+                // reaches through its own update loop.
+                ((MineShaft)currentLocation).createLadderAt(WarpDestination);
+
                 BossManager.Death(who.currentLocation, who, DisplayName, SpawnLocation);
             }
 
