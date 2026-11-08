@@ -77,16 +77,14 @@ namespace StardewRoguelike
 
         public static string GetMapPath(MineShaft mine)
         {
-            string result;
-            int level = Roguelike.GetLevelFromMineshaft(mine);
-            if (DebugCommands.ForcedFortuneTeller)
-                result = "custom-merchant-curses";
-            else if (level == 1 || level == Constants.ScalingOrder[0] || level == Constants.ScalingOrder[2])
-                result = "custom-merchant";
-            else if (level == Constants.ScalingOrder[1])
-                result = "custom-merchant-curses";
-            else
-                result = Roguelike.FloorRng.NextDouble() < 0.5 ? "custom-merchant-curses" : "custom-merchant";
+            // The curse teller is gone from the merchant floors. Curses are what a
+            // shrine charges for a perk now, so a second place that sold them for
+            // gold or health made the price look like one more thing on a shelf -
+            // and it was the only place in the run handing them out for nothing in
+            // particular. The map is still reachable with rdebug forcefortune.
+            string result = DebugCommands.ForcedFortuneTeller
+                ? "custom-merchant-curses"
+                : "custom-merchant";
 
             return result + (Roguelike.HardMode ? "-hard" : "");
         }
@@ -238,23 +236,14 @@ namespace StardewRoguelike
                 }
 
                 int level = Roguelike.GetLevelFromMineshaft(mine);
-                Vector2 dialogueLocation;
 
                 if (level == 1)
                 {
                     // Do Marlon introduction
-                    dialogueLocation = new Vector2(23, 3) * 64f;
+                    Vector2 dialogueLocation = new Vector2(23, 3) * 64f;
                     dialogueLocation.X += 32;
                     dialogueLocation.Y -= 16;
                     mine.DrawSpeechBubble(dialogueLocation, I18n.Merchant_MarlonIntroduction(), 400);
-                }
-                else if (level == Constants.ScalingOrder[1])
-                {
-                    // Do fortune teller introduction
-                    dialogueLocation = new Vector2(13, 3) * 64f;
-                    dialogueLocation.X -= 16;
-                    dialogueLocation.Y -= 16;
-                    mine.DrawSpeechBubble(dialogueLocation, I18n.Merchant_FortuneIntroduction(), 400);
                 }
                 else if (level == Constants.ScalingOrder[2])
                 {
