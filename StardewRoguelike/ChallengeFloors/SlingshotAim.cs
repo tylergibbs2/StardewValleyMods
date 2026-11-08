@@ -106,6 +106,16 @@ namespace StardewRoguelike.ChallengeFloors
         /// </summary>
         private float restingZoom = 1f;
 
+        /// <summary>
+        /// Whether the player pins their toolbar, kept for the same reason.
+        ///
+        /// The toolbar takes itself to the top of the screen when the player is in
+        /// the lower half of it, which on a framed arena is where the player always
+        /// is - so it sat over the targets for the whole fight. Pinning is the base
+        /// game's own answer to that, so the floor borrows it.
+        /// </summary>
+        private bool restingPinToolbar;
+
         /// <summary>Whether the camera is this floor's rather than the player's.</summary>
         private bool holdingCamera;
 
@@ -319,6 +329,10 @@ namespace StardewRoguelike.ChallengeFloors
                 cameraY = Game1.viewport.Y + Game1.viewport.Height / 2f;
                 restingZoom = Game1.options.desiredBaseZoomLevel;
                 zoom = restingZoom;
+
+                restingPinToolbar = Game1.options.pinToolbarToggle;
+                Game1.options.pinToolbarToggle = true;
+
                 holdingCamera = true;
             }
 
@@ -507,6 +521,7 @@ namespace StardewRoguelike.ChallengeFloors
 
             zoom = restingZoom;
             Game1.options.desiredBaseZoomLevel = restingZoom;
+            Game1.options.pinToolbarToggle = restingPinToolbar;
         }
 
         public override void Update(MineShaft mine, GameTime time)
