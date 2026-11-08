@@ -114,8 +114,8 @@ namespace StardewRoguelike.ChallengeFloors
             base.PlayerEntered(mine);
             Location = mine;
 
-            CurseToAdd = Curse.GetRandomUniqueCurse(Roguelike.FloorRng);
-            CurrentShop = new(Merchant.MerchantShopId, Merchant.GetMerchantStock(0.5f, Roguelike.FloorRng), on_purchase: Merchant.OnPurchase, playOpenSound: false);
+            CurseToAdd = Curse.GetRandomUniqueCurse(Roguelike.OfferRng);
+            CurrentShop = new(Merchant.MerchantShopId, Merchant.GetMerchantStock(0.5f, Roguelike.OfferRng), on_purchase: Merchant.OnPurchase, playOpenSound: false);
             Merchant.ApplySellableCategories(CurrentShop);
         }
 

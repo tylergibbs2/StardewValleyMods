@@ -52,11 +52,78 @@ namespace StardewRoguelike
         /// </summary>
         private const int AddedMagneticRadius = 128;
 
-        public static int FloorRngSeed { get; set; } = Guid.NewGuid().GetHashCode();
+        /// <summary>
+        /// The seed every floor in the run is generated from.
+        ///
+        /// Lives on the team, net-synced, because it has to be one value for the
+        /// whole save: it used to be a plain static seeded from a fresh Guid on each
+        /// machine, so a farmhand never received the host's seed and rolled their
+        /// merchant stock, curse offer and perk offer from an unrelated sequence.
+        /// Only the host writes it; the seed terminal turns anyone else away.
+        /// </summary>
+        public static int FloorRngSeed
+        {
+            get => Game1.player.team.get_FarmerTeamFloorRngSeed().Value;
+            set => Game1.player.team.get_FarmerTeamFloorRngSeed().Value = value;
+        }
 
         public static bool RerollRandomEveryRun { get; set; } = true;
 
-        public static Random FloorRng { get; set; } = new(FloorRngSeed);
+        private static Random? floorRng;
+
+        private static readonly PerScreen<Random?> ScreenOfferRng = new(() => null);
+
+        /// <summary>
+        /// The sequence the world is built from: which floors are merchants, bosses,
+        /// challenges or forges, which map each one loads, where the monsters stand.
+        ///
+        /// One per machine and only the host draws from it, because only the host
+        /// generates floors. Created on demand rather than in a field initialiser,
+        /// since the seed now lives on the save and cannot be read before one loads.
+        /// </summary>
+        public static Random FloorRng
+        {
+            get => floorRng ??= new(FloorRngSeed);
+            set => floorRng = value;
+        }
+
+        /// <summary>
+        /// The sequence for what this screen's own player is offered: perk choices,
+        /// merchant stock, the curse on sale, dwarf chest contents.
+        ///
+        /// Separate from <see cref="FloorRng"/> and per-screen, because these draws
+        /// happen once per player rather than once per run. Sharing one sequence
+        /// meant every player's offers depended on how many floors had been built and
+        /// on who happened to walk through a door first, so the same seed could not
+        /// reproduce them - and in multiplayer the host, who also spends the sequence
+        /// on world generation, was always out of step with everyone else.
+        /// </summary>
+        public static Random OfferRng
+        {
+            get => ScreenOfferRng.Value ??= new(OfferRngSeed);
+            set => ScreenOfferRng.Value = value;
+        }
+
+        /// <summary>
+        /// The offer sequence's seed. Derived from the run's seed rather than equal
+        /// to it, so the two sequences do not draw the same numbers in lockstep.
+        /// </summary>
+        private static int OfferRngSeed => unchecked(FloorRngSeed * 31 + 17);
+
+        /// <summary>
+        /// Restarts both sequences from the current seed. Called when a run begins
+        /// and whenever the host changes the seed.
+        /// </summary>
+        public static void ReseedRun()
+        {
+            // Only the host advances the world sequence, so only the host restarts
+            // it: in split-screen the second player reaching the mine would otherwise
+            // rewind it under the floors already generated.
+            if (Context.IsMainPlayer)
+                FloorRng = new(FloorRngSeed);
+
+            OfferRng = new(OfferRngSeed);
+        }
 
         public static readonly List<string> SeenMineMaps = new();
 
@@ -404,7 +471,7 @@ namespace StardewRoguelike
             {
                 ModEntry.ActiveStats.Reset();
 
-                FloorRng = new(FloorRngSeed);
+                ReseedRun();
                 SeenMineMaps.Clear();
                 ChallengeFloor.History.Clear();
                 MineShaft.clearActiveMines();

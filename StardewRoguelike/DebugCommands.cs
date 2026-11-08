@@ -228,7 +228,7 @@ namespace StardewRoguelike
                     else
                     {
                         Roguelike.FloorRngSeed = int.Parse(args[1]);
-                        Roguelike.FloorRng = new(Roguelike.FloorRngSeed);
+                        Roguelike.ReseedRun();
                         ChallengeFloor.History.Clear();
                         Roguelike.SeenMineMaps.Clear();
                     }

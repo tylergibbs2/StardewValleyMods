@@ -60,7 +60,9 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(FarmerTeam __instance)
         {
-            __instance.NetFields.AddField(__instance.get_FarmerTeamHardMode());
+            __instance.NetFields
+                .AddField(__instance.get_FarmerTeamHardMode())
+                .AddField(__instance.get_FarmerTeamFloorRngSeed());
         }
     }
 }

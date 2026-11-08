@@ -153,7 +153,7 @@ namespace StardewRoguelike.UI
             if (sender.Text.Length >= 1)
             {
                 Roguelike.FloorRngSeed = int.Parse(sender.Text);
-                Roguelike.FloorRng = new(Roguelike.FloorRngSeed);
+                Roguelike.ReseedRun();
                 Roguelike.RerollRandomEveryRun = rerollTarget;
 
                 Game1.exitActiveMenu();

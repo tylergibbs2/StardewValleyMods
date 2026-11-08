@@ -182,13 +182,13 @@ namespace StardewRoguelike
             if (e.NewLocation is MineShaft mine && IsMerchantFloor(mine))
             {
                 Perks.CurrentMenu = new();
-                CurseToAdd = Curse.GetRandomUniqueCurse(Roguelike.FloorRng);
+                CurseToAdd = Curse.GetRandomUniqueCurse(Roguelike.OfferRng);
 
                 ShopMenu menu;
                 if (Perks.HasPerk(Perks.PerkType.Indecisive))
-                    menu = new RefreshableShopMenu(GetMerchantStock(random: Roguelike.FloorRng), false, on_purchase: OnPurchase);
+                    menu = new RefreshableShopMenu(GetMerchantStock(random: Roguelike.OfferRng), false, on_purchase: OnPurchase);
                 else
-                    menu = new(MerchantShopId, GetMerchantStock(random: Roguelike.FloorRng), on_purchase: OnPurchase, playOpenSound: false);
+                    menu = new(MerchantShopId, GetMerchantStock(random: Roguelike.OfferRng), on_purchase: OnPurchase, playOpenSound: false);
                 ApplySellableCategories(menu);
                 CurrentShop = menu;
                 CurrentSeedShop = new(SeedShopId, GetSeedStock(), playOpenSound: false);

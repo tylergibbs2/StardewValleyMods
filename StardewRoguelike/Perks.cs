@@ -191,13 +191,13 @@ namespace StardewRoguelike
 
         public static PerkType GetRandomPerk()
         {
-            double roll = Roguelike.FloorRng.NextDouble();
+            double roll = Roguelike.OfferRng.NextDouble();
             if (roll < CommonPerkChance)
-                return CommonPerks[Roguelike.FloorRng.Next(CommonPerks.Count)];
+                return CommonPerks[Roguelike.OfferRng.Next(CommonPerks.Count)];
             else if (roll < CommonPerkChance + UncommonPerkChance)
-                return UncommonPerks[Roguelike.FloorRng.Next(UncommonPerks.Count)];
+                return UncommonPerks[Roguelike.OfferRng.Next(UncommonPerks.Count)];
             else if (roll < CommonPerkChance + UncommonPerkChance + RarePerkChance)
-                return RarePerks[Roguelike.FloorRng.Next(RarePerks.Count)];
+                return RarePerks[Roguelike.OfferRng.Next(RarePerks.Count)];
 
             throw new Exception("doesnt add up to 100");
         }
