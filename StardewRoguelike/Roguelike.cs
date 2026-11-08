@@ -490,6 +490,11 @@ namespace StardewRoguelike
         /// <summary>Advances a floor and warps there.</summary>
         public static void Descend()
         {
+            // The base game plays this when the ladder is clicked. It belongs here
+            // instead, because clicking the ladder now opens the exit menu and the
+            // descent does not happen until a floor has been picked.
+            Game1.playSound("stairsdown");
+
             NextFloor();
             Game1.warpFarmer($"UndergroundMine1/{CurrentLevel}", 6, 6, 2);
         }
