@@ -585,7 +585,13 @@ namespace StardewRoguelike
             else if (ChallengeFloor.IsChallengeFloor(mine))
                 return ChallengeFloor.GetMapPath(mine);
 
-            var validOptions = Constants.ValidMineMaps;
+            // A copy, not the list itself. RemoveAll below mutates in place, and
+            // ValidMineMaps is a static the whole mod reads from - readonly protects
+            // the reference, not the contents. Aliasing it meant the first dark
+            // floor of a hard mode run deleted every water map from the pool for the
+            // rest of the process: later floors, later runs and ChallengeFloor's own
+            // fallback all silently lost four of the twenty-five layouts.
+            List<string> validOptions = new(Constants.ValidMineMaps);
 
             if (avoidWater)
                 validOptions.RemoveAll(Constants.MapsWithWater.Contains);
