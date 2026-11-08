@@ -417,9 +417,18 @@ namespace StardewRoguelike
                 HardMode = false;
                 ModEntry.ActiveStats.HardMode = false;
 
-                qi.setTileLocation(new(17, 6));
-                qi.faceDirection(2);
-                mine.addCharacter(qi);
+                // Guarded for the same reason the bubble above is: 1.6 only builds
+                // villagers for loaded locations, so Qi can be absent. He is
+                // decoration and a dialogue source - the run starts from the ladder,
+                // and PopulateQiDialogue already returns early without him - so the
+                // lobby simply goes without. Dereferencing him here regardless threw
+                // on the host, during SaveLoaded, before the run could begin.
+                if (qi is not null)
+                {
+                    qi.setTileLocation(new(17, 6));
+                    qi.faceDirection(2);
+                    mine.addCharacter(qi);
+                }
 
                 Vector2 computerTile = new(19, 7);
                 mine.Objects[computerTile] = new SObject(computerTile, "239");
