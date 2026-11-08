@@ -101,14 +101,6 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override bool ShouldSpawnLadder(MineShaft mine) => IsOver;
 
-        public static Vector2 GetRandomTileInRect(Rectangle rect)
-        {
-            int x = Game1.random.Next(rect.X, rect.X + rect.Width + 1);
-            int y = Game1.random.Next(rect.Y, rect.Y + rect.Height + 1);
-
-            return new(x, y);
-        }
-
         public void SpawnEnemies(MineShaft mine)
         {
             int monstersToSpawn = Game1.random.Next(1, 4);
@@ -135,7 +127,7 @@ namespace StardewRoguelike.ChallengeFloors
             List<Vector2> spawnTiles = new();
             while (spawnTiles.Count < monstersToSpawn)
             {
-                Vector2 tile = GetRandomTileInRect(spawnRect);
+                Vector2 tile = RoguelikeUtility.GetRandomTileInRect(spawnRect);
                 if (!spawnTiles.Contains(tile))
                     spawnTiles.Add(tile);
             }

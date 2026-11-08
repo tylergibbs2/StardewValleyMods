@@ -343,18 +343,10 @@ namespace StardewRoguelike.Bosses
             });
         }
 
-        public static Vector2 GetRandomTileInRect(Rectangle rect)
-        {
-            int x = Game1.random.Next(rect.X, rect.X + rect.Width + 1);
-            int y = Game1.random.Next(rect.Y, rect.Y + rect.Height + 1);
-
-            return new(x, y);
-        }
-
         public void DoLavaLurkAttack()
         {
-            Vector2 tileLoc1 = GetRandomTileInRect(LavaLurkBox1);
-            Vector2 tileLoc2 = GetRandomTileInRect(LavaLurkBox2);
+            Vector2 tileLoc1 = RoguelikeUtility.GetRandomTileInRect(LavaLurkBox1);
+            Vector2 tileLoc2 = RoguelikeUtility.GetRandomTileInRect(LavaLurkBox2);
             Vector2[] locs = new Vector2[] { tileLoc1, tileLoc2 };
 
             for (int i = 0; i < 2; i++)

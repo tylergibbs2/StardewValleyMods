@@ -11,6 +11,23 @@ namespace StardewRoguelike
 {
     internal class RoguelikeUtility
     {
+        /// <summary>A random tile inside <paramref name="rect"/>.</summary>
+        /// <remarks>
+        /// One copy, since there were two with the same fault in them. Next's upper
+        /// bound is already exclusive, and both copies added one to it, so a pick
+        /// could land a tile past the far edge: JOTPK spawned monsters on a fifth
+        /// tile of a four-tile side, and Nadith's lava reached a row and a column
+        /// outside its box. JOTPK's caller also clamps its count to Width * Height,
+        /// which never counted that extra row.
+        /// </remarks>
+        public static Vector2 GetRandomTileInRect(Rectangle rect)
+        {
+            return new(
+                Game1.random.Next(rect.X, rect.X + rect.Width),
+                Game1.random.Next(rect.Y, rect.Y + rect.Height)
+            );
+        }
+
         public static void DoAttackCue(GameLocation location, int tickDuration)
         {
             AttackIndicatorMessage message = new()
