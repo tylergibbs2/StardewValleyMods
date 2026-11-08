@@ -5,6 +5,7 @@ using StardewRoguelike.Run;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
+using System;
 using System.Collections.Generic;
 
 namespace StardewRoguelike.UI
@@ -15,6 +16,10 @@ namespace StardewRoguelike.UI
     ///
     /// Replaces the hidden ladder as the thing a floor is "for": the question stops
     /// being where the way down is and becomes which way down to take.
+    ///
+    /// Closing it is allowed. The ladder stays where it is, so backing out costs
+    /// nothing but the walk back, and the offers are worked out from the seed and the
+    /// route rather than rolled when the menu opens - the same three are waiting.
     /// </summary>
     public class ExitChoiceMenu : IClickableMenu
     {
@@ -52,7 +57,26 @@ namespace StardewRoguelike.UI
         /// <summary>Set once a choice is made, so Update can close and descend.</summary>
         private bool committed;
 
-        public ExitChoiceMenu(int level) : base(0, 0, 0, 0, showUpperRightCloseButton: false)
+        /// <summary>How long the menu takes to settle into place, in milliseconds.</summary>
+        private const float OpenDuration = 200f;
+
+        /// <summary>How far above its resting place the menu starts.</summary>
+        private const float OpenRise = 40f;
+
+        /// <summary>Milliseconds since the menu opened, capped at <see cref="OpenDuration"/>.</summary>
+        private float opened;
+
+        /// <summary>How far through the opening the menu is, eased, from 0 to 1.</summary>
+        private float Entrance
+        {
+            get
+            {
+                float t = opened / OpenDuration;
+                return 1f - (1f - t) * (1f - t) * (1f - t);
+            }
+        }
+
+        public ExitChoiceMenu(int level) : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             this.level = level;
             offers = RunRoute.OffersFor(level);
@@ -61,6 +85,8 @@ namespace StardewRoguelike.UI
             height = HeaderHeight + offers.Length * (OptionHeight + OptionGap) - OptionGap + 64;
 
             SetUpPositions();
+
+            Game1.playSound("bigSelect");
         }
 
         private void SetUpPositions()
@@ -84,6 +110,10 @@ namespace StardewRoguelike.UI
                     downNeighborID = i < offers.Length - 1 ? i + 1 : -1
                 });
             }
+
+            // Built from the final bounds rather than the empty ones the base
+            // constructor was given, which is where it would otherwise sit.
+            initializeUpperRightCloseButton();
         }
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
@@ -100,8 +130,16 @@ namespace StardewRoguelike.UI
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            if (committed)
+            // Nothing is clickable until it has stopped moving, so a click always
+            // lands on the option it looked like it would.
+            if (committed || opened < OpenDuration)
                 return;
+
+            if (upperRightCloseButton is not null && upperRightCloseButton.containsPoint(x, y))
+            {
+                exitThisMenu();
+                return;
+            }
 
             for (int i = 0; i < options.Count; i++)
             {
@@ -115,12 +153,26 @@ namespace StardewRoguelike.UI
             }
         }
 
+        public override void performHoverAction(int x, int y)
+        {
+            base.performHoverAction(x, y);
+
+            if (upperRightCloseButton is not null)
+                upperRightCloseButton.tryHover(x, y);
+        }
+
         public override void receiveKeyPress(Keys key)
         {
-            // Deliberately not closable: the floor has no other way out, so letting
-            // the menu be dismissed would strand the player on a cleared floor.
-            if (Game1.options.doesInputListContain(Game1.options.menuButton, key))
+            bool cancel = key == Keys.Escape
+                          || Game1.options.doesInputListContain(Game1.options.menuButton, key);
+
+            // Backing out leaves the ladder where it is, so the player can keep
+            // playing the floor and take the same three offers whenever they like.
+            if (cancel && !committed && readyToClose())
+            {
+                exitThisMenu();
                 return;
+            }
 
             base.receiveKeyPress(key);
         }
@@ -128,6 +180,9 @@ namespace StardewRoguelike.UI
         public override void update(GameTime time)
         {
             base.update(time);
+
+            if (opened < OpenDuration)
+                opened = Math.Min(OpenDuration, opened + (float)time.ElapsedGameTime.TotalMilliseconds);
 
             if (!committed)
                 return;
@@ -158,14 +213,23 @@ namespace StardewRoguelike.UI
 
         public override void draw(SpriteBatch b)
         {
-            b.Draw(Game1.fadeToBlackRect, Game1.graphics.GraphicsDevice.Viewport.Bounds, Color.Black * 0.6f);
+            // The whole menu drops the last few pixels into place and fades up as it
+            // does, so an exit that is now a question announces itself rather than
+            // appearing between one frame and the next.
+            float entrance = Entrance;
+            float alpha = entrance;
+            int rise = (int)((1f - entrance) * -OpenRise);
+            Color tint = Color.White * alpha;
+
+            b.Draw(Game1.fadeToBlackRect, Game1.graphics.GraphicsDevice.Viewport.Bounds, Color.Black * (0.6f * alpha));
 
             drawTextureBox(
                 b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
-                xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
+                xPositionOnScreen, yPositionOnScreen + rise, width, height, tint);
 
             SpriteText.drawStringWithScrollCenteredAt(
-                b, I18n.ExitChoice_Title(), xPositionOnScreen + width / 2, yPositionOnScreen + TitleTop);
+                b, I18n.ExitChoice_Title(), xPositionOnScreen + width / 2,
+                yPositionOnScreen + TitleTop + rise, "", alpha);
 
             // Forward context, so the choice is made against something. Without it
             // every option is judged only on this floor, which is how the run reads
@@ -177,42 +241,53 @@ namespace StardewRoguelike.UI
                 b, horizon, Game1.smallFont,
                 new Vector2(
                     xPositionOnScreen + width / 2 - horizonSize.X / 2,
-                    yPositionOnScreen + SubtitleTop),
-                Game1.textColor * 0.75f);
+                    yPositionOnScreen + SubtitleTop + rise),
+                Game1.textColor * (0.75f * alpha));
 
             for (int i = 0; i < options.Count; i++)
             {
                 ClickableComponent option = options[i];
-                bool hovered = option.containsPoint(Game1.getMouseX(), Game1.getMouseY());
+                bool hovered = entrance >= 1f
+                               && option.containsPoint(Game1.getMouseX(), Game1.getMouseY());
+                int top = option.bounds.Y + rise;
 
                 drawTextureBox(
                     b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
-                    option.bounds.X, option.bounds.Y, option.bounds.Width, option.bounds.Height,
-                    hovered && !committed ? Color.Wheat : Color.White);
+                    option.bounds.X, top, option.bounds.Width, option.bounds.Height,
+                    (hovered && !committed ? Color.Wheat : Color.White) * alpha);
 
                 FloorKind kind = offers[i];
                 int textRoom = option.bounds.Width - TextInset - 24;
 
                 DrawFitted(b, FloorKindInfo.Name(kind), Game1.dialogueFont,
-                    new Vector2(option.bounds.X + TextInset, option.bounds.Y + 20),
-                    textRoom, Game1.textColor);
+                    new Vector2(option.bounds.X + TextInset, top + 20),
+                    textRoom, Game1.textColor * alpha);
 
                 DrawFitted(b, FloorKindInfo.Description(kind), Game1.smallFont,
-                    new Vector2(option.bounds.X + TextInset, option.bounds.Y + 60),
-                    textRoom, Game1.textColor * 0.8f);
+                    new Vector2(option.bounds.X + TextInset, top + 60),
+                    textRoom, Game1.textColor * (0.8f * alpha));
 
                 Rectangle icon = FloorKindInfo.Icon(kind);
                 b.Draw(
                     Game1.mouseCursors,
-                    new Vector2(option.bounds.X + IconInset, option.bounds.Y + 24),
-                    icon, Color.White, 0f, Vector2.Zero, 56f / icon.Width, SpriteEffects.None, 1f);
+                    new Vector2(option.bounds.X + IconInset, top + 24),
+                    icon, tint, 0f, Vector2.Zero, 56f / icon.Width, SpriteEffects.None, 1f);
             }
 
             if (committed)
             {
                 Utility.drawTextWithShadow(
                     b, I18n.ExitChoice_Waiting(), Game1.smallFont,
-                    new Vector2(xPositionOnScreen + 32, yPositionOnScreen + height - 56), Game1.textColor);
+                    new Vector2(xPositionOnScreen + 32, yPositionOnScreen + height - 56 + rise),
+                    Game1.textColor * alpha);
+            }
+
+            if (upperRightCloseButton is not null && !committed)
+            {
+                int resting = upperRightCloseButton.bounds.Y;
+                upperRightCloseButton.bounds.Y += rise;
+                upperRightCloseButton.draw(b, tint, 1f);
+                upperRightCloseButton.bounds.Y = resting;
             }
 
             drawMouse(b);
