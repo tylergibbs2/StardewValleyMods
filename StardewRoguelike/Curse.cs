@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -377,6 +377,29 @@ namespace StardewRoguelike
             }
         }
 
+        /// <summary>
+        /// Reports what the buff display has made of the player's curses.
+        /// </summary>
+        /// <remarks>
+        /// Temporary. The buff itself checks out - it lands in AppliedBuffs with an
+        /// icon and with visible set - so the only step left that can swallow it is
+        /// BuffsDisplay, which rebuilds its icons from the player's buffs when it is
+        /// marked dirty and is only told to do so while the player can move and time
+        /// is passing.
+        /// </remarks>
+        public static void LogBuffDisplayState()
+        {
+            int curseBuffs = Game1.player.buffs.AppliedBuffs.Values.Count(buff => buff is Curse);
+
+            ModEntry.ModMonitor.Log(
+                $"curse display: curses={Game1.player.get_FarmerCurses().Count} " +
+                $"curseBuffs={curseBuffs} buffs={Game1.player.buffs.AppliedBuffs.Count} " +
+                $"icons={Game1.buffsDisplay.getNumBuffs()} dirty={Game1.buffsDisplay.dirty} " +
+                $"hud={Game1.displayHUD} canMove={Game1.player.CanMove} " +
+                $"timePasses={Game1.shouldTimePass()}",
+                LogLevel.Debug);
+        }
+
         // Only works for Game1.player
         public static bool HasCurse(CurseType curseType)
         {
@@ -450,17 +473,6 @@ namespace StardewRoguelike
             Game1.player.get_FarmerCurses().Add((int)curseType);
             Game1.player.applyBuff(curse);
             bool result = HasCurse(curseType);
-
-            // Curses are not reaching the buff bar and nothing about the buff itself
-            // explains it, so it says what it built. BuffsDisplay drops a buff that
-            // is not visible or has no icon texture, and shows nothing for one that
-            // never made it into AppliedBuffs at all.
-            ModEntry.ModMonitor.Log(
-                $"curse {curseType}: applied={result} " +
-                $"hasBuff={Game1.player.hasBuff(GetBuffId(curseType))} " +
-                $"icon={(curse.iconTexture is null ? "null" : "ok")} " +
-                $"visible={curse.visible} buffsOnPlayer={Game1.player.buffs.AppliedBuffs.Count}",
-                StardewModdingAPI.LogLevel.Debug);
 
             switch (curseType)
             {

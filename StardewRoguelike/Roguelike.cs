@@ -1,4 +1,4 @@
-using StardewRoguelike.Run;
+﻿using StardewRoguelike.Run;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewRoguelike.Mode;
@@ -273,6 +273,9 @@ namespace StardewRoguelike
 
             Perks.EnsurePerkBuff();
             Curse.EnsureCurseBuffs();
+
+            if (e.IsOneSecond && Curse.HasAnyCurse())
+                Curse.LogBuffDisplayState();
 
             // Kept alive by refreshing a very short duration each tick, so it lapses
             // as soon as the player stops qualifying for it.
