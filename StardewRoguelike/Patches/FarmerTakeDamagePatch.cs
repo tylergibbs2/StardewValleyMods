@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI.Utilities;
 using StardewRoguelike.HatQuests;
@@ -65,10 +65,14 @@ namespace StardewRoguelike.Patches
                         trajectory *= 2f;
 
                     trajectory /= 2f;
-                    int damageToMonster = damage;
+
+                    // Each level sends the hit back harder. A ring without the perk
+                    // reflects it once over, as it always did.
+                    int reflect = Math.Max(1, Perks.PerkLevel(Perks.PerkType.Reflect));
+                    int damageToMonster = damage * reflect;
                     int farmerDamage = Math.Max(1, damage - effectiveResilience);
                     if (farmerDamage < 10)
-                        damageToMonster = (int)Math.Ceiling((damageToMonster + farmerDamage) / 2.0);
+                        damageToMonster = (int)Math.Ceiling((damageToMonster + farmerDamage * reflect) / 2.0);
 
                     damager.takeDamage(damageToMonster, (int)trajectory.X, (int)trajectory.Y, isBomb: false, 1.0, __instance);
                     damager.currentLocation.debris.Add(new Debris(damageToMonster, new Vector2(monsterBox.Center.X + 16, monsterBox.Center.Y), new Color(255, 130, 0), 1f, damager));
@@ -83,13 +87,16 @@ namespace StardewRoguelike.Patches
                 int effectiveDamage = damage - effectiveResilience;
                 damage = Math.Max(1, effectiveDamage);
 
-                if (Perks.HasPerk(Perks.PerkType.Shield))
-                    damage = (int)Math.Round(damage * 0.9f);
+                // Compounding rather than adding, so three levels take off a little
+                // less than a third and no amount of it can reach immunity.
+                int shield = Perks.PerkLevel(Perks.PerkType.Shield);
+                if (shield > 0)
+                    damage = (int)Math.Round(damage * (float)Math.Pow(0.9f, shield));
 
                 if (Perks.HasPerk(Perks.PerkType.TurtleShell) && ShellCooldownSeconds == 0)
                 {
                     __instance.currentLocation.playSound("crafting");
-                    damage = (int)Math.Round(damage * 0.5f);
+                    damage = (int)Math.Round(damage * (float)Math.Pow(0.5f, Perks.PerkLevel(Perks.PerkType.TurtleShell)));
                     ShellCooldownSeconds = 10;
                 }
 

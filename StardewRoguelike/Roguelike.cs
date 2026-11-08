@@ -1169,7 +1169,8 @@ namespace StardewRoguelike
 
             double roll = Game1.random.NextDouble();
 
-            if (Perks.HasPerk(Perks.PerkType.BarrelEnthusiast))
+            // Another roll kept per level, each of which can only improve it.
+            for (int i = 0; i < Perks.PerkLevel(Perks.PerkType.BarrelEnthusiast); i++)
                 roll = Math.Min(Game1.random.NextDouble(), roll);
 
             if (HatQuest.HasBuffFor(HatQuestType.GARBAGE_HAT))

@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using StardewValley.GameData.BigCraftables;
 using StardewValley.GameData.Characters;
 using StardewModdingAPI;
@@ -731,8 +731,7 @@ namespace StardewRoguelike
 
             Dictionary<ISalable, ItemStockInformation> stock = new();
 
-            if (Perks.HasPerk(Perks.PerkType.Discount))
-                priceAdjustment *= 0.9f;
+            priceAdjustment *= (float)Math.Pow(0.9f, Perks.PerkLevel(Perks.PerkType.Discount));
 
             if (Roguelike.CurrentLevel < Constants.ScalingOrder[0])         // Floor 1 Shop
                 MerchantFloors[0].AddToStock(stock, priceAdjustment, random);

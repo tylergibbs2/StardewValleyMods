@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using StardewRoguelike.HatQuests;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -26,8 +26,7 @@ namespace StardewRoguelike.Patches
             if (__result <= 0)
                 return;
 
-            if (Perks.HasPerk(Perks.PerkType.FoodEnjoyer))
-                __result = (int)(__result * 1.2f);
+            __result = (int)(__result * Math.Pow(1.2f, Perks.PerkLevel(Perks.PerkType.FoodEnjoyer)));
 
             if (HatQuest.HasBuffFor(HatQuestType.CHEF_HAT))
                 __result = (int)(__result * 1.2f);

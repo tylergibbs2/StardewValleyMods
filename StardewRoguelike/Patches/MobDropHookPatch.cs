@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Locations;
@@ -22,7 +22,9 @@ namespace StardewRoguelike.Patches
             for (int i = 0; i < goldToDrop; i++)
                 objects.Add(384);
 
-            if (Perks.HasPerk(Perks.PerkType.Scavenger) && Game1.random.NextDouble() < 0.05)
+            // The chance rises per level rather than the amount dropped.
+            int scavenger = Perks.PerkLevel(Perks.PerkType.Scavenger);
+            if (scavenger > 0 && Game1.random.NextDouble() < 0.05 * scavenger)
                 objects.Add(874);
 
             Vector2 playerPosition = new(Game1.player.GetBoundingBox().Center.X, Game1.player.GetBoundingBox().Center.Y);

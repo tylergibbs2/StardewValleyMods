@@ -15,11 +15,8 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix(ref float knockBackModifier, ref float critChance, ref float critMultiplier)
         {
-            if (Perks.HasPerk(Perks.PerkType.Precision))
-                critMultiplier *= 1.2f;
-
-            if (Perks.HasPerk(Perks.PerkType.Desperado))
-                critMultiplier += 1.5f;
+            critMultiplier *= (float)Math.Pow(1.2f, Perks.PerkLevel(Perks.PerkType.Precision));
+            critMultiplier += 1.5f * Perks.PerkLevel(Perks.PerkType.Desperado);
 
             if (Curse.HasCurse(CurseType.PlayerKnockback))
                 knockBackModifier *= 2;
@@ -47,7 +44,10 @@ namespace StardewRoguelike.Patches
                         Game1.playSound("coin");
                 }
 
-                if (Perks.HasPerk(Perks.PerkType.Leech) && Game1.random.NextDouble() < 0.25)
+                // The chance rises with the level rather than the amount healed, so
+                // it reads as happening more often rather than harder.
+                int leech = Perks.PerkLevel(Perks.PerkType.Leech);
+                if (leech > 0 && Game1.random.NextDouble() < 0.25 * leech)
                     Game1.player.health = Math.Min(Game1.player.health + 1, Game1.player.maxHealth);
             }
         }

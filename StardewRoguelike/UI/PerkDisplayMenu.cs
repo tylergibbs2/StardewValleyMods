@@ -174,6 +174,15 @@ namespace StardewRoguelike.UI
             b.DrawString(Game1.smallFont, noPerks, new Vector2(xPositionOnScreen + width / 2 - Game1.smallFont.MeasureString(noPerks).X / 2f, currentDrawHeight + spaceToClearSideBorder), Game1.textColor);
         }
 
+        /// <summary>The level of a perk, as a numeral, for the end of its name.</summary>
+        private static string Numeral(int level) => level switch
+        {
+            2 => "II",
+            3 => "III",
+            4 => "IV",
+            _ => level.ToString()
+        };
+
         /// <summary>Draws a divider at <paramref name="y"/>, a screen coordinate.</summary>
         /// <remarks>
         /// Every caller passes currentDrawHeight, which starts at yPositionOnScreen
@@ -216,13 +225,17 @@ namespace StardewRoguelike.UI
                 downArrow.draw(b);
         }
 
-        public void DrawPerk(SpriteBatch b, Perks.PerkType perkType)
+        public void DrawPerk(SpriteBatch b, Perks.PerkType perkType, int level)
         {
             Perks.PerkRarity rarity = Perks.GetPerkRarity(perkType);
             Color rarityColor = PerkMenu.GetRarityColor(rarity);
             Rectangle iconSourceRect = Perks.GetPerkSourceRect(perkType);
 
+            // A perk taken more than once says so, since the list is the only place
+            // the player can see how far they have taken anything.
             string perkName = Perks.GetPerkDisplayName(perkType);
+            if (level > 1)
+                perkName += " " + Numeral(level);
             string perkDescription = Perks.GetPerkDescription(perkType);
             string rarityText = PerkMenu.GetRarityText(rarity);
 
@@ -302,8 +315,8 @@ namespace StardewRoguelike.UI
                 DrawNoPerksText(b);
             else
             {
-                foreach (Perks.PerkType perkType in Perks.GetActivePerks())
-                    DrawPerk(b, perkType);
+                foreach ((Perks.PerkType perkType, int level) in Perks.GetActivePerks())
+                    DrawPerk(b, perkType, level);
 
                 DrawScrollArrows(b);
             }

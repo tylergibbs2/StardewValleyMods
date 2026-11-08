@@ -90,7 +90,7 @@ namespace StardewRoguelike
 
         private static readonly float RarePerkChance = 0.1f;
 
-        private static readonly PerScreen<HashSet<PerkType>> ScreenActivePerks = new(() => new());
+        private static readonly PerScreen<Dictionary<PerkType, int>> ScreenActivePerks = new(() => new());
 
         /// <summary>
         /// The perks the player on this screen has taken.
@@ -102,7 +102,45 @@ namespace StardewRoguelike
         /// Re-created on demand: StateEffect clears every PerScreen in the assembly
         /// by writing null into it when the mode turns off, which is the right thing
         /// for the perk list but leaves nothing to read from until the next run.
-        private static HashSet<PerkType> ActivePerks => ScreenActivePerks.Value ??= new();
+        private static Dictionary<PerkType, int> ActivePerks => ScreenActivePerks.Value ??= new();
+
+        /// <summary>
+        /// How many times a perk can be taken.
+        ///
+        /// A build is more of one thing, and until this existed there was no more of
+        /// anything: every perk was taken once and then struck off the list, so the
+        /// run collected breadth and could never commit to a direction.
+        /// </summary>
+        /// <summary>The health a single level of Defender is worth.</summary>
+        private const int DefenderHealth = 25;
+
+        public static int MaxLevel(PerkType perkType) => perkType switch
+        {
+            // Granted by handing the player a vanilla profession, which they either
+            // hold or do not. There is no second copy of being a Fighter.
+            PerkType.Fighter or PerkType.Scout or PerkType.Gemologist
+                or PerkType.Miner or PerkType.Brute or PerkType.Acrobat
+                or PerkType.Geologist or PerkType.Tiller => 1,
+
+            // Permissions rather than quantities: there is no second helping of
+            // being allowed to deconstruct an item.
+            PerkType.Deconstructor or PerkType.Indecisive or PerkType.Gamer
+                or PerkType.Fisherman or PerkType.Sturdy => 1,
+
+            _ => 3
+        };
+
+        /// <summary>How many times the player has taken <paramref name="perkType"/>.</summary>
+        public static int PerkLevel(PerkType perkType)
+        {
+            return ActivePerks.TryGetValue(perkType, out int level) ? level : 0;
+        }
+
+        /// <summary>Whether there is another level of this perk left to take.</summary>
+        public static bool CanTake(PerkType perkType)
+        {
+            return PerkLevel(perkType) < MaxLevel(perkType);
+        }
 
         public static string GetPerkDisplayName(PerkType perkType)
         {
@@ -191,7 +229,8 @@ namespace StardewRoguelike
                 return PerkRarity.Rare;
         }
 
-        public static HashSet<PerkType> GetActivePerks()
+        /// <summary>The perks the player holds, with how deep each one goes.</summary>
+        public static IReadOnlyDictionary<PerkType, int> GetActivePerks()
         {
             return ActivePerks;
         }
@@ -215,7 +254,7 @@ namespace StardewRoguelike
                 return null;
 
             PerkType perk = GetRandomPerk();
-            while (ActivePerks.Contains(perk))
+            while (!CanTake(perk))
                 perk = GetRandomPerk();
 
             return perk;
@@ -238,7 +277,7 @@ namespace StardewRoguelike
 
             foreach (PerkType perk in Run.RunPlan.ShrineOrderFor(level))
             {
-                if (ActivePerks.Contains(perk))
+                if (!CanTake(perk))
                     continue;
 
                 if (first is null)
@@ -272,8 +311,26 @@ namespace StardewRoguelike
 
         public static void AddPerk(PerkType perkType)
         {
-            if (HasPerk(perkType))
+            if (!CanTake(perkType))
                 return;
+
+            // The one-off half of a perk - a profession, a lump of health - happens
+            // when it is first taken. Taking it again only deepens what it already
+            // does, which the effects read back off the level.
+            if (HasPerk(perkType))
+            {
+                ActivePerks[perkType]++;
+
+                // The one perk whose deepening is a lump rather than a rate.
+                if (perkType == PerkType.Defender)
+                {
+                    Roguelike.TrueMaxHP += DefenderHealth;
+                    Game1.player.health = Roguelike.TrueMaxHP;
+                }
+
+                RefreshPerkBuff();
+                return;
+            }
 
             switch (perkType)
             {
@@ -293,7 +350,7 @@ namespace StardewRoguelike
                     Game1.player.professions.Add(26);
                     break;
                 case PerkType.Defender:
-                    Roguelike.TrueMaxHP += 25;
+                    Roguelike.TrueMaxHP += DefenderHealth;
                     Game1.player.health = Roguelike.TrueMaxHP;
                     break;
                 case PerkType.Acrobat:
@@ -307,7 +364,7 @@ namespace StardewRoguelike
                     break;
             }
 
-            ActivePerks.Add(perkType);
+            ActivePerks[perkType] = 1;
             RefreshPerkBuff();
         }
 
@@ -334,7 +391,7 @@ namespace StardewRoguelike
                     Game1.player.professions.Remove(26);
                     break;
                 case PerkType.Defender:
-                    Roguelike.TrueMaxHP = Math.Max(0, Roguelike.TrueMaxHP - 25);
+                    Roguelike.TrueMaxHP = Math.Max(0, Roguelike.TrueMaxHP - DefenderHealth * PerkLevel(PerkType.Defender));
                     if (Curse.HasCurse(CurseType.GlassCannon))
                         Game1.player.health = Math.Min(Roguelike.TrueMaxHP / 2, Game1.player.health);
                     else
@@ -390,14 +447,12 @@ namespace StardewRoguelike
         {
             BuffEffects effects = new();
 
-            if (HasPerk(PerkType.SpecialCharm))
-                effects.LuckLevel.Value += 1;
-            if (HasPerk(PerkType.RabbitsFoot))
-                effects.LuckLevel.Value += 3;
-            if (HasPerk(PerkType.Swift))
-                effects.Speed.Value += 1;
-            if (HasPerk(PerkType.Immunity))
-                effects.Immunity.Value += 2;
+            // Per level rather than per perk. A perk taken twice is twice the perk,
+            // which is the whole point of being allowed to take it twice.
+            effects.LuckLevel.Value += PerkLevel(PerkType.SpecialCharm);
+            effects.LuckLevel.Value += PerkLevel(PerkType.RabbitsFoot) * 3;
+            effects.Speed.Value += PerkLevel(PerkType.Swift);
+            effects.Immunity.Value += PerkLevel(PerkType.Immunity) * 2;
 
             if (!effects.HasAnyValue())
             {
@@ -419,12 +474,18 @@ namespace StardewRoguelike
 
         public static bool HasPerk(PerkType perkType)
         {
-            return ActivePerks.Contains(perkType);
+            return ActivePerks.ContainsKey(perkType);
         }
 
         public static bool HasAllPerks()
         {
-            return ActivePerks.Count == TotalPerkCount;
+            foreach (PerkType perk in Enum.GetValues<PerkType>())
+            {
+                if (CanTake(perk))
+                    return false;
+            }
+
+            return true;
         }
 
         public static void RemoveAllPerks()
