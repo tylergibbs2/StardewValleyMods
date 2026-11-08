@@ -2,6 +2,21 @@
 
 # Release notes
 
+## 1.2.2
+
+Released on 8 November 2026 for SMAPI 4.0.0 or later.
+
+This release corrects a fault that stopped a boss fight, and more split-screen
+faults.
+
+- Fix: The fight against Telesto the Full Moon failed. The mod gave an error on the first game tick of the fight. Versions 1.2.0 and 1.2.1 have this fault.
+- Fix: The mod gave an error when it loaded a save and Mister Qi was not available. The run could not start.
+- Fix: In split-screen, two players shared one shop, one seed shop, one hat board, one curse offer, one perk choice and one forge. The second player to arrive replaced the offers of the first player, and purchases of one player could go to the other player.
+- Fix: In split-screen, the pick-a-path floor also shared its curse offer, its shop and its wheel.
+- Fix: In split-screen, the second screen kept the data of a completed run and used it in a normal save.
+- Fix: Monsters on the Journey of the Prairie King floor spawned one tile outside their side. The lava of Nadith the Extinct reached one row and one column outside its area.
+- Fix: On the egg hunt floor, the music stopped one second before the end of the floor.
+
 ## 1.2.1
 
 Released on 7 November 2026 for SMAPI 4.0.0 or later.
