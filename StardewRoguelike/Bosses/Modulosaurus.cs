@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewRoguelike.Extensions;
 using StardewRoguelike.Netcode;
@@ -171,6 +171,11 @@ namespace StardewRoguelike.Bosses
                     if (Roguelike.HardMode)
                         DoLavaLurkAttack();
 
+                    // Only the meteor chain sets this timer - the selector fires a
+                    // lava lurk where it stands - so this is where a chained one
+                    // hands the boss back.
+                    attackState.Value = 0;
+
                     TicksToAttack = 90 - this.AdjustRangeForHealth(0, 60);
                 }
             }
@@ -231,17 +236,33 @@ namespace StardewRoguelike.Bosses
 
                 if (TicksUntilMeteorStrike == 0)
                 {
-                    attackState.Value = 0;
-
                     DoMeteorStrike();
 
+                    // The follow-up is this attack continuing, so attackState stays
+                    // set. Clearing it here said the boss was free on the very tick
+                    // the meteor landed, and the selector below - which still had
+                    // TicksToAttack at zero, since the meteor never reset it - picked
+                    // a second attack and started it on top of the one being chained.
+                    //
+                    // The animation flags are set the same way the selector sets them
+                    // too. The chain used to leave them wherever the last attack had
+                    // put them, so a chained shotgun fired without its firing pose.
                     double rng = Game1.random.NextDouble();
                     if (rng < ((float)1 / 3))
+                    {
+                        firing.Value = false;
+                        TicksUntilNextFireBreath = 30;
                         TicksOfTotalFireBreath = 120;
+                    }
                     else if (rng < ((float)2 / 3))
+                    {
+                        firing.Value = true;
                         TicksUntilShotgunFireballs = 120;
+                    }
                     else
+                    {
                         TicksUntilLavaLurk = 120;
+                    }
                 }
             }
 

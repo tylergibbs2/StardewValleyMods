@@ -25,26 +25,6 @@ namespace StardewRoguelike
             set => ScreenCurrentForge.Value = value;
         }
 
-        public static bool ShouldDoForgeFloor(int level)
-        {
-            if (DebugCommands.ForcedForgeFloor)
-                return true;
-
-            int lastForgeFloor = 0;
-            int highestFloor = Roguelike.GetHighestMineShaftLevel();
-            foreach (MineShaft mine in MineShaft.activeMines)
-            {
-                int floor = Roguelike.GetLevelFromMineshaft(mine);
-                if (IsForgeFloor(mine) && floor > lastForgeFloor)
-                    lastForgeFloor = floor;
-            }
-
-            if (lastForgeFloor == 0)
-                return level > ForgeFloorMinimumLevel;
-
-            return Roguelike.FloorRng.NextDouble() <= ForgeFloorChance && level > highestFloor && (level - lastForgeFloor) >= ForgeFloorMinimumInterval;
-        }
-
         public static bool IsForgeFloor(MineShaft mine)
         {
             return mine.get_MineShaftForgeFloor().Value;

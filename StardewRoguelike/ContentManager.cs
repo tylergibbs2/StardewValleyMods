@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,9 +52,12 @@ namespace StardewRoguelike
                 new Rectangle(255, 1436, 12, 14)   // merchant backpack, see Merchant.Draw
             }),
 
+            // The sheet is 159 wide, so a 24-wide region starting at 136 ends one
+            // pixel past it and SMAPI refuses the whole edit - which is why the
+            // cinder shard icon the mod paints out was still showing.
             ["LooseSprites/ForgeMenu"] = ("assets/TileSheets/ForgeMenu.png", new[]
             {
-                new Rectangle(136, 16, 24, 24)
+                new Rectangle(136, 16, 23, 24)
             }),
 
             ["TileSheets/Projectiles"] = ("assets/TileSheets/Projectiles.png", new[]
@@ -139,8 +142,21 @@ namespace StardewRoguelike
         /// </summary>
         public static void SetupAudio()
         {
+            if (Game1.soundBank is null || Game1.audioEngine is null)
+            {
+                ModEntry.ModMonitor.Log(
+                    "No sound bank yet; the mod's music and sounds will not be available.",
+                    StardewModdingAPI.LogLevel.Warn);
+                return;
+            }
+
+            int added = 0;
             foreach (var (name, category, filename, loop) in CustomAudio)
             {
+                // Skip what is already there, so this can be run again safely.
+                if (Game1.soundBank.Exists(name))
+                    continue;
+
                 string filePath = Path.Combine(ModEntry.Instance.Helper.DirectoryPath, "assets", "Audio", filename);
                 string extension = Path.GetExtension(filePath);
                 SoundEffect audio = extension switch
@@ -156,7 +172,20 @@ namespace StardewRoguelike
                 };
 
                 Game1.soundBank.AddCue(cue);
+                added++;
             }
+
+            // Counted back out of the bank rather than trusting the adds. The game
+            // builds its sound bank on a background thread, so cues can be written
+            // into one that is then replaced - which is silent, and leaves the mod
+            // with no music and nothing in the log to explain it.
+            int present = CustomAudio.Count(entry => Game1.soundBank.Exists(entry.Item1));
+
+            ModEntry.ModMonitor.Log(
+                $"custom audio: {present}/{CustomAudio.Count} cues in the sound bank ({added} added just now)",
+                present == CustomAudio.Count
+                    ? StardewModdingAPI.LogLevel.Debug
+                    : StardewModdingAPI.LogLevel.Warn);
         }
 
         /// <summary>

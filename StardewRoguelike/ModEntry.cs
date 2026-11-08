@@ -9,6 +9,7 @@ using StardewRoguelike.UI;
 using StardewValley;
 using StardewModdingAPI.Utilities;
 using StardewRoguelike.Mode;
+using StardewRoguelike.Run;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -92,10 +93,19 @@ namespace StardewRoguelike
             ModRegistry = helper.ModRegistry;
             ModMonitor = Monitor;
 
-            // Load all custom audio
-            ContentManager.SetupAudio();
-
             // Initialize all event handlers
+            //
+            // Custom audio waits for GameLaunched rather than loading here. The game
+            // builds its sound bank from Initialize as a threaded task, so at Entry
+            // it may not exist yet or may still be replaced afterwards - and cues
+            // added to a bank that is then thrown away go quietly, with no error and
+            // no music.
+            helper.Events.GameLoop.GameLaunched += (_, _) => ContentManager.SetupAudio();
+
+            // And again when a save loads, in case the bank that existed at launch
+            // was not the one the game ended up using. SetupAudio skips cues that are
+            // already present, so running it twice costs nothing.
+            helper.Events.GameLoop.SaveLoaded += (_, _) => ContentManager.SetupAudio();
             helper.Events.GameLoop.GameLaunched += SetupGMCM;
             helper.Events.GameLoop.GameLaunched += CheckForUpdate;
             // Carries out a pending mode switch from the update loop, where none of
@@ -276,6 +286,10 @@ namespace StardewRoguelike
             {
                 AttackIndicatorMessage message = e.ReadAs<AttackIndicatorMessage>();
                 message.Trigger();
+            }
+            else if (e.Type == RunRoute.MessageType)
+            {
+                RunRoute.Receive(e.ReadAs<RunRoute.ChoicePayload>());
             }
             else if (e.Type == "GameOver") // Signal that the game is over
                 Roguelike.GameOver();

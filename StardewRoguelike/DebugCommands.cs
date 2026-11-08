@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using StardewRoguelike.VirtualProperties;
 using System.Text;
 using StardewModdingAPI;
@@ -40,6 +40,12 @@ namespace StardewRoguelike
         public static int ForcedBossIndex = -1;
 
         public static int ForcedChallengeIndex = -1;
+
+        /// <summary>
+        /// An index into FloorKind, or -1. Forces every floor the group has not been
+        /// handed outright to be that kind.
+        /// </summary>
+        public static int ForcedFloorKindIndex = -1;
 
         public static bool ForcedForgeFloor = false;
 
@@ -229,8 +235,7 @@ namespace StardewRoguelike
                     {
                         Roguelike.FloorRngSeed = int.Parse(args[1]);
                         Roguelike.ReseedRun();
-                        ChallengeFloor.History.Clear();
-                        Roguelike.SeenMineMaps.Clear();
+                                Roguelike.SeenMineMaps.Clear();
                     }
                     break;
                 case "stonechance":
@@ -279,6 +284,17 @@ namespace StardewRoguelike
                     }
                     else
                         ForcedBossIndex = int.Parse(args[1]);
+                    break;
+                case "forcefloor":
+                    if (args.Length == 1)
+                    {
+                        ModEntry.ModMonitor.Log($"-1 = disabled", LogLevel.Info);
+                        var kinds = Enum.GetValues<Run.FloorKind>();
+                        for (int i = 0; i < kinds.Length; i++)
+                            ModEntry.ModMonitor.Log($"{i} = {kinds[i]}", LogLevel.Info);
+                    }
+                    else
+                        ForcedFloorKindIndex = int.Parse(args[1]);
                     break;
                 case "forcechallenge":
                     if (args.Length == 1)
@@ -606,6 +622,7 @@ namespace StardewRoguelike
             help.AppendLine("printstats : prints the stats payload");
             help.AppendLine("forceboss [int:which] : forces boss floors to appear when possible");
             help.AppendLine("forcechallenge [int:which] : forces challenge floors to appear when possible");
+            help.AppendLine("forcefloor [int:which] : forces every chosen floor to be one kind");
             help.AppendLine("forceforge [bool:status] : forces forge floors to appear when possible");
             help.AppendLine("forcechest [bool:status] : forces chest floors to appear when possible");
             help.AppendLine("forcefortune [bool:status] : force the fortune teller to spawn");

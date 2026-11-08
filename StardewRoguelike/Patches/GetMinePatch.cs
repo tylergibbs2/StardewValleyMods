@@ -1,9 +1,10 @@
-using StardewValley.Locations;
+﻿using StardewValley.Locations;
 using System;
 using System.Reflection;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewRoguelike.Extensions;
+using StardewRoguelike.Run;
 using HarmonyLib;
 
 namespace StardewRoguelike.Patches
@@ -36,21 +37,56 @@ namespace StardewRoguelike.Patches
             newMine.get_MineShaftLevel().Value = requestedLevel;
             newMine.get_MineShaftEntryTime().Value = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
 
-            if (Merchant.IsMerchantFloor(requestedLevel))
-                Merchant.Initialize(newMine);
-            else if (BossFloor.IsBossFloor(requestedLevel))
-                BossFloor.Setup(newMine);
-            else if (ForgeFloor.ShouldDoForgeFloor(requestedLevel))
-                newMine.get_MineShaftForgeFloor().Value = true;
-            else if (ChestFloor.ShouldDoChestFloor(requestedLevel))
+            // What this floor is comes from the run plan and the group's choices now,
+            // rather than from a chain of predicates each rolling FloorRng and reading
+            // whichever mines happened to be loaded. Two machines generating the same
+            // level therefore build the same floor.
+            FloorKind kind = RunRoute.KindFor(requestedLevel);
+            switch (kind)
             {
-                newMine.get_MineShaftChestFloor().Value = true;
-                ChestFloor.SpawnChest(newMine);
-            }
-            else if (ChallengeFloor.ShouldDoChallengeFloor(requestedLevel))
-            {
-                newMine.get_MineShaftIsChallengeFloor().Value = true;
-                newMine.get_MineShaftChallengeFloor().Value = ChallengeFloor.GetRandomChallenge(requestedLevel);
+                case FloorKind.Merchant:
+                    Merchant.Initialize(newMine);
+                    break;
+
+                case FloorKind.Boss:
+                    BossFloor.Setup(newMine);
+                    break;
+
+                case FloorKind.Forge:
+                    newMine.get_MineShaftForgeFloor().Value = true;
+                    break;
+
+                case FloorKind.Vault:
+                    newMine.get_MineShaftChestFloor().Value = true;
+                    ChestFloor.SpawnChest(newMine);
+                    break;
+
+                case FloorKind.Arena:
+                    newMine.get_MineShaftIsChallengeFloor().Value = true;
+                    newMine.get_MineShaftChallengeFloor().Value =
+                        ChallengeFloor.Create(RunRoute.ArenaFor(requestedLevel));
+                    break;
+
+                case FloorKind.Shrine:
+                    // Placed further down. The map does not exist yet here, and the
+                    // shrine has to pick a tile to stand on.
+                    break;
+
+                case FloorKind.Spring:
+                    newMine.get_MineShaftIsChallengeFloor().Value = true;
+                    newMine.get_MineShaftChallengeFloor().Value =
+                        ChallengeFloor.Create(ChallengeFloor.ChallengeType.HotSpring);
+                    break;
+
+                case FloorKind.DarkMineshaft:
+                    // Set here rather than below with the hard mode roll, because the
+                    // map is chosen from it: a dark floor avoids the water maps.
+                    newMine.set_MineShaftIsDarkArea(true);
+                    break;
+
+                case FloorKind.Normal:
+                default:
+                    break;
             }
 
             double darkChance;
@@ -75,6 +111,13 @@ namespace StardewRoguelike.Patches
 
             Game1.netWorldState.Value.MinesDifficulty = 0;
             Game1.netWorldState.Value.SkullCavesDifficulty = 0;
+
+            // Anything that reads the map waits until generateContents has built it.
+            // Challenge floors already did; the shrine has to as well, since it looks
+            // for a clear tile near the entrance and neither the tiles nor the
+            // entrance exist before this point.
+            if (kind == FloorKind.Shrine)
+                TerrainFeatures.PerkShrine.PlaceIn(newMine);
 
             if (newMine.get_MineShaftIsChallengeFloor().Value)
                 newMine.get_MineShaftChallengeFloor().Value.Initialize(newMine);

@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewValley;
@@ -311,7 +311,12 @@ namespace StardewRoguelike.Bosses
                 if (withinPlayerThreshold(6) && TicksToExplode == 0 && TicksToArrowVolley == 0)
                     TicksToArrowVolley = Game1.random.Next(60 * 5, 60 * 7);
 
-                if (TicksToArrowVolley > 0 && TicksToExplode == 0)
+                // A volley already counting down keeps counting. The fuse used to
+                // hold it, so a hit landed after the cue had played left the cone to
+                // arrive once the explosion had resolved - a warning that no longer
+                // said when. A lit fuse still stops a new volley from starting, which
+                // is what the test above is for.
+                if (TicksToArrowVolley > 0)
                 {
                     TicksToArrowVolley--;
 

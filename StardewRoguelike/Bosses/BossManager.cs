@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using StardewValley.GameData;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
@@ -178,11 +178,9 @@ namespace StardewRoguelike.Bosses
                 }
             }
 
-            string sound = allFarmersNoHit ? "getNewSpecialItem" : "Cowboy_Secret";
-            location.playSound(sound);
-            Game1.changeMusicTrack("none", true, MusicContext.Default);
-            location.checkForMusic(new GameTime());
-
+            // The reward first. It used to come after the music was changed, and a
+            // throw in there - which is what the music patch did on this very call -
+            // took the chest with it, so a boss could be killed for nothing.
             if (chestLocation.HasValue)
             {
                 MineShaft mine = (MineShaft)location;
@@ -198,6 +196,11 @@ namespace StardewRoguelike.Bosses
 
                 mine.SpawnLocalChest(chestLocation.Value, chestItems);
             }
+
+            string sound = allFarmersNoHit ? "getNewSpecialItem" : "Cowboy_Secret";
+            location.playSound(sound);
+            Game1.changeMusicTrack("none", true, MusicContext.Default);
+            location.checkForMusic(new GameTime());
         }
 
         public static void PlayerWarped(object? sender, WarpedEventArgs e)

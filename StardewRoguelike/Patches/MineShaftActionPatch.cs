@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Locations;
@@ -26,6 +26,19 @@ namespace StardewRoguelike.Patches
 					__result = false;
                     return false;
                 }
+
+				// The ladder is taken here rather than left to the base game, which
+				// plays the descent sound on the line after Game1.enterMine returns.
+				// Now that the exit asks where to go first, that sounded the moment the
+				// ladder was clicked, so the player heard themselves descend while the
+				// menu was still asking. Roguelike.Descend plays it instead, once a floor
+				// has been chosen and the descent really happens.
+				if (tile.TileIndex == 173)
+				{
+					Game1.enterMine(__instance.mineLevel + 1);
+					__result = true;
+					return false;
+				}
 
                 if (TilesToIgnore.Contains(tile.TileIndex))
 				{

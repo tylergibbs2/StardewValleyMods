@@ -1,9 +1,10 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Enchantments;
+using StardewValley.Inventories;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,42 @@ namespace StardewRoguelike.Patches
         public static bool Prefix(ref int __result)
         {
             __result = 0;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Lets the forge work with no cinder shards at all.
+    ///
+    /// Zeroing the cost was never enough on its own. The menu asks
+    /// Items.ContainsId("(O)848", cost) both to decide what to say and to decide
+    /// whether to craft, and that method looks the item up before it looks at the
+    /// count - so a cost of zero is still refused by a player carrying none. The
+    /// forge floor hands out no shards and the run has no other source, so the floor
+    /// only ever worked for someone who happened to have some already.
+    ///
+    /// Scoped as tightly as it can be: this floor's own menu, and that one item.
+    /// </summary>
+    internal class FreeForgeShardsPatch : Patch
+    {
+        private const string CinderShard = "(O)848";
+
+        protected override PatchDescriptor GetPatchDescriptor() => new(
+            typeof(Inventory),
+            nameof(Inventory.ContainsId),
+            new[] { typeof(string), typeof(int) });
+
+        public static bool Prefix(string itemId, ref bool __result)
+        {
+            if (Game1.activeClickableMenu is not LimitedForgeMenu)
+                return true;
+
+            // Compared both ways rather than through ItemRegistry, since this runs
+            // on every inventory lookup the menu makes.
+            if (itemId != CinderShard && itemId != "848")
+                return true;
+
+            __result = true;
             return false;
         }
     }

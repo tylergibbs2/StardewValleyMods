@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
@@ -114,6 +114,38 @@ namespace StardewRoguelike.Bosses
             OnAttackedNetEvent.Poll();
         }
 
+        /// <summary>
+        /// Advances the lightning, announcing a strike and then landing it.
+        ///
+        /// Its own method, and called before anything that can return early, because
+        /// the gap between the marker and the bolt is the whole point of the marker.
+        /// </summary>
+        private void UpdateLightning(GameTime time)
+        {
+            if (Player is null || !withinPlayerThreshold(20))
+                return;
+
+            LastLightning = Math.Max(0f, LastLightning - time.ElapsedGameTime.Milliseconds);
+
+            if (!StartedLightning && LastLightning < (Health < MaxHealth / 2 ? 500f : 1000f))
+            {
+                StartedLightning = true;
+                PositionToStrike = Player.Position;
+                LightningStrikeWarningEvent.Fire(PositionToStrike);
+            }
+
+            // Only ever after a marker has gone down, so a bolt cannot land on a
+            // stale position without having said where it was going.
+            if (StartedLightning && LastLightning == 0f)
+            {
+                StartedLightning = false;
+                LightningStrikeEvent.Fire(PositionToStrike);
+                LastLightning = Game1.random.Next(2000, 4000) * (Health < MaxHealth / 2 ? 1 : 2);
+                if (Roguelike.HardMode)
+                    LastLightning -= 600;
+            }
+        }
+
         private void OnAttacked()
         {
             if (!Context.IsMainPlayer)
@@ -208,6 +240,13 @@ namespace StardewRoguelike.Bosses
             if (BurnCooldown > 0)
                 BurnCooldown--;
 
+            // The lightning runs to its own clock, above the burn rather than below
+            // it. The burn held the whole tick back, so a strike that had already put
+            // its marker on the ground had its countdown stopped with it: the bolt
+            // arrived whenever the burn finished, by which time the player had walked
+            // off the spot the marker was pointing at.
+            UpdateLightning(time);
+
             if (TicksToBurn > 0)
             {
                 Sprite.currentFrame = 1;
@@ -240,23 +279,6 @@ namespace StardewRoguelike.Bosses
             if (Player is not null && withinPlayerThreshold(20))
             {
                 LastIceBall = Math.Max(0f, LastIceBall - time.ElapsedGameTime.Milliseconds);
-                LastLightning = Math.Max(0f, LastLightning - time.ElapsedGameTime.Milliseconds);
-
-                if (!StartedLightning && LastLightning < (Health < MaxHealth / 2 ? 500f : 1000f))
-                {
-                    StartedLightning = true;
-                    PositionToStrike = Player.Position;
-                    LightningStrikeWarningEvent.Fire(PositionToStrike);
-                }
-
-                if (LastLightning == 0f)
-                {
-                    StartedLightning = false;
-                    LightningStrikeEvent.Fire(PositionToStrike);
-                    LastLightning = Game1.random.Next(2000, 4000) * (Health < MaxHealth / 2 ? 1 : 2);
-                    if (Roguelike.HardMode)
-                        LastLightning -= 600;
-                }
 
                 if (LastIceBall == 0f)
                 {

@@ -1,3 +1,4 @@
+﻿using StardewRoguelike.Run;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewRoguelike.Mode;
@@ -300,6 +301,12 @@ namespace StardewRoguelike
                 Game1.playSound("ow");
             }
 
+            if (DescendPending && Game1.activeClickableMenu is null)
+            {
+                DescendPending = false;
+                Descend();
+            }
+
             if (Game1.killScreen)
                 HandleDeath();
 
@@ -460,6 +467,35 @@ namespace StardewRoguelike
         /// Method called when the player goes down a ladder.
         /// Performs some resets and increments the level counter
         /// </summary>
+        private static readonly PerScreen<bool> ScreenDescendPending = new(() => false);
+
+        /// <summary>
+        /// Set when this screen's exit choice has been committed and the player is
+        /// clear to go down. Polled from UpdateTicked, because a farmhand's choice has
+        /// to reach the host and come back before the next floor can be generated
+        /// against it.
+        ///
+        /// Per-screen: UpdateTicked runs once per screen, so a shared flag would send
+        /// the other split-screen player down a floor they never chose.
+        /// </summary>
+        public static bool DescendPending
+        {
+            get => ScreenDescendPending.Value;
+            set => ScreenDescendPending.Value = value;
+        }
+
+        /// <summary>Advances a floor and warps there.</summary>
+        public static void Descend()
+        {
+            // The base game plays this when the ladder is clicked. It belongs here
+            // instead, because clicking the ladder now opens the exit menu and the
+            // descent does not happen until a floor has been picked.
+            Game1.playSound("stairsdown");
+
+            NextFloor();
+            Game1.warpFarmer($"UndergroundMine1/{CurrentLevel}", 6, 6, 2);
+        }
+
         public static void NextFloor()
         {
             FloorTickCounter = 0;
@@ -468,8 +504,8 @@ namespace StardewRoguelike
                 ModEntry.ActiveStats.Reset();
 
                 ReseedRun();
+                RunRoute.Clear();
                 SeenMineMaps.Clear();
-                ChallengeFloor.History.Clear();
                 MineShaft.clearActiveMines();
             }
 
