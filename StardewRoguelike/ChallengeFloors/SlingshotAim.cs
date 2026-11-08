@@ -84,22 +84,18 @@ namespace StardewRoguelike.ChallengeFloors
         /// <summary>As far out as the floor will ever pull the camera.</summary>
         private const float MinimumZoom = 0.5f;
 
-        /// <summary>How much of the way to its mark the zoom closes each tick.</summary>
-        private const float ZoomSmoothing = 0.1f;
-
-        /// <summary>Close enough to the mark to stop, in zoom levels.</summary>
-        private const float ZoomSettled = 0.004f;
-
         /// <summary>Where the camera is now, in world pixels, before rounding.</summary>
         private float cameraX;
         private float cameraY;
 
-        /// <summary>The zoom the floor is asking for, eased toward its mark.</summary>
-        private float zoom;
-
         /// <summary>
         /// The player's own zoom, taken when the floor takes the camera and given
         /// back when it lets go.
+        ///
+        /// Written to desiredBaseZoomLevel rather than baseZoomLevel: Game1 re-asserts
+        /// one from the other every tick, so setting the applied zoom put the two
+        /// permanently at odds and the game reset it, forced a viewport snap and
+        /// refreshed the window every frame, which stamped on the pan.
         ///
         /// Held rather than read each tick, because the field it is read from is the
         /// same one the floor writes to while it has the camera.
@@ -321,32 +317,33 @@ namespace StardewRoguelike.ChallengeFloors
             if (!wants && !holdingCamera)
                 return;
 
-            // Picked up from where the camera and the zoom already are, so the first
-            // frame of holding them changes nothing and the easing does the moving.
+            // The camera is picked up from wherever it already is, so the first frame
+            // of holding it changes nothing and the glide does the moving.
             if (wants && !holdingCamera)
             {
                 cameraX = Game1.viewport.X + Game1.viewport.Width / 2f;
                 cameraY = Game1.viewport.Y + Game1.viewport.Height / 2f;
                 restingZoom = Game1.options.desiredBaseZoomLevel;
-                zoom = restingZoom;
-
                 restingPinToolbar = Game1.options.pinToolbarToggle;
                 Game1.options.pinToolbarToggle = true;
 
+                // Set once rather than eased. Every change to the zoom has the game
+                // rebuild both render targets and the lightmap, so easing it over
+                // half a second rebuilt all three about twenty times - which is what
+                // the flashing was, and the viewport snap each change forces was the
+                // jitter. One change costs one rebuild, the same as the player
+                // pressing the zoom button, and the pan still glides.
+                Game1.options.desiredBaseZoomLevel = ArenaZoom();
+
                 holdingCamera = true;
             }
-
-            float targetZoom = wants ? ArenaZoom() : restingZoom;
-
-            zoom += (targetZoom - zoom) * ZoomSmoothing;
-            ApplyZoom();
 
             if (!wants)
             {
                 // Eased home rather than dropped. Handing the camera straight back
                 // snapped the view onto the player the instant they stepped over the
                 // line, so the way out was animated and the way back was a cut. The
-                // floor keeps hold until the view and the zoom have both arrived.
+                // floor keeps hold until the view has arrived.
                 Game1.viewportFreeze = true;
 
                 float homeX = Game1.player.Position.X + 32f;
@@ -359,12 +356,13 @@ namespace StardewRoguelike.ChallengeFloors
                     (int)(cameraX - Game1.viewport.Width / 2f),
                     (int)(cameraY - Game1.viewport.Height / 2f));
 
-                bool zoomHome = Math.Abs(zoom - restingZoom) < ZoomSettled;
-                bool viewHome = Math.Abs(homeX - cameraX) < HomeSettled
-                                && Math.Abs(homeY - cameraY) < HomeSettled;
-
-                if (zoomHome && viewHome)
+                // The zoom goes back last, inside ReleaseCamera, so the one rebuild
+                // it costs lands on a camera that has already stopped moving.
+                if (Math.Abs(homeX - cameraX) < HomeSettled
+                    && Math.Abs(homeY - cameraY) < HomeSettled)
+                {
                     ReleaseCamera();
+                }
 
                 return;
             }
@@ -425,29 +423,6 @@ namespace StardewRoguelike.ChallengeFloors
             float fit = Math.Min(screen.Width / wanted, screen.Height / tall);
 
             return Math.Clamp(fit, MinimumZoom, restingZoom);
-        }
-
-        /// <summary>
-        /// Pushes the eased zoom at the game, when it has moved enough to be worth it.
-        /// </summary>
-        /// <remarks>
-        /// Written to desiredBaseZoomLevel rather than baseZoomLevel. Game1 re-asserts
-        /// one from the other on every tick, so setting the applied zoom put the two
-        /// permanently at odds: the game reset it, forced a viewport snap and
-        /// refreshed the window every single frame, and the refresh stamped on the
-        /// pan. That is why this only ever worked when the player happened to already
-        /// be at the zoom the floor wanted - then there was nothing to disagree about.
-        ///
-        /// Setting the wanted zoom instead lets the game apply it once, in its own
-        /// order, and settle. It also means the game does the window refresh, so the
-        /// viewport and the lightmap are resized once per step rather than twice.
-        /// </remarks>
-        private void ApplyZoom()
-        {
-            if (Math.Abs(Game1.options.desiredBaseZoomLevel - zoom) < 0.002f)
-                return;
-
-            Game1.options.desiredBaseZoomLevel = zoom;
         }
 
         /// <summary>
@@ -519,7 +494,6 @@ namespace StardewRoguelike.ChallengeFloors
             holdingCamera = false;
             Game1.viewportFreeze = false;
 
-            zoom = restingZoom;
             Game1.options.desiredBaseZoomLevel = restingZoom;
             Game1.options.pinToolbarToggle = restingPinToolbar;
         }
