@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 using StardewRoguelike.Enchantments;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -99,23 +100,43 @@ namespace StardewRoguelike
         /// </summary>
         public static readonly int PotentBuffDuration = 1000 * 60 * 5;
 
+        private static readonly PerScreen<int> ScreenTicksToSpawnBombs = new(() => 60 * 10);
+        private static readonly PerScreen<int> ScreenDOTDamageToTick = new(() => 0);
+        private static readonly PerScreen<int> ScreenHOTHealToTick = new(() => 0);
+
         /// <summary>
         /// The amount of game ticks to wait before spawning bombs when
         /// the player has the <see cref="CurseType.BombsAroundPlayer"/> curse.
+        ///
+        /// Per-screen, like the two below: curses are held per farmer, and
+        /// UpdateTicked runs once per screen, so a static would have two local
+        /// players draining and re-arming a single counter between them.
         /// </summary>
-        private static int TicksToSpawnBombs = 60 * 10;
+        private static int TicksToSpawnBombs
+        {
+            get => ScreenTicksToSpawnBombs.Value;
+            set => ScreenTicksToSpawnBombs.Value = value;
+        }
 
         /// <summary>
         /// The amount of damage over time to deal when the player has the
         /// <see cref="CurseType.DamageOverTime"/> curse.
         /// </summary>
-        public static int DOTDamageToTick = 0;
+        public static int DOTDamageToTick
+        {
+            get => ScreenDOTDamageToTick.Value;
+            set => ScreenDOTDamageToTick.Value = value;
+        }
 
         /// <summary>
         /// The amount of heal over time to perform when the player has the
         /// <see cref="CurseType.HealOverTime"/> curse.
         /// </summary>
-        public static int HOTHealToTick = 0;
+        public static int HOTHealToTick
+        {
+            get => ScreenHOTHealToTick.Value;
+            set => ScreenHOTHealToTick.Value = value;
+        }
 
         /// <summary>
         /// Gets the ID this curse is tracked under in <see cref="Farmer.buffs"/>.

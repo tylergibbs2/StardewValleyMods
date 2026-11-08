@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewRoguelike.VirtualProperties;
@@ -16,10 +17,32 @@ namespace StardewRoguelike
 
     class SpectatorMode
     {
-        public static Farmer? Following { get; private set; }
-        public static SpectateToolbar? FollowingToolbar { get; private set; }
+        private static readonly PerScreen<Farmer?> ScreenFollowing = new(() => null);
+        private static readonly PerScreen<SpectateToolbar?> ScreenFollowingToolbar = new(() => null);
+        private static readonly PerScreen<List<Item>> ScreenStoredItems = new(() => new());
 
-        private readonly static List<Item> StoredItems = new();
+        /// <summary>The farmer the player on this screen is watching.</summary>
+        public static Farmer? Following
+        {
+            get => ScreenFollowing.Value;
+            private set => ScreenFollowing.Value = value;
+        }
+
+        public static SpectateToolbar? FollowingToolbar
+        {
+            get => ScreenFollowingToolbar.Value;
+            private set => ScreenFollowingToolbar.Value = value;
+        }
+
+        /// <summary>
+        /// The inventory held for the player on this screen while they spectate.
+        ///
+        /// Per-screen because this is the one piece of spectator state that is not
+        /// recoverable if it goes wrong: two local players dying at once shared a
+        /// single list, so the first to be revived took everything in it and the
+        /// second came back empty-handed.
+        /// </summary>
+        private static List<Item> StoredItems => ScreenStoredItems.Value ??= new();
 
         public static void EnterSpectatorMode()
         {

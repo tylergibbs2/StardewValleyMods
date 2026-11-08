@@ -1,5 +1,6 @@
 using HarmonyLib;
 using Microsoft.Xna.Framework;
+using StardewModdingAPI.Utilities;
 using StardewRoguelike.HatQuests;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
@@ -12,7 +13,14 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(Farmer), nameof(Farmer.takeDamage))]
     internal class FarmerTakeDamagePatch
     {
-        public static int ShellCooldownSeconds = 0;
+        private static readonly PerScreen<int> ScreenShellCooldownSeconds = new(() => 0);
+
+        /// <summary>Turtle Shell's remaining cooldown for the player on this screen.</summary>
+        public static int ShellCooldownSeconds
+        {
+            get => ScreenShellCooldownSeconds.Value;
+            set => ScreenShellCooldownSeconds.Value = value;
+        }
 
         public static bool Prefix(Farmer __instance, int damage, bool overrideParry, Monster damager)
         {

@@ -7,6 +7,7 @@ using StardewRoguelike.Bosses;
 using StardewRoguelike.Netcode;
 using StardewRoguelike.UI;
 using StardewValley;
+using StardewModdingAPI.Utilities;
 using StardewRoguelike.Mode;
 using StardewValley.Menus;
 using System;
@@ -49,7 +50,14 @@ namespace StardewRoguelike
         /// </summary>
         public static readonly Stats ActiveStats = new();
 
-        public static bool Invincible { get; set; } = false;
+        private static readonly PerScreen<bool> ScreenInvincible = new(() => false);
+
+        /// <summary>Whether the player on this screen is in the death grace period.</summary>
+        public static bool Invincible
+        {
+            get => ScreenInvincible.Value;
+            set => ScreenInvincible.Value = value;
+        }
 
         public static ModConfig Config { get; private set; } = null!;
 

@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using StardewModdingAPI.Utilities;
 using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Buffs;
@@ -82,7 +83,19 @@ namespace StardewRoguelike
 
         private static readonly float RarePerkChance = 0.1f;
 
-        private static readonly HashSet<PerkType> ActivePerks = new();
+        private static readonly PerScreen<HashSet<PerkType>> ScreenActivePerks = new(() => new());
+
+        /// <summary>
+        /// The perks the player on this screen has taken.
+        ///
+        /// Per-screen, not static: in split-screen a plain static would hand both
+        /// local players the same perk list, so one picking a perk would silently
+        /// grant it to the other.
+        /// </summary>
+        /// Re-created on demand: StateEffect clears every PerScreen in the assembly
+        /// by writing null into it when the mode turns off, which is the right thing
+        /// for the perk list but leaves nothing to read from until the next run.
+        private static HashSet<PerkType> ActivePerks => ScreenActivePerks.Value ??= new();
 
         public static string GetPerkDisplayName(PerkType perkType)
         {
