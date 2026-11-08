@@ -53,7 +53,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         private bool initializedOtherRoom = false;
 
-        private bool canSpawnLadder = false;
+        private readonly NetBool canSpawnLadder = new(false);
 
         private bool spawnedLadder = false;
 
@@ -68,7 +68,7 @@ namespace StardewRoguelike.ChallengeFloors
         protected override void InitNetFields()
         {
             base.InitNetFields();
-            NetFields.AddField(InitializedRoomType).AddField(InaccessibleRoomType).AddField(IsLeftSide).AddField(ShouldSpawnRooms);
+            NetFields.AddField(InitializedRoomType).AddField(InaccessibleRoomType).AddField(IsLeftSide).AddField(ShouldSpawnRooms).AddField(canSpawnLadder);
         }
 
         public void OnGateOpen(Point point)
@@ -145,7 +145,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override bool ShouldSpawnLadder(MineShaft mine)
         {
-            return canSpawnLadder;
+            return canSpawnLadder.Value;
         }
 
         public override void Update(MineShaft mine, GameTime time)
@@ -267,7 +267,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         private void SpawnLadder()
         {
-            canSpawnLadder = true;
+            canSpawnLadder.Value = true;
 
             if (IsLeftSide.Value)
                 Location.createLadderAt(new(6, 14));

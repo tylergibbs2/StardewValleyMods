@@ -17,7 +17,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         bool spawnedFirstWave = false;
 
-        bool gameOver = false;
+        private readonly NetBool gameOver = new(false);
 
         private readonly NetInt floorSecondsLeft = new(60);
 
@@ -29,7 +29,7 @@ namespace StardewRoguelike.ChallengeFloors
         {
             base.InitNetFields();
 
-            NetFields.AddField(floorSecondsLeft).AddField(wavesKilled);
+            NetFields.AddField(floorSecondsLeft).AddField(wavesKilled).AddField(gameOver);
         }
 
         public override List<string> MapPaths => new() {
@@ -40,7 +40,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void GameOver(MineShaft mine)
         {
-            gameOver = true;
+            gameOver.Value = true;
             mine.createLadderAt(ChallengeFloor.GetSpawnLocation(mine));
 
             mine.characters.RemoveWhere(c => c is Monster);
@@ -100,7 +100,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override bool ShouldSpawnLadder(MineShaft mine)
         {
-            return gameOver;
+            return gameOver.Value;
         }
 
         public void RenderHud(object? sender, RenderedHudEventArgs e)
@@ -180,7 +180,7 @@ namespace StardewRoguelike.ChallengeFloors
 
         public override void Update(MineShaft mine, GameTime time)
         {
-            if (!Context.IsMainPlayer || gameOver || !Game1.shouldTimePass())
+            if (!Context.IsMainPlayer || gameOver.Value || !Game1.shouldTimePass())
                 return;
 
             if (!spawnedFirstWave)
