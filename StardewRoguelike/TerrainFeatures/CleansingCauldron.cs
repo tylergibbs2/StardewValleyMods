@@ -9,15 +9,51 @@ namespace StardewRoguelike.TerrainFeatures
 {
     internal class CleansingCauldron : TerrainFeature
     {
-        private string textureName = "TerrainFeatures\\CleansingCauldron";
+        /// <summary>The cauldron with something in it.</summary>
+        private const string FullTexture = "TerrainFeatures\\CleansingCauldron";
+
+        /// <summary>The cauldron with nothing in it.</summary>
+        private const string EmptyTexture = "TerrainFeatures\\CleansingCauldronEmpty";
+
+        private string textureName = EmptyTexture;
 
         private Lazy<Texture2D> texture = null!;
 
         private bool used = false;
 
-        public CleansingCauldron() : base(false)
+        /// <summary>Whether the floor has been told the cauldron filled.</summary>
+        private bool announced = false;
+
+        /// <summary>Ticks so it can notice the last monster dying.</summary>
+        public CleansingCauldron() : base(needsTick: true)
         {
             ResetTexture();
+        }
+
+        /// <summary>
+        /// Whether the cauldron will take a curse.
+        ///
+        /// The floor has to be cleared first, the same as the shrine's. Undoing a
+        /// decision is worth a floor of work; otherwise a cauldron is a free walk to
+        /// a pot, and the curse the shrine charged stops being a price at all.
+        /// </summary>
+        private bool Ready => !used && Location is MineShaft mine && mine.EnemyCount == 0;
+
+        public override bool tickUpdate(GameTime time)
+        {
+            // Said once, when the last monster dies, and the pot fills to match. The
+            // colour is the only thing telling the player it is waiting on anything.
+            if (!used && !announced && Ready)
+            {
+                announced = true;
+                textureName = FullTexture;
+                ResetTexture();
+
+                Game1.chatBox?.addMessage(I18n.Cauldron_Ready(), Color.Gold);
+                Location?.localSound("bubbles");
+            }
+
+            return false;
         }
 
         protected void ResetTexture()
@@ -38,24 +74,36 @@ namespace StardewRoguelike.TerrainFeatures
         /// <summary>
         /// Puts a cauldron on <paramref name="mine"/>, near where the player arrives.
         ///
-        /// Near the entrance on purpose. A floor taken to undo something is not a
-        /// floor anybody wants to search, and unlike the shrine it asks for no fight
-        /// first, so there is nothing to walk past on the way.
+        /// In the middle of the floor, like the shrine, and for the same reason: the
+        /// floor has to be cleared before it will take anything, so the middle is
+        /// where the fight ends up anyway.
         /// </summary>
         public static void PlaceIn(MineShaft mine)
         {
             if (mine.map is null)
                 return;
 
-            Vector2 entrance = mine.tileBeneathLadder;
+            Vector2 middle = new(
+                mine.Map.Layers[0].LayerWidth / 2,
+                mine.Map.Layers[0].LayerHeight / 2);
 
-            for (int radius = 2; radius <= 12; radius++)
+            if (TryPlace(mine, middle))
+                return;
+
+            // Nothing clear in the middle still gets a cauldron rather than none,
+            // since the floor was chosen for it.
+            TryPlace(mine, mine.tileBeneathLadder);
+        }
+
+        private static bool TryPlace(MineShaft mine, Vector2 entrance)
+        {
+            for (int radius = 0; radius <= 12; radius++)
             {
                 for (int dx = -radius; dx <= radius; dx++)
                 {
                     for (int dy = -radius; dy <= radius; dy++)
                     {
-                        if (Math.Abs(dx) != radius && Math.Abs(dy) != radius)
+                        if (radius > 0 && Math.Abs(dx) != radius && Math.Abs(dy) != radius)
                             continue;
 
                         Vector2 tile = new(entrance.X + dx, entrance.Y + dy);
@@ -63,10 +111,12 @@ namespace StardewRoguelike.TerrainFeatures
                             continue;
 
                         mine.terrainFeatures.Add(tile, new CleansingCauldron());
-                        return;
+                        return true;
                     }
                 }
             }
+
+            return false;
         }
 
         /// <summary>
@@ -93,11 +143,25 @@ namespace StardewRoguelike.TerrainFeatures
 
         public override bool performUseAction(Vector2 tileLocation)
         {
-            if (used || !Curse.HasAnyCurse())
+            if (used)
                 return false;
 
+            if (!Ready)
+            {
+                // A line in the chat rather than a dialogue box, so being told no
+                // does not stop the floor while something is still chasing you.
+                Game1.chatBox?.addMessage(I18n.Cauldron_Dormant(), Color.Gold);
+                return false;
+            }
+
+            if (!Curse.HasAnyCurse())
+            {
+                Game1.drawObjectDialogue(I18n.Cauldron_NothingToTake());
+                return false;
+            }
+
             used = true;
-            textureName += "Empty";
+            textureName = EmptyTexture;
             ResetTexture();
             Game1.playSound("glug");
             // Cleansing, and nothing else. It handed over a perk as well while it

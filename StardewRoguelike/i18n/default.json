@@ -70,7 +70,7 @@
   "PerkTypeName.LastStand": "Last Stand",
   "PerkTypeDesc.LastStand": "You hit far harder below a third of your health",
   "PerkTypeName.Flurry": "Flurry",
-  "PerkTypeDesc.Flurry": "Hits in a row without being hit do more damage. Best with a dagger",
+  "PerkTypeDesc.Flurry": "Hits in a row without being hit do more damage",
   "PerkTypeName.Prospector": "Prospector",
   "PerkTypeDesc.Prospector": "Rock you break bursts, and gives up more of what is in it",
   "PerkTypeName.Volatile": "Volatile",
@@ -220,6 +220,9 @@
   "ExitChoice.ShrineOffer": "Holds {{first}} or {{second}}, for a curse.",
   "ExitChoice.ShrineOfferOne": "Holds {{perk}}, for a curse.",
   "Shrine.NothingToOffer": "You already have every perk.",
+  "Cauldron.Dormant": "The cauldron is cold while monsters remain on this floor.",
+  "Cauldron.Ready": "The cauldron is full.",
+  "Cauldron.NothingToTake": "You carry no curse for the cauldron to take.",
   "Shrine.Dormant": "The shrine is dormant while monsters remain on this floor.",
   "Shrine.Ready": "The shrine is ready.",
   "Shrine.Cursed": "The shrine takes its price: {{curse}}"
