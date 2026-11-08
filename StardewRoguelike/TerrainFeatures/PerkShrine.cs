@@ -47,6 +47,9 @@ namespace StardewRoguelike.TerrainFeatures
         /// </summary>
         public static void PlaceIn(MineShaft mine)
         {
+            if (mine.map is null)
+                return;
+
             Vector2 entrance = mine.tileBeneathLadder;
 
             for (int radius = 2; radius <= 12; radius++)

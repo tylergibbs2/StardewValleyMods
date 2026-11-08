@@ -41,7 +41,8 @@ namespace StardewRoguelike.Patches
             // rather than from a chain of predicates each rolling FloorRng and reading
             // whichever mines happened to be loaded. Two machines generating the same
             // level therefore build the same floor.
-            switch (RunRoute.KindFor(requestedLevel))
+            FloorKind kind = RunRoute.KindFor(requestedLevel);
+            switch (kind)
             {
                 case FloorKind.Merchant:
                     Merchant.Initialize(newMine);
@@ -67,7 +68,8 @@ namespace StardewRoguelike.Patches
                     break;
 
                 case FloorKind.Shrine:
-                    TerrainFeatures.PerkShrine.PlaceIn(newMine);
+                    // Placed further down. The map does not exist yet here, and the
+                    // shrine has to pick a tile to stand on.
                     break;
 
                 case FloorKind.Spring:
@@ -103,6 +105,13 @@ namespace StardewRoguelike.Patches
 
             Game1.netWorldState.Value.MinesDifficulty = 0;
             Game1.netWorldState.Value.SkullCavesDifficulty = 0;
+
+            // Anything that reads the map waits until generateContents has built it.
+            // Challenge floors already did; the shrine has to as well, since it looks
+            // for a clear tile near the entrance and neither the tiles nor the
+            // entrance exist before this point.
+            if (kind == FloorKind.Shrine)
+                TerrainFeatures.PerkShrine.PlaceIn(newMine);
 
             if (newMine.get_MineShaftIsChallengeFloor().Value)
                 newMine.get_MineShaftChallengeFloor().Value.Initialize(newMine);
