@@ -301,6 +301,12 @@ namespace StardewRoguelike
                 Game1.playSound("ow");
             }
 
+            if (DescendPending && Game1.activeClickableMenu is null)
+            {
+                DescendPending = false;
+                Descend();
+            }
+
             if (Game1.killScreen)
                 HandleDeath();
 
@@ -461,6 +467,20 @@ namespace StardewRoguelike
         /// Method called when the player goes down a ladder.
         /// Performs some resets and increments the level counter
         /// </summary>
+        /// <summary>
+        /// Set when an exit choice has been committed and the group is clear to go
+        /// down. Polled from UpdateTicked, because a farmhand's choice has to reach
+        /// the host and come back before the next floor can be generated against it.
+        /// </summary>
+        public static bool DescendPending { get; set; }
+
+        /// <summary>Advances a floor and warps there.</summary>
+        public static void Descend()
+        {
+            NextFloor();
+            Game1.warpFarmer($"UndergroundMine1/{CurrentLevel}", 6, 6, 2);
+        }
+
         public static void NextFloor()
         {
             FloorTickCounter = 0;

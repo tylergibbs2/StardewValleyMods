@@ -1,4 +1,6 @@
 using HarmonyLib;
+using StardewRoguelike.Run;
+using StardewRoguelike.UI;
 using StardewValley;
 
 namespace StardewRoguelike.Patches
@@ -8,12 +10,18 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix()
         {
-            Roguelike.NextFloor();
+            int next = Roguelike.CurrentLevel + 1;
 
-            // Warp to mine level 1. We handle choosing the map
-            // elsewhere.
-            Game1.warpFarmer($"UndergroundMine1/{Roguelike.CurrentLevel}", 6, 6, 2);
+            // Merchant and boss floors are forced, so taking the exit on the floor
+            // before one of them descends as it always did. Everywhere else the exit
+            // asks where to go first.
+            if (!RunRoute.IsSettled(next))
+            {
+                Game1.activeClickableMenu = new ExitChoiceMenu(next);
+                return false;
+            }
 
+            Roguelike.Descend();
             return false;
         }
     }

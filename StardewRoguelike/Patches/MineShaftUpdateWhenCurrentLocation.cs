@@ -1,5 +1,6 @@
 using HarmonyLib;
 using Microsoft.Xna.Framework;
+using StardewRoguelike.Run;
 using StardewValley.Locations;
 
 namespace StardewRoguelike.Patches
@@ -10,6 +11,7 @@ namespace StardewRoguelike.Patches
         public static void Postfix(MineShaft __instance, GameTime time)
         {
             ChallengeFloor.DoUpdate(__instance, time);
+            RunPacing.EnsureExit(__instance);
         }
     }
 }
