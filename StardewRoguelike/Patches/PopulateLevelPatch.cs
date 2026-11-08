@@ -1,4 +1,5 @@
-using HarmonyLib;
+﻿using HarmonyLib;
+using StardewRoguelike.Run;
 using Microsoft.Xna.Framework;
 using StardewRoguelike.Extensions;
 using StardewValley;
@@ -278,9 +279,16 @@ namespace StardewRoguelike.Patches
                 }
             }
 
-            if (monstersSpawned < Constants.MinimumMonstersPerFloor)
+            // A shrine floor has to be cleared before it lets anyone past, so it is
+            // stocked for a fight rather than for a walk to the statue.
+            int minimumMonsters =
+                RunRoute.KindFor(Roguelike.GetLevelFromMineshaft(__instance)) == FloorKind.Shrine
+                    ? Constants.MinimumMonstersPerShrineFloor
+                    : Constants.MinimumMonstersPerFloor;
+
+            if (monstersSpawned < minimumMonsters)
             {
-                int monstersToSpawn = Constants.MinimumMonstersPerFloor - monstersSpawned;
+                int monstersToSpawn = minimumMonsters - monstersSpawned;
                 __instance.SpawnMonsters(monstersToSpawn);
             }
 

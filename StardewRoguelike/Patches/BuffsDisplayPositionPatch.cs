@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using StardewValley;
 using StardewValley.Menus;
 
@@ -27,6 +27,9 @@ namespace StardewRoguelike.Patches
         private const int IconSize = 64;
         private const int IconGap = 8;
 
+        /// <summary>Where the icons were last put, so the move is reported once.</summary>
+        private static int reportedX = int.MinValue;
+
         public static void Postfix(BuffsDisplay __instance)
         {
             __instance.xPositionOnScreen = Game1.uiViewport.Width - RightMargin - __instance.width;
@@ -40,6 +43,20 @@ namespace StardewRoguelike.Patches
                 IconSize,
                 IconGap,
                 rightToLeft: true);
+
+            // Said once per resting place rather than every frame. If the buff bar is
+            // still missing and this has not been said at all, the icons are not being
+            // placed here and the fault is upstream of this patch.
+            if (__instance.xPositionOnScreen != reportedX)
+            {
+                reportedX = __instance.xPositionOnScreen;
+                ModEntry.ModMonitor.Log(
+                    $"buff icons: box={__instance.xPositionOnScreen},{__instance.yPositionOnScreen} " +
+                    $"{__instance.width}x{__instance.height} ui={Game1.uiViewport.Width}x{Game1.uiViewport.Height} " +
+                    $"first icon at {__instance.xPositionOnScreen + __instance.width - IconSize - IconGap} " +
+                    $"showing={__instance.getNumBuffs()}",
+                    StardewModdingAPI.LogLevel.Debug);
+            }
         }
     }
 }

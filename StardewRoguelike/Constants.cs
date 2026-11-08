@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using StardewValley;
 
 namespace StardewRoguelike
@@ -42,6 +42,15 @@ namespace StardewRoguelike
         };
 
         public static readonly int MinimumMonstersPerFloor = 5;
+
+        /// <summary>
+        /// The same, on a floor whose shrine is the reward for clearing it.
+        ///
+        /// Higher because the floor has to be cleared to get past it, so this is the
+        /// price of the perk the shrine trades. At the ordinary five a shrine floor
+        /// was a mining floor with a free perk on it.
+        /// </summary>
+        public static readonly int MinimumMonstersPerShrineFloor = 10;
         public static readonly int MaximumMonstersPerFloorPreLoop = 15;
         public static readonly int MaximumMonstersPerFloorPostLoop = 30;
 
