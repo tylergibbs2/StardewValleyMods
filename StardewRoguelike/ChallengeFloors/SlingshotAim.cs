@@ -64,13 +64,16 @@ namespace StardewRoguelike.ChallengeFloors
         /// able to see the whole field starts to matter more than being able to see
         /// where you are standing.
         /// </summary>
-        private const int FiringLineRow = 22;
+        private const int FiringLineRow = 23;
 
         /// <summary>
         /// How far back over the line the player has to step before the camera is
         /// handed back, so that standing on it does not flicker.
         /// </summary>
-        private const float FiringLineSlack = 64f;
+        private const int FiringLineSlack = 1;
+
+        /// <summary>How close counts as home when easing the camera back, in pixels.</summary>
+        private const float HomeSettled = 8f;
 
         /// <summary>Tiles of air left around the arena when framing it.</summary>
         private const float ZoomMarginTiles = 2f;
@@ -317,11 +320,27 @@ namespace StardewRoguelike.ChallengeFloors
 
             if (!wants)
             {
-                // On the way back out. The zoom keeps easing home while the camera
-                // follows the player again, and the floor lets go once the two agree.
-                Game1.viewportFreeze = false;
+                // Eased home rather than dropped. Handing the camera straight back
+                // snapped the view onto the player the instant they stepped over the
+                // line, so the way out was animated and the way back was a cut. The
+                // floor keeps hold until the view and the zoom have both arrived.
+                Game1.viewportFreeze = true;
 
-                if (Math.Abs(zoom - restingZoom) < ZoomSettled)
+                float homeX = Game1.player.Position.X + 32f;
+                float homeY = Game1.player.Position.Y + 32f;
+
+                cameraX += (homeX - cameraX) * Smoothing;
+                cameraY += (homeY - cameraY) * Smoothing;
+
+                Game1.viewport.Location = new xTile.Dimensions.Location(
+                    (int)(cameraX - Game1.viewport.Width / 2f),
+                    (int)(cameraY - Game1.viewport.Height / 2f));
+
+                bool zoomHome = Math.Abs(zoom - restingZoom) < ZoomSettled;
+                bool viewHome = Math.Abs(homeX - cameraX) < HomeSettled
+                                && Math.Abs(homeY - cameraY) < HomeSettled;
+
+                if (zoomHome && viewHome)
                     ReleaseCamera();
 
                 return;
@@ -345,9 +364,13 @@ namespace StardewRoguelike.ChallengeFloors
         /// </summary>
         private bool AtFiringLine()
         {
-            float line = FiringLineRow * 64f + (holdingCamera ? FiringLineSlack : 0f);
+            // Counted in tile rows rather than pixels. The water is rows eighteen to
+            // twenty-one and the line sits just below it, so comparing raw positions
+            // put a player standing on that very row on either side of it depending
+            // on where in the tile they had stopped.
+            float line = FiringLineRow + (holdingCamera ? FiringLineSlack : 0);
 
-            return Game1.player.Position.Y <= line;
+            return Game1.player.Tile.Y <= line;
         }
 
         /// <summary>
