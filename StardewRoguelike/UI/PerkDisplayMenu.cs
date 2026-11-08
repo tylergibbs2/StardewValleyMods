@@ -174,15 +174,6 @@ namespace StardewRoguelike.UI
             b.DrawString(Game1.smallFont, noPerks, new Vector2(xPositionOnScreen + width / 2 - Game1.smallFont.MeasureString(noPerks).X / 2f, currentDrawHeight + spaceToClearSideBorder), Game1.textColor);
         }
 
-        /// <summary>The level of a perk, as a numeral, for the end of its name.</summary>
-        private static string Numeral(int level) => level switch
-        {
-            2 => "II",
-            3 => "III",
-            4 => "IV",
-            _ => level.ToString()
-        };
-
         /// <summary>Draws a divider at <paramref name="y"/>, a screen coordinate.</summary>
         /// <remarks>
         /// Every caller passes currentDrawHeight, which starts at yPositionOnScreen
@@ -235,7 +226,7 @@ namespace StardewRoguelike.UI
             // the player can see how far they have taken anything.
             string perkName = Perks.GetPerkDisplayName(perkType);
             if (level > 1)
-                perkName += " " + Numeral(level);
+                perkName += " " + Perks.Numeral(level);
             string perkDescription = Perks.GetPerkDescription(perkType);
             string rarityText = PerkMenu.GetRarityText(rarity);
 

@@ -169,6 +169,32 @@ namespace StardewRoguelike
             return PerkLevel(perkType) < MaxLevel(perkType);
         }
 
+        /// <summary>
+        /// A perk's name as an offer, which says where taking it would leave it.
+        /// </summary>
+        /// <remarks>
+        /// A shrine offering a perk the player already carries is offering to deepen
+        /// it, and the name alone does not say so: "Shield" and "Shield again" read
+        /// identically. The level it would reach is written after it.
+        /// </remarks>
+        public static string GetOfferDisplayName(PerkType perkType)
+        {
+            int next = PerkLevel(perkType) + 1;
+
+            return next > 1
+                ? $"{GetPerkDisplayName(perkType)} {Numeral(next)}"
+                : GetPerkDisplayName(perkType);
+        }
+
+        /// <summary>A perk level as a numeral, for the end of its name.</summary>
+        public static string Numeral(int level) => level switch
+        {
+            2 => "II",
+            3 => "III",
+            4 => "IV",
+            _ => level.ToString()
+        };
+
         public static string GetPerkDisplayName(PerkType perkType)
         {
             return perkType switch
@@ -334,33 +360,79 @@ namespace StardewRoguelike
         /// </remarks>
         public static (PerkType?, PerkType?) GetShrineOffer(int level)
         {
-            PerkType? first = null;
-            PerkType? second = null;
+            PerkType[] order = Run.RunPlan.ShrineOrderFor(level);
 
             // A run with no keystone yet is offered nothing else. Four or five perks
             // out of a pool this size means a keystone would otherwise turn up about
             // once in several runs, and a player cannot steer towards something they
             // will probably never meet.
-            bool keystonesOnly = !HasAnyKeystone();
+            if (!HasAnyKeystone())
+            {
+                PerkType? firstKey = null;
+                PerkType? secondKey = null;
 
-            foreach (PerkType perk in Run.RunPlan.ShrineOrderFor(level))
+                foreach (PerkType perk in order)
+                {
+                    if (!KeystonePerks.Contains(perk) || !CanTake(perk))
+                        continue;
+
+                    if (firstKey is null)
+                        firstKey = perk;
+                    else
+                    {
+                        secondKey = perk;
+                        break;
+                    }
+                }
+
+                return (firstKey, secondKey);
+            }
+
+            // One perk the player does not have, and one they can take further.
+            //
+            // Both drawn from the order would be two they do not have far more often
+            // than not - the offer is two perks out of thirty-two, so the chance of
+            // it holding something they already carry is about a quarter. Over the
+            // eight shrines a run allows, deepening happened by coincidence roughly
+            // once, and a run came out wide whatever the player was trying to do.
+            // Offering one of each makes going deeper a decision instead.
+            PerkType? fresh = null;
+            PerkType? deeper = null;
+
+            foreach (PerkType perk in order)
             {
                 if (!CanTake(perk))
                     continue;
 
-                if (keystonesOnly && !KeystonePerks.Contains(perk))
-                    continue;
-
-                if (first is null)
-                    first = perk;
+                if (PerkLevel(perk) == 0)
+                    fresh ??= perk;
                 else
-                {
-                    second = perk;
+                    deeper ??= perk;
+
+                if (fresh is not null && deeper is not null)
                     break;
-                }
             }
 
-            return (first, second);
+            // Nothing to deepen yet, or nothing new left: fall back to filling the
+            // offer from whichever the order still has.
+            if (fresh is null || deeper is null)
+            {
+                PerkType? only = fresh ?? deeper;
+                PerkType? backup = null;
+
+                foreach (PerkType perk in order)
+                {
+                    if (!CanTake(perk) || perk == only)
+                        continue;
+
+                    backup = perk;
+                    break;
+                }
+
+                return (only, backup);
+            }
+
+            return (fresh, deeper);
         }
 
         /// <summary>Whether the player has taken any perk that shapes a run.</summary>

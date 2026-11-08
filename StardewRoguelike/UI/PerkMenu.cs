@@ -158,9 +158,11 @@ namespace StardewRoguelike.UI
             if (!perkType.HasValue)
                 return new();
 
+            // The offer name rather than the plain one, so a perk the player already
+            // carries says which level taking it would reach.
             return new()
             {
-                Perks.GetPerkDisplayName(perkType.Value),
+                Perks.GetOfferDisplayName(perkType.Value),
                 Perks.GetPerkDescription(perkType.Value)
             };
         }

@@ -45,11 +45,11 @@ namespace StardewRoguelike.Run
                 return Description(kind);
 
             if (right is null)
-                return I18n.ExitChoice_ShrineOfferOne(perk: Perks.GetPerkDisplayName(left.Value));
+                return I18n.ExitChoice_ShrineOfferOne(perk: Perks.GetOfferDisplayName(left.Value));
 
             return I18n.ExitChoice_ShrineOffer(
-                first: Perks.GetPerkDisplayName(left.Value),
-                second: Perks.GetPerkDisplayName(right.Value));
+                first: Perks.GetOfferDisplayName(left.Value),
+                second: Perks.GetOfferDisplayName(right.Value));
         }
 
         public static string Description(FloorKind kind) => kind switch
