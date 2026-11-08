@@ -25,15 +25,25 @@ namespace StardewRoguelike.UI
         private const int IconInset = 24;
         private const int TextInset = 96;
 
+        /// <summary>Where the title scroll's text sits, relative to the menu top.</summary>
+        private const int TitleTop = 24;
+
         /// <summary>
-        /// Room for the title scroll and the line under it.
+        /// The title scroll's art, in drawn pixels.
         ///
-        /// Measured rather than guessed: drawStringWithScrollCenteredAt centres on x
-        /// only and takes y as the top of the scroll, so a fixed offset put the line
-        /// underneath it inside the scroll art.
+        /// SpriteText.drawString's scrollType 0 draws a fixed 18-pixel-tall scroll at
+        /// 4x, starting 12 pixels above the text it wraps. getHeightOfString measures
+        /// the text rather than the art, so a header sized from it comes up short and
+        /// puts whatever follows inside the scroll.
         /// </summary>
-        private static int HeaderHeight =>
-            24 + SpriteText.getHeightOfString(I18n.ExitChoice_Title()) + 44;
+        private const int ScrollHeight = 18 * 4;
+        private const int ScrollOverhang = 12;
+
+        /// <summary>The line under the title, clear of the scroll's lower edge.</summary>
+        private const int SubtitleTop = TitleTop - ScrollOverhang + ScrollHeight + 12;
+
+        /// <summary>Where the options begin.</summary>
+        private const int HeaderHeight = SubtitleTop + 40;
 
         private readonly int level;
         private readonly FloorKind[] offers;
@@ -48,7 +58,7 @@ namespace StardewRoguelike.UI
             offers = RunPlan.OffersFor(level);
 
             width = 800;
-            height = HeaderHeight + offers.Length * (OptionHeight + OptionGap) + 48;
+            height = HeaderHeight + offers.Length * (OptionHeight + OptionGap) - OptionGap + 64;
 
             SetUpPositions();
         }
@@ -155,7 +165,7 @@ namespace StardewRoguelike.UI
                 xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             SpriteText.drawStringWithScrollCenteredAt(
-                b, I18n.ExitChoice_Title(), xPositionOnScreen + width / 2, yPositionOnScreen + 24);
+                b, I18n.ExitChoice_Title(), xPositionOnScreen + width / 2, yPositionOnScreen + TitleTop);
 
             // Forward context, so the choice is made against something. Without it
             // every option is judged only on this floor, which is how the run reads
@@ -167,7 +177,7 @@ namespace StardewRoguelike.UI
                 b, horizon, Game1.smallFont,
                 new Vector2(
                     xPositionOnScreen + width / 2 - horizonSize.X / 2,
-                    yPositionOnScreen + HeaderHeight - 40),
+                    yPositionOnScreen + SubtitleTop),
                 Game1.textColor * 0.75f);
 
             for (int i = 0; i < options.Count; i++)
