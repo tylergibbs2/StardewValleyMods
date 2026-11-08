@@ -143,6 +143,10 @@ namespace StardewRoguelike.Run
             {
                 Perks.PerkRarity.Common => 5,
                 Perks.PerkRarity.Uncommon => 3,
+
+                // A keystone is already guaranteed at the first shrine, so in the
+                // ordinary draw it is the rarest thing there is.
+                Perks.PerkRarity.Keystone => 1,
                 _ => 2
             };
         }

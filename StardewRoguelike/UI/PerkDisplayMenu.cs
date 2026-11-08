@@ -246,7 +246,7 @@ namespace StardewRoguelike.UI
                 perksOnScreen++;
 
                 b.Draw(
-                    Game1.mouseCursors,
+                    Perks.GetPerkIconTexture(perkType),
                     new Vector2(xPositionOnScreen + spaceToClearSideBorder * 2, (currentDrawHeight + scrollOffset)),
                     iconSourceRect,
                     Color.White,

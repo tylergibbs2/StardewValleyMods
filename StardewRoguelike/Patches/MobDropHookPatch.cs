@@ -8,6 +8,23 @@ using System.Collections.Generic;
 
 namespace StardewRoguelike.Patches
 {
+    /// <summary>
+    /// Runs the keystone perks when a monster dies.
+    /// </summary>
+    /// <remarks>
+    /// A postfix, and a patch of its own, because the prefix below returns false on
+    /// boss and challenge floors to stop the ordinary drops - and a keystone has to
+    /// go off wherever the monster died, not only where it would have dropped gold.
+    /// </remarks>
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.monsterDrop))]
+    internal class KeystoneKillPatch
+    {
+        public static void Postfix(GameLocation __instance, Monster monster, int x, int y)
+        {
+            Keystones.OnMonsterKilled(__instance, monster, x, y);
+        }
+    }
+
     [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.monsterDrop))]
     internal class MobDropHookPatch
     {

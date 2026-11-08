@@ -855,6 +855,7 @@ namespace StardewRoguelike
         {
             Curse.RemoveAllCurses();
             Perks.RemoveAllPerks();
+            Keystones.Reset();
 
             Game1.player.set_FarmerActiveHatQuest(null);
 

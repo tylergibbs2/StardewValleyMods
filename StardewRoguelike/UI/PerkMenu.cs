@@ -171,6 +171,7 @@ namespace StardewRoguelike.UI
             {
                 Perks.PerkRarity.Common => new(3, 153, 63),
                 Perks.PerkRarity.Uncommon => new(3, 157, 252),
+                Perks.PerkRarity.Keystone => new(252, 148, 3),
                 _ => new(157, 3, 252)
             };
         }
@@ -181,6 +182,7 @@ namespace StardewRoguelike.UI
             {
                 Perks.PerkRarity.Common => I18n.UI_PerkMenu_Rarity_Common(),
                 Perks.PerkRarity.Uncommon => I18n.UI_PerkMenu_Rarity_Uncommon(),
+                Perks.PerkRarity.Keystone => I18n.UI_PerkMenu_Rarity_Keystone(),
                 _ => I18n.UI_PerkMenu_Rarity_Rare()
             };
         }
@@ -314,7 +316,7 @@ namespace StardewRoguelike.UI
                 {
                     b.DrawString(Game1.dialogueFont, leftPerkDescription[0], new Vector2(xPositionOnScreen + spaceToClearSideBorder + 32, yPositionOnScreen + spaceToClearTopBorder + 160), leftPerkColor);
                     b.DrawString(Game1.smallFont, Game1.parseText(GetRarityText(leftPerkRarity), Game1.smallFont, width / 3 - 64), new Vector2(xPositionOnScreen + spaceToClearSideBorder + 32, yPositionOnScreen + spaceToClearTopBorder + 208), GetRarityColor(leftPerkRarity));
-                    b.Draw(Game1.mouseCursors, new Vector2(xPositionOnScreen + spaceToClearSideBorder + width / 2 - 112, yPositionOnScreen + spaceToClearTopBorder + 160 - 16), Perks.GetPerkSourceRect(leftPerk.Value), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
+                    b.Draw(Perks.GetPerkIconTexture(leftPerk.Value), new Vector2(xPositionOnScreen + spaceToClearSideBorder + width / 2 - 112, yPositionOnScreen + spaceToClearTopBorder + 160 - 16), Perks.GetPerkSourceRect(leftPerk.Value), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
                     for (int j = 1; j < leftPerkDescription.Count; j++)
                         b.DrawString(Game1.smallFont, Game1.parseText(leftPerkDescription[j], Game1.smallFont, width / 3 - 64), new Vector2(-4 + xPositionOnScreen + spaceToClearSideBorder + 32, yPositionOnScreen + spaceToClearTopBorder + 128 + 8 + 64 * (j + 1)), leftPerkColor);
                 }
@@ -324,7 +326,7 @@ namespace StardewRoguelike.UI
                 {
                     b.DrawString(Game1.dialogueFont, rightPerkDescription[0], new Vector2(xPositionOnScreen + spaceToClearSideBorder + width / 2, yPositionOnScreen + spaceToClearTopBorder + 160), rightPerkColor);
                     b.DrawString(Game1.smallFont, Game1.parseText(GetRarityText(rightPerkRarity), Game1.smallFont, width / 3 - 64), new Vector2(xPositionOnScreen + spaceToClearSideBorder + width / 2, yPositionOnScreen + spaceToClearTopBorder + 208), GetRarityColor(rightPerkRarity));
-                    b.Draw(Game1.mouseCursors, new Vector2(xPositionOnScreen + spaceToClearSideBorder + width - 128, yPositionOnScreen + spaceToClearTopBorder + 160 - 16), Perks.GetPerkSourceRect(rightPerk.Value), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
+                    b.Draw(Perks.GetPerkIconTexture(rightPerk.Value), new Vector2(xPositionOnScreen + spaceToClearSideBorder + width - 128, yPositionOnScreen + spaceToClearTopBorder + 160 - 16), Perks.GetPerkSourceRect(rightPerk.Value), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
                     for (int i = 1; i < rightPerkDescription.Count; i++)
                         b.DrawString(Game1.smallFont, Game1.parseText(rightPerkDescription[i], Game1.smallFont, width / 3 - 48), new Vector2(-4 + xPositionOnScreen + spaceToClearSideBorder + width / 2, yPositionOnScreen + spaceToClearTopBorder + 128 + 8 + 64 * (i + 1)), rightPerkColor);
                 }

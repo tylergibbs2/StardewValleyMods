@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Utilities;
 using StardewRoguelike.UI;
 using StardewValley;
@@ -14,7 +15,10 @@ namespace StardewRoguelike
         {
             Common,
             Uncommon,
-            Rare
+            Rare,
+
+            /// <summary>A perk that changes how the player fights, not by how much.</summary>
+            Keystone
         }
 
         #pragma warning disable format
@@ -47,7 +51,16 @@ namespace StardewRoguelike
             Fisherman        = 24,
             Deconstructor    = 25,
             Gamer            = 26,
-            Tiller           = 27
+            Tiller           = 27,
+
+            // Keystones. These change what the player does rather than how much of
+            // it they do, which is the thing the other twenty-eight never did: by
+            // the fortieth floor a run was the same character swinging the same
+            // sword about forty per cent harder.
+            Volatile         = 28,
+            Momentum         = 29,
+            Ricochet         = 30,
+            Bombardier       = 31
         }
         #pragma warning restore format
 
@@ -71,6 +84,20 @@ namespace StardewRoguelike
         {
             PerkType.Acrobat, PerkType.Desperado, PerkType.RabbitsFoot,
             PerkType.TurtleShell, PerkType.Leech
+        };
+
+        /// <summary>
+        /// The perks that give a run its shape.
+        ///
+        /// A player holding none of these is offered them and nothing else, so every
+        /// run picks up an identity at its first shrine and the rest of it is spent
+        /// supporting that. After that they join the ordinary draw, rarely, so a
+        /// second one is possible but not expected.
+        /// </summary>
+        public static readonly List<PerkType> KeystonePerks = new()
+        {
+            PerkType.Volatile, PerkType.Momentum,
+            PerkType.Ricochet, PerkType.Bombardier
         };
 
         private static readonly PerScreen<PerkMenu?> ScreenCurrentMenu = new(() => null);
@@ -174,6 +201,10 @@ namespace StardewRoguelike
                 PerkType.Deconstructor => I18n.PerkTypeName_Deconstructor(),
                 PerkType.Gamer => I18n.PerkTypeName_Gamer(),
                 PerkType.Tiller => I18n.PerkTypeName_Tiller(),
+                PerkType.Volatile => I18n.PerkTypeName_Volatile(),
+                PerkType.Momentum => I18n.PerkTypeName_Momentum(),
+                PerkType.Ricochet => I18n.PerkTypeName_Ricochet(),
+                PerkType.Bombardier => I18n.PerkTypeName_Bombardier(),
                 _ => "Not Implemented"
             };
         }
@@ -210,14 +241,43 @@ namespace StardewRoguelike
                 PerkType.Deconstructor => I18n.PerkTypeDesc_Deconstructor(),
                 PerkType.Gamer => I18n.PerkTypeDesc_Gamer(),
                 PerkType.Tiller => I18n.PerkTypeDesc_Tiller(),
+                PerkType.Volatile => I18n.PerkTypeDesc_Volatile(),
+                PerkType.Momentum => I18n.PerkTypeDesc_Momentum(),
+                PerkType.Ricochet => I18n.PerkTypeDesc_Ricochet(),
+                PerkType.Bombardier => I18n.PerkTypeDesc_Bombardier(),
                 _ => "Not Implemented"
             };
         }
 
+        /// <summary>
+        /// The sheet a perk's icon comes from.
+        ///
+        /// The mod's own icon grid holds exactly the twenty-eight perks it was drawn
+        /// for and has nothing after them, so the keystones take an object off the
+        /// game's sheet rather than an empty square.
+        /// </summary>
+        public static Texture2D GetPerkIconTexture(PerkType perkType)
+        {
+            return KeystonePerks.Contains(perkType) ? Game1.objectSpriteSheet : Game1.mouseCursors;
+        }
+
         public static Rectangle GetPerkSourceRect(PerkType perkType)
         {
+            if (KeystoneIcon(perkType) is int index)
+                return Game1.getSourceRectForStandardTileSheet(Game1.objectSpriteSheet, index, 16, 16);
+
             return new((int)perkType % 6 * 16, 624 + (int)perkType / 6 * 16, 16, 16);
         }
+
+        /// <summary>The object a keystone borrows its icon from, if it is one.</summary>
+        private static int? KeystoneIcon(PerkType perkType) => perkType switch
+        {
+            PerkType.Volatile => 286,    // cherry bomb
+            PerkType.Momentum => 395,    // coffee
+            PerkType.Ricochet => 441,    // explosive ammo
+            PerkType.Bombardier => 287,  // bomb
+            _ => null
+        };
 
         public static PerkRarity GetPerkRarity(PerkType perkType)
         {
@@ -225,6 +285,8 @@ namespace StardewRoguelike
                 return PerkRarity.Common;
             else if (UncommonPerks.Contains(perkType))
                 return PerkRarity.Uncommon;
+            else if (KeystonePerks.Contains(perkType))
+                return PerkRarity.Keystone;
             else
                 return PerkRarity.Rare;
         }
@@ -275,9 +337,18 @@ namespace StardewRoguelike
             PerkType? first = null;
             PerkType? second = null;
 
+            // A run with no keystone yet is offered nothing else. Four or five perks
+            // out of a pool this size means a keystone would otherwise turn up about
+            // once in several runs, and a player cannot steer towards something they
+            // will probably never meet.
+            bool keystonesOnly = !HasAnyKeystone();
+
             foreach (PerkType perk in Run.RunPlan.ShrineOrderFor(level))
             {
                 if (!CanTake(perk))
+                    continue;
+
+                if (keystonesOnly && !KeystonePerks.Contains(perk))
                     continue;
 
                 if (first is null)
@@ -290,6 +361,18 @@ namespace StardewRoguelike
             }
 
             return (first, second);
+        }
+
+        /// <summary>Whether the player has taken any perk that shapes a run.</summary>
+        public static bool HasAnyKeystone()
+        {
+            foreach (PerkType perk in KeystonePerks)
+            {
+                if (HasPerk(perk))
+                    return true;
+            }
+
+            return false;
         }
 
         public static (PerkType?, PerkType?) GetTwoRandomUniquePerks()
