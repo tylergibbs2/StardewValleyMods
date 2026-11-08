@@ -15,8 +15,6 @@ namespace StardewRoguelike
 {
     public class ChallengeFloor
     {
-        public static readonly List<ChallengeType> History = new();
-
         #pragma warning disable format
         public enum ChallengeType
         {
@@ -52,28 +50,6 @@ namespace StardewRoguelike
         }
 
         /// <summary>
-        /// Checks if there has been a challenge floor since the last merchant
-        /// that has appeared since the specified level.
-        /// </summary>
-        /// <param name="level">The level.</param>
-        /// <returns>true if there has been, false otherwise</returns>
-        public static bool HadChallengeFloorSinceLastMerchant(int level)
-        {
-            int count = 0;
-
-            while (!Merchant.IsMerchantFloor(level + count))
-            {
-                MineShaft? mine = GetMineFromLevel(level + count);
-                if (mine is not null && IsChallengeFloor(mine))
-                    return true;
-
-                count--;
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Calculates the number floors until the next boss appears, starting
         /// from the specified level.
         /// </summary>
@@ -87,25 +63,6 @@ namespace StardewRoguelike
                 count++;
 
             return count;
-        }
-
-        /// <summary>
-        /// Checks whether or not the specified level should be a challenge floor.
-        /// </summary>
-        /// <param name="level">The level.</param>
-        /// <returns>true if it should be, false otherwise.</returns>
-        public static bool ShouldDoChallengeFloor(int level)
-        {
-            if (DebugCommands.ForcedChallengeIndex != -1)
-                return true;
-
-            if (level == 8)
-                return false;
-
-            if (HadChallengeFloorSinceLastMerchant(level))
-                return false;
-
-            return Roguelike.FloorRng.NextDouble() < ((float)1 / FloorsUntilNextBoss(level));
         }
 
         /// <summary>
@@ -161,42 +118,13 @@ namespace StardewRoguelike
             return challenge.GetSpawnLocation(mine) ?? tileBeneathLadder ?? new(0, 0);
         }
 
-        /// <summary>
-        /// Gets a random challenge for a level from the enum of <see cref="ChallengeType"/>.
-        /// The returned ChallengeBase instance is ready to be assigned to the MineShaft.
-        /// </summary>
-        /// <param name="level">The level.</param>
-        /// <returns>A random challenge instance.</returns>
-        public static ChallengeBase GetRandomChallenge(int level)
+        /// <summary>Builds the challenge floor for <paramref name="type"/>.</summary>
+        /// <remarks>
+        /// Split out of GetRandomChallenge so the run plan can name a challenge
+        /// without going through the roll that used to pick one.
+        /// </remarks>
+        public static ChallengeBase Create(ChallengeType type)
         {
-            var values = Enum.GetValues<ChallengeType>().ToList();
-
-            ChallengeType type;
-            if (DebugCommands.ForcedChallengeIndex != -1)
-                type = values[DebugCommands.ForcedChallengeIndex];
-            else
-            {
-                float healthRemaining = Game1.player.health / (float)Game1.player.maxHealth;
-                if (FloorsUntilNextBoss(level) > 1 || (!Context.IsMultiplayer && healthRemaining >= 0.9f))
-                    values.Remove(ChallengeType.HotSpring);
-
-                if (level < 6)
-                {
-                    values.Remove(ChallengeType.PickAPath);
-                    values.Remove(ChallengeType.HotSpring);
-                }
-                else if (level < 18)
-                    values.Remove(ChallengeType.GambaChests);
-
-                while (History.Count >= values.Count && History.Count > 0)
-                    History.RemoveAt(0);
-
-                values.RemoveAll(value => History.Contains(value));
-
-                type = values[Roguelike.FloorRng.Next(values.Count)];
-                History.Add(type);
-            }
-
             return type switch
             {
                 ChallengeType.KOTH => new KOTH(),

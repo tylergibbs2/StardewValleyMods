@@ -1,3 +1,4 @@
+using StardewRoguelike.Run;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewRoguelike.Mode;
@@ -468,8 +469,8 @@ namespace StardewRoguelike
                 ModEntry.ActiveStats.Reset();
 
                 ReseedRun();
+                RunRoute.Clear();
                 SeenMineMaps.Clear();
-                ChallengeFloor.History.Clear();
                 MineShaft.clearActiveMines();
             }
 

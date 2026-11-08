@@ -62,7 +62,8 @@ namespace StardewRoguelike.Patches
         {
             __instance.NetFields
                 .AddField(__instance.get_FarmerTeamHardMode())
-                .AddField(__instance.get_FarmerTeamFloorRngSeed());
+                .AddField(__instance.get_FarmerTeamFloorRngSeed())
+                .AddField(__instance.get_FarmerTeamRoute());
         }
     }
 }

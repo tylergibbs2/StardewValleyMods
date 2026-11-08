@@ -4,6 +4,7 @@ using System.Reflection;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewRoguelike.Extensions;
+using StardewRoguelike.Run;
 using HarmonyLib;
 
 namespace StardewRoguelike.Patches
@@ -36,21 +37,44 @@ namespace StardewRoguelike.Patches
             newMine.get_MineShaftLevel().Value = requestedLevel;
             newMine.get_MineShaftEntryTime().Value = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
 
-            if (Merchant.IsMerchantFloor(requestedLevel))
-                Merchant.Initialize(newMine);
-            else if (BossFloor.IsBossFloor(requestedLevel))
-                BossFloor.Setup(newMine);
-            else if (ForgeFloor.ShouldDoForgeFloor(requestedLevel))
-                newMine.get_MineShaftForgeFloor().Value = true;
-            else if (ChestFloor.ShouldDoChestFloor(requestedLevel))
+            // What this floor is comes from the run plan and the group's choices now,
+            // rather than from a chain of predicates each rolling FloorRng and reading
+            // whichever mines happened to be loaded. Two machines generating the same
+            // level therefore build the same floor.
+            switch (RunRoute.KindFor(requestedLevel))
             {
-                newMine.get_MineShaftChestFloor().Value = true;
-                ChestFloor.SpawnChest(newMine);
-            }
-            else if (ChallengeFloor.ShouldDoChallengeFloor(requestedLevel))
-            {
-                newMine.get_MineShaftIsChallengeFloor().Value = true;
-                newMine.get_MineShaftChallengeFloor().Value = ChallengeFloor.GetRandomChallenge(requestedLevel);
+                case FloorKind.Merchant:
+                    Merchant.Initialize(newMine);
+                    break;
+
+                case FloorKind.Boss:
+                    BossFloor.Setup(newMine);
+                    break;
+
+                case FloorKind.Forge:
+                    newMine.get_MineShaftForgeFloor().Value = true;
+                    break;
+
+                case FloorKind.Vault:
+                    newMine.get_MineShaftChestFloor().Value = true;
+                    ChestFloor.SpawnChest(newMine);
+                    break;
+
+                case FloorKind.Arena:
+                    newMine.get_MineShaftIsChallengeFloor().Value = true;
+                    newMine.get_MineShaftChallengeFloor().Value =
+                        ChallengeFloor.Create(RunPlan.ArenaFor(requestedLevel));
+                    break;
+
+                case FloorKind.Spring:
+                    newMine.get_MineShaftIsChallengeFloor().Value = true;
+                    newMine.get_MineShaftChallengeFloor().Value =
+                        ChallengeFloor.Create(ChallengeFloor.ChallengeType.HotSpring);
+                    break;
+
+                case FloorKind.Normal:
+                default:
+                    break;
             }
 
             double darkChance;

@@ -229,8 +229,7 @@ namespace StardewRoguelike
                     {
                         Roguelike.FloorRngSeed = int.Parse(args[1]);
                         Roguelike.ReseedRun();
-                        ChallengeFloor.History.Clear();
-                        Roguelike.SeenMineMaps.Clear();
+                                Roguelike.SeenMineMaps.Clear();
                     }
                     break;
                 case "stonechance":

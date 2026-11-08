@@ -21,34 +21,6 @@ namespace StardewRoguelike
         }
 
         /// <summary>
-        /// Checks whether a specified level should be a chest floor.
-        /// Two chest floors cannot appear back to back. Otherwise,
-        /// calculation is random chance.
-        /// </summary>
-        /// <param name="level">The level.</param>
-        /// <returns>true if we should, false otherwise.</returns>
-        public static bool ShouldDoChestFloor(int level)
-        {
-            if (DebugCommands.ForcedChestFloor)
-                return true;
-
-            if (level > 6 && level < 12)
-                return false;
-
-            bool previousFloorWasChestFloor = false;
-            foreach (MineShaft mine in MineShaft.activeMines)
-            {
-                if (Roguelike.GetLevelFromMineshaft(mine) == level - 1)
-                {
-                    previousFloorWasChestFloor = IsChestFloor(mine);
-                    break;
-                }
-            }
-
-            return Roguelike.FloorRng.NextDouble() <= ChestFloorChance && !previousFloorWasChestFloor;
-        }
-
-        /// <summary>
         /// Checks whether a specified MineShaft is a chest floor.
         /// This data is stored internally on the MineShaft instance.
         /// </summary>

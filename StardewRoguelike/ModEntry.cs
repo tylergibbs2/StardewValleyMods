@@ -9,6 +9,7 @@ using StardewRoguelike.UI;
 using StardewValley;
 using StardewModdingAPI.Utilities;
 using StardewRoguelike.Mode;
+using StardewRoguelike.Run;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
@@ -276,6 +277,10 @@ namespace StardewRoguelike
             {
                 AttackIndicatorMessage message = e.ReadAs<AttackIndicatorMessage>();
                 message.Trigger();
+            }
+            else if (e.Type == RunRoute.MessageType)
+            {
+                RunRoute.Receive(e.ReadAs<RunRoute.ChoicePayload>());
             }
             else if (e.Type == "GameOver") // Signal that the game is over
                 Roguelike.GameOver();
