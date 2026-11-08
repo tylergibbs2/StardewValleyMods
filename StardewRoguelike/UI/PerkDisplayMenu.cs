@@ -141,6 +141,12 @@ namespace StardewRoguelike.UI
             b.DrawString(Game1.smallFont, noPerks, new Vector2(xPositionOnScreen + width / 2 - Game1.smallFont.MeasureString(noPerks).X / 2f, yPositionOnScreen + 200 + spaceToClearTopBorder), Game1.textColor);
         }
 
+        /// <summary>Draws a divider at <paramref name="y"/>, a screen coordinate.</summary>
+        /// <remarks>
+        /// Every caller passes currentDrawHeight, which starts at yPositionOnScreen
+        /// and is therefore already absolute. Adding yPositionOnScreen again here put
+        /// every divider a menu's-worth of pixels below where it belonged.
+        /// </remarks>
         public void DrawHorizontalLine(SpriteBatch b, int y)
         {
             drawTextureBox(
@@ -148,7 +154,7 @@ namespace StardewRoguelike.UI
                 Game1.menuTexture,
                 horizontalLineRectangle,
                 xPositionOnScreen,
-                yPositionOnScreen - spaceToClearSideBorder + y,
+                y - spaceToClearSideBorder,
                 width,
                 spaceToClearSideBorder,
                 Color.White,
@@ -156,9 +162,15 @@ namespace StardewRoguelike.UI
             );
         }
 
+        /// <summary>Whether a row at this screen coordinate falls inside the list.</summary>
+        /// <remarks>
+        /// titleDrawHeight and yLevel are absolute, so the lower bound has to be too:
+        /// height on its own is the menu's size, not the screen position of its
+        /// bottom edge, so rows were being cut off a menu's-worth of pixels early.
+        /// </remarks>
         private bool ShouldDraw(int yLevel)
         {
-            return yLevel >= titleDrawHeight && yLevel < height;
+            return yLevel >= titleDrawHeight && yLevel < yPositionOnScreen + height;
         }
 
         public void DrawScrollArrows(SpriteBatch b)

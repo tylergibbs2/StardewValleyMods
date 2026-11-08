@@ -451,6 +451,17 @@ namespace StardewRoguelike
             Game1.player.applyBuff(curse);
             bool result = HasCurse(curseType);
 
+            // Curses are not reaching the buff bar and nothing about the buff itself
+            // explains it, so it says what it built. BuffsDisplay drops a buff that
+            // is not visible or has no icon texture, and shows nothing for one that
+            // never made it into AppliedBuffs at all.
+            ModEntry.ModMonitor.Log(
+                $"curse {curseType}: applied={result} " +
+                $"hasBuff={Game1.player.hasBuff(GetBuffId(curseType))} " +
+                $"icon={(curse.iconTexture is null ? "null" : "ok")} " +
+                $"visible={curse.visible} buffsOnPlayer={Game1.player.buffs.AppliedBuffs.Count}",
+                StardewModdingAPI.LogLevel.Debug);
+
             switch (curseType)
             {
                 case CurseType.GlassCannon:

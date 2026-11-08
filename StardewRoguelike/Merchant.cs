@@ -248,15 +248,6 @@ namespace StardewRoguelike
                     dialogueLocation.Y -= 16;
                     mine.DrawSpeechBubble(dialogueLocation, I18n.Merchant_MarlonIntroduction(), 400);
                 }
-                else if (level == Constants.ScalingOrder[0])
-                {
-                    // Do Gil introduction
-                    dialogueLocation = new Vector2(18, 3) * 64f;
-                    dialogueLocation.X -= 16;
-                    dialogueLocation.Y -= 16;
-                    mine.DrawSpeechBubble(dialogueLocation, I18n.Merchant_GilIntroduction(), 400);
-
-                }
                 else if (level == Constants.ScalingOrder[1])
                 {
                     // Do fortune teller introduction
