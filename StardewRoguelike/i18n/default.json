@@ -198,5 +198,6 @@
   "ExitChoice.ShrineDesc": "Clear the floor. Take a curse, choose a perk.",
   "Shrine.NothingToOffer": "You already have every perk.",
   "Shrine.Dormant": "The shrine is dormant while monsters remain on this floor.",
-  "Shrine.Ready": "The shrine is ready."
+  "Shrine.Ready": "The shrine is ready.",
+  "Shrine.Cursed": "The shrine takes its price: {{curse}}"
 }

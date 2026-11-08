@@ -101,6 +101,11 @@ namespace StardewRoguelike
             // added to a bank that is then thrown away go quietly, with no error and
             // no music.
             helper.Events.GameLoop.GameLaunched += (_, _) => ContentManager.SetupAudio();
+
+            // And again when a save loads, in case the bank that existed at launch
+            // was not the one the game ended up using. SetupAudio skips cues that are
+            // already present, so running it twice costs nothing.
+            helper.Events.GameLoop.SaveLoaded += (_, _) => ContentManager.SetupAudio();
             helper.Events.GameLoop.GameLaunched += SetupGMCM;
             helper.Events.GameLoop.GameLaunched += CheckForUpdate;
             // Carries out a pending mode switch from the update loop, where none of

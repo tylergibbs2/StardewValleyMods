@@ -44,7 +44,7 @@ namespace StardewRoguelike
 
     internal class Curse : Buff
     {
-        private static string GetCurseDisplayName(CurseType curseType)
+        public static string GetCurseDisplayName(CurseType curseType)
         {
             return curseType switch
             {

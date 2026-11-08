@@ -137,7 +137,16 @@ namespace StardewRoguelike.TerrainFeatures
             // player has already paid for every one they are carrying.
             CurseType? curse = Curse.GetRandomUniqueCurse();
             if (curse.HasValue)
+            {
                 Curse.AddCurse(curse.Value);
+
+                // Said out loud. The curse was being applied silently and the perk
+                // menu opened over the top of it, so the price went unseen and the
+                // shrine looked like it was giving perks away.
+                Game1.chatBox?.addMessage(
+                    I18n.Shrine_Cursed(curse: Curse.GetCurseDisplayName(curse.Value)),
+                    Color.OrangeRed);
+            }
 
             used = true;
             Game1.playSound("debuffSpell");

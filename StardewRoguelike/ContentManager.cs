@@ -147,8 +147,13 @@ namespace StardewRoguelike
                 return;
             }
 
+            int added = 0;
             foreach (var (name, category, filename, loop) in CustomAudio)
             {
+                // Skip what is already there, so this can be run again safely.
+                if (Game1.soundBank.Exists(name))
+                    continue;
+
                 string filePath = Path.Combine(ModEntry.Instance.Helper.DirectoryPath, "assets", "Audio", filename);
                 string extension = Path.GetExtension(filePath);
                 SoundEffect audio = extension switch
@@ -164,11 +169,20 @@ namespace StardewRoguelike
                 };
 
                 Game1.soundBank.AddCue(cue);
+                added++;
             }
 
+            // Counted back out of the bank rather than trusting the adds. The game
+            // builds its sound bank on a background thread, so cues can be written
+            // into one that is then replaced - which is silent, and leaves the mod
+            // with no music and nothing in the log to explain it.
+            int present = CustomAudio.Count(entry => Game1.soundBank.Exists(entry.Item1));
+
             ModEntry.ModMonitor.Log(
-                $"loaded {CustomAudio.Count} custom cues into the sound bank",
-                StardewModdingAPI.LogLevel.Debug);
+                $"custom audio: {present}/{CustomAudio.Count} cues in the sound bank ({added} added just now)",
+                present == CustomAudio.Count
+                    ? StardewModdingAPI.LogLevel.Debug
+                    : StardewModdingAPI.LogLevel.Warn);
         }
 
         /// <summary>
