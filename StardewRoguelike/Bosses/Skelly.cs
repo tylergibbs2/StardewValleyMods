@@ -61,13 +61,34 @@ namespace StardewRoguelike.Bosses
         private bool CachedMagesAreDead = false;
 
         private int TicksToAttack = 60 * 5;
-        private int PreviousAttack = 2;
 
-        private int BonesToThrow = 0;
-        private int NextBoneThrow = 0;
+        /// <summary>
+        /// The boss's three attacks, cycled in order. The rotation is independent of
+        /// the freeze AOE and of the mage phase, which run on their own timers.
+        /// </summary>
+        private enum Attack
+        {
+            Bones,
+            FrostBolts,
+            BoneCircles
+        }
 
-        private int FrostBoltsToThrow = 0;
-        private int NextFrostBolt = 0;
+        /// <summary>The attack chosen last, and so the one the next pick follows.</summary>
+        private Attack PreviousAttack = Attack.BoneCircles;
+
+        /// <summary>
+        /// The projectile attack currently being fired, if any.
+        ///
+        /// Bones and frost bolts used to own a counter pair each - BonesToThrow with
+        /// NextBoneThrow, FrostBoltsToThrow with NextFrostBolt - which left "throwing
+        /// bones and frost bolts at the same time" perfectly representable, and made
+        /// the attack in progress something you worked out by seeing which counter
+        /// happened to be non-zero. They are one pair and a name now.
+        /// </summary>
+        private readonly NetEnum<Attack> FiringAttack = new(Attack.Bones);
+
+        private int ShotsLeft = 0;
+        private int TicksToNextShot = 0;
 
         private int TicksToSpawnBoneCircles = 0;
         private int TicksToDespawnBoneCircle = 0;
@@ -95,7 +116,7 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddField(Invincible).AddField(Charging).AddField(ThrowingAnim);
+            NetFields.AddField(Invincible).AddField(Charging).AddField(ThrowingAnim).AddField(FiringAttack);
         }
 
         public override void update(GameTime time, GameLocation location)
@@ -223,32 +244,23 @@ namespace StardewRoguelike.Bosses
                     SpawnBoneCircles();
             }
 
-            if (BonesToThrow > 0)
+            if (ShotsLeft > 0)
             {
-                if (NextBoneThrow == 0)
+                if (TicksToNextShot == 0)
                 {
-                    ThrowBone();
-                    BonesToThrow--;
-                    NextBoneThrow = 20;
+                    if (FiringAttack.Value == Attack.Bones)
+                        ThrowBone();
+                    else
+                        ThrowFrostBolt();
+
+                    ShotsLeft--;
+                    TicksToNextShot = 20;
                 }
                 else
-                    NextBoneThrow--;
+                    TicksToNextShot--;
             }
 
-            if (FrostBoltsToThrow > 0)
-            {
-                if (NextFrostBolt == 0)
-                {
-                    ThrowFrostBolt();
-                    FrostBoltsToThrow--;
-                    NextFrostBolt = 20;
-                }
-                else
-                    NextFrostBolt--;
-            }
-
-
-            if (ThrowingAnim.Value && BonesToThrow == 0 && FrostBoltsToThrow == 0)
+            if (ThrowingAnim.Value && ShotsLeft == 0)
                 ThrowingAnim.Value = false;
 
             if (TicksToAttack == 0 && TicksToSpawnBoneCircles == 0)
@@ -260,33 +272,26 @@ namespace StardewRoguelike.Bosses
 
                 if (TicksToAttack == 0)
                 {
-                    int attack = PreviousAttack switch
+                    Attack attack = PreviousAttack switch
                     {
-                        0 => 1,
-                        1 => 2,
-                        2 => 0,
-                        _ => throw new NotImplementedException()
+                        Attack.Bones => Attack.FrostBolts,
+                        Attack.FrostBolts => Attack.BoneCircles,
+                        _ => Attack.Bones
                     };
                     PreviousAttack = attack;
 
-                    if (attack == 0)
-                    {
-                        ThrowingAnim.Value = true;
-                        BonesToThrow = SpawnedMages ? 5 : 3;
-                        if (Roguelike.HardMode)
-                            BonesToThrow += 2;
-                        NextBoneThrow = 20;
-                    }
-                    else if (attack == 1)
-                    {
-                        ThrowingAnim.Value = true;
-                        FrostBoltsToThrow = SpawnedMages ? 5 : 3;
-                        if (Roguelike.HardMode)
-                            FrostBoltsToThrow += 2;
-                        NextFrostBolt = 20;
-                    }
-                    else
+                    if (attack == Attack.BoneCircles)
                         TicksToSpawnBoneCircles = 61;
+                    else
+                    {
+                        ThrowingAnim.Value = true;
+                        FiringAttack.Value = attack;
+
+                        ShotsLeft = SpawnedMages ? 5 : 3;
+                        if (Roguelike.HardMode)
+                            ShotsLeft += 2;
+                        TicksToNextShot = 20;
+                    }
                 }
             }
 
