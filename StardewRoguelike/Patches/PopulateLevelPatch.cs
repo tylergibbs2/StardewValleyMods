@@ -15,6 +15,15 @@ namespace StardewRoguelike.Patches
     [HarmonyPatch(typeof(MineShaft), "populateLevel")]
     internal class PopulateLevelPatch
     {
+        /// <summary>How much thicker the stone lies on a dark mineshaft.</summary>
+        private const double DarkStoneMultiplier = 1.75;
+
+        /// <summary>How much likelier any given stone there is worth breaking.</summary>
+        private const double DarkGemMultiplier = 4;
+
+        /// <summary>And what it costs to be down there.</summary>
+        private const double DarkMonsterMultiplier = 1.5;
+
         public static bool Prefix(MineShaft __instance)
         {
             __instance.loadObjects();  // Loads trees for the egg hunt floor
@@ -70,15 +79,28 @@ namespace StardewRoguelike.Patches
             else
                 gemStoneChance = 0.005 + (Game1.player.team.AverageLuckLevel() / 200.0);
 
-            // A shrine floor is a fight rather than a dig. Leaving the ore in gave it
-            // everything a mineshaft gives and a perk on top, which is what made the
-            // two indistinguishable in the first place. Resource clumps are already
-            // out, since the base game keeps them off a floor that has to be cleared.
-            bool isShrineFloor = RunRoute.IsShrineFloor(__instance);
+            FloorKind kind = RunRoute.KindFor(level);
+            bool isShrineFloor = kind == FloorKind.Shrine;
+            bool isDarkMineshaft = kind == FloorKind.DarkMineshaft;
+
             if (isShrineFloor)
             {
+                // A shrine floor is a fight rather than a dig. Leaving the ore in gave
+                // it everything a mineshaft gives and a perk on top, which is what
+                // made the two indistinguishable in the first place. Resource clumps
+                // are already out, since the base game keeps them off a floor that has
+                // to be cleared.
                 stoneChance = 0;
                 gemStoneChance = 0;
+            }
+            else if (isDarkMineshaft)
+            {
+                // What the floor is for, and what it charges. The gems are the draw
+                // and are stepped up hardest, since they are what a mineshaft beside
+                // it in the menu cannot promise.
+                stoneChance *= DarkStoneMultiplier;
+                gemStoneChance *= DarkGemMultiplier;
+                monsterChance *= DarkMonsterMultiplier;
             }
 
             int monstersSpawned = 0;
@@ -292,9 +314,11 @@ namespace StardewRoguelike.Patches
 
             // A shrine floor has to be cleared before it lets anyone past, so it is
             // stocked for a fight rather than for a walk to the statue.
-            int minimumMonsters = isShrineFloor
-                ? Constants.MinimumMonstersPerShrineFloor
-                : Constants.MinimumMonstersPerFloor;
+            int minimumMonsters = Constants.MinimumMonstersPerFloor;
+            if (isShrineFloor)
+                minimumMonsters = Constants.MinimumMonstersPerShrineFloor;
+            else if (isDarkMineshaft)
+                minimumMonsters = Constants.MinimumMonstersPerDarkFloor;
 
             if (monstersSpawned < minimumMonsters)
             {

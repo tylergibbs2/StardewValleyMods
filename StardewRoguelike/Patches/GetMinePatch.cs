@@ -78,6 +78,12 @@ namespace StardewRoguelike.Patches
                         ChallengeFloor.Create(ChallengeFloor.ChallengeType.HotSpring);
                     break;
 
+                case FloorKind.DarkMineshaft:
+                    // Set here rather than below with the hard mode roll, because the
+                    // map is chosen from it: a dark floor avoids the water maps.
+                    newMine.set_MineShaftIsDarkArea(true);
+                    break;
+
                 case FloorKind.Normal:
                 default:
                     break;

@@ -1,4 +1,4 @@
-namespace StardewRoguelike.Run
+﻿namespace StardewRoguelike.Run
 {
     /// <summary>
     /// What a floor is. Replaces the chain of ShouldDoXFloor predicates that used to
@@ -29,6 +29,15 @@ namespace StardewRoguelike.Run
         Merchant,
 
         /// <summary>A boss floor. Forced before each merchant; never offered as a choice.</summary>
-        Boss
+        Boss,
+
+        /// <summary>
+        /// A mine layout with the lights out. Thicker stone and more of it worth
+        /// breaking, and more of everything else too.
+        ///
+        /// Last on purpose: the value is what the route is stored as, so the ones
+        /// above it have to keep the numbers they already have.
+        /// </summary>
+        DarkMineshaft
     }
 }

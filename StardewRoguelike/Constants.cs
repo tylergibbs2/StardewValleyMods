@@ -51,6 +51,9 @@ namespace StardewRoguelike
         /// was a mining floor with a free perk on it.
         /// </summary>
         public static readonly int MinimumMonstersPerShrineFloor = 10;
+
+        /// <summary>The same, on a dark mineshaft, which is paid for in company.</summary>
+        public static readonly int MinimumMonstersPerDarkFloor = 8;
         public static readonly int MaximumMonstersPerFloorPreLoop = 15;
         public static readonly int MaximumMonstersPerFloorPostLoop = 30;
 

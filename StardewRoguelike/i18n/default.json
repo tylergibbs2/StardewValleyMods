@@ -180,6 +180,8 @@
   "ExitChoice.Waiting": "Waiting for the group...",
   "ExitChoice.Normal": "Mineshaft",
   "ExitChoice.NormalDesc": "Ore and stone. Leave when a way down turns up.",
+  "ExitChoice.DarkMineshaft": "Dark Mineshaft",
+  "ExitChoice.DarkMineshaftDesc": "Unlit. More ore and more monsters.",
   "ExitChoice.Arena": "Arena",
   "ExitChoice.ArenaDesc": "A combat challenge. Rewards gold.",
   "ExitChoice.Vault": "Treasure",

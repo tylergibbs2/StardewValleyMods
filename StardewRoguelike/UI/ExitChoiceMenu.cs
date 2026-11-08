@@ -269,7 +269,7 @@ namespace StardewRoguelike.UI
 
                 Rectangle icon = FloorKindInfo.Icon(kind);
                 b.Draw(
-                    Game1.mouseCursors,
+                    FloorKindInfo.IconTexture(kind),
                     new Vector2(option.bounds.X + IconInset, top + 24),
                     icon, tint, 0f, Vector2.Zero, 56f / icon.Width, SpriteEffects.None, 1f);
             }

@@ -12,15 +12,24 @@ namespace StardewRoguelike.Patches
     {
 		public static bool Prefix(MineShaft __instance)
         {
+			FloorKind kind = RunRoute.KindFor(Roguelike.GetLevelFromMineshaft(__instance));
+
 			// A shrine floor is a fight rather than a dig. This is a separate entry
 			// point from populateLevel, so zeroing the stone chances there left the
 			// gold standing.
-			if (RunRoute.IsShrineFloor(__instance))
+			if (kind == FloorKind.Shrine)
 				return false;
 
 			Random mineRandom = __instance.mineRandom;
 
-			if (!(mineRandom.NextDouble() < 0.55))
+			// Rolled either way, so that taking a dark mineshaft does not shift
+			// everything the mine draws afterwards.
+			bool rolled = mineRandom.NextDouble() < 0.55;
+
+			// A dark mineshaft always has its gold. It is the floor people take for
+			// the ore, so leaving it to a coin toss would make the choice a gamble
+			// rather than a trade.
+			if (!rolled && kind != FloorKind.DarkMineshaft)
 				return false;
 
 			Vector2 endPoint = __instance.getRandomTile();

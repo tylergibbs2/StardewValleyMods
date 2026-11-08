@@ -34,6 +34,15 @@ namespace StardewRoguelike.Run
         /// </summary>
         public const int ForgeMinimumLevel = 10;
 
+        /// <summary>
+        /// A dark mineshaft is not offered before this level.
+        ///
+        /// The opening floors are where a player is working out what the exits mean,
+        /// carrying the weapon they started with, which is not the moment to put the
+        /// lights out.
+        /// </summary>
+        private const int DarkMinimumLevel = 5;
+
         /// <summary>The combat floors an Arena exit can lead to.</summary>
         private static readonly ChallengeFloor.ChallengeType[] ArenaChallenges =
         {
@@ -54,6 +63,7 @@ namespace StardewRoguelike.Run
         private static readonly (FloorKind Kind, int Weight)[] Pool =
         {
             (FloorKind.Normal, 3),
+            (FloorKind.DarkMineshaft, 2),
             (FloorKind.Arena, 3),
             (FloorKind.Vault, 2),
             (FloorKind.Spring, 2),
@@ -282,6 +292,7 @@ namespace StardewRoguelike.Run
         private static bool Allowed(FloorKind kind, int level) => kind switch
         {
             FloorKind.Forge => level > ForgeMinimumLevel,
+            FloorKind.DarkMineshaft => level > DarkMinimumLevel,
             _ => true
         };
 
