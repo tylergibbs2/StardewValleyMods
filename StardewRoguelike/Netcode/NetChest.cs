@@ -89,7 +89,8 @@ namespace StardewRoguelike.Netcode
                 if (Game1.player.rightRing.Value is not null)
                     playerItems.Add(Game1.player.rightRing.Value.DisplayName);
 
-                Item item = Merchant.GetNextMerchantFloor(mine).PickAnyRandomAvoiding(playerItems);
+                Item item = Merchant.GetChestMerchantFloor(Roguelike.GetLevelFromMineshaft(mine), Game1.random)
+                    .PickAnyRandomAvoiding(playerItems);
                 items.Add(item);
             }
             else

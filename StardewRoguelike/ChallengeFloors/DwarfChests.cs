@@ -37,7 +37,8 @@ namespace StardewRoguelike.ChallengeFloors
 
         public void SpawnLocalChests(MineShaft mine)
         {
-            MerchantFloor merchantFloor = Merchant.GetNextMerchantFloor(mine);
+            MerchantFloor merchantFloor = Merchant.GetChestMerchantFloor(
+                Roguelike.GetLevelFromMineshaft(mine), Roguelike.OfferRng);
 
             Vector2 leftMostChest = new(7f, 12f);
             for (int i = 0; i < 3; i++)

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Menus;
 
 namespace StardewRoguelike.Run
 {
@@ -37,6 +38,9 @@ namespace StardewRoguelike.Run
         /// </remarks>
         public static string Description(FloorKind kind, int level)
         {
+            if (kind == FloorKind.Vault)
+                return TreasureDescription(level);
+
             if (kind != FloorKind.Shrine)
                 return Description(kind);
 
@@ -51,6 +55,36 @@ namespace StardewRoguelike.Run
             return I18n.ExitChoice_ShrineOffer(
                 first: Perks.GetOfferDisplayName(left.Value),
                 second: Perks.GetOfferDisplayName(right.Value));
+        }
+
+        /// <summary>
+        /// What a treasure floor is offering, which depends on which of them it is.
+        /// </summary>
+        /// <remarks>
+        /// The plain chest names the thing it is holding, because that can be known.
+        /// The other three name the shape of the gamble instead: what is in them is
+        /// decided when they are opened, and saying so is the honest version of
+        /// naming it. Between them the exit can tell the player whether this is a
+        /// known quantity, a price, or a roll.
+        /// </remarks>
+        private static string TreasureDescription(int level)
+        {
+            ChallengeFloor.ChallengeType? treasure = RunRoute.VaultFor(level);
+
+            if (treasure == ChallengeFloor.ChallengeType.DwarfChests)
+                return I18n.ExitChoice_VaultDwarf();
+
+            if (treasure == ChallengeFloor.ChallengeType.GambaChests)
+                return I18n.ExitChoice_VaultGamba();
+
+            if (treasure == ChallengeFloor.ChallengeType.PickAPath)
+                return I18n.ExitChoice_VaultDoors();
+
+            Item? item = ChestFloor.ItemFor(level);
+
+            return item is null
+                ? Description(FloorKind.Vault)
+                : I18n.ExitChoice_VaultHolds(item: item.DisplayName);
         }
 
         public static string Description(FloorKind kind) => kind switch

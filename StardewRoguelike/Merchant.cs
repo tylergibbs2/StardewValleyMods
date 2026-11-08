@@ -451,6 +451,48 @@ namespace StardewRoguelike
             return GetNextMerchantFloor(level);
         }
 
+        /// <summary>The shelf at <paramref name="index"/>, clamped to what exists.</summary>
+        public static MerchantFloor GetMerchantFloorAt(int index)
+        {
+            return MerchantFloors[Math.Clamp(index, 0, MerchantFloors.Count - 1)];
+        }
+
+        /// <summary>
+        /// The shelf a chest on <paramref name="level"/> draws from.
+        /// </summary>
+        /// <remarks>
+        /// Chests used to draw from GetNextMerchantFloor - the shop the player has
+        /// not reached yet - and then strike out everything they were already
+        /// carrying. Between the two, a chest could not produce anything that was not
+        /// an upgrade: the shelf was above them and the things they owned were
+        /// removed from it. Opening one was a formality.
+        ///
+        /// Three shelves now, the one behind, the one beside and the one ahead, so a
+        /// chest can hand over something the player has already outgrown. Which of
+        /// the three is weighted by how near the boss is: a chest taken on the way
+        /// out of a merchant floor is mostly the shelf just passed, and one taken on
+        /// the boss's doorstep is mostly the shelf ahead. Where in a cycle a treasure
+        /// floor is spent is a decision, and this is what makes it one.
+        /// </remarks>
+        public static MerchantFloor GetChestMerchantFloor(int level, Random random)
+        {
+            int current = level / 6;
+            int toBoss = ChallengeFloor.FloorsUntilNextBoss(level);
+
+            // behind, beside, ahead
+            int[] weights = toBoss switch
+            {
+                <= 1 => new[] { 1, 3, 3 },
+                2 => new[] { 2, 3, 2 },
+                _ => new[] { 3, 3, 1 }
+            };
+
+            int roll = random.Next(weights[0] + weights[1] + weights[2]);
+            int offset = roll < weights[0] ? -1 : roll < weights[0] + weights[1] ? 0 : 1;
+
+            return GetMerchantFloorAt(current + offset);
+        }
+
         public static MerchantFloor GetNextMerchantFloor(int level)
         {
             int index = (level / 6) + 1;

@@ -174,6 +174,22 @@ namespace StardewRoguelike.Run
         /// <summary>Keeps the treasure order off every other stream.</summary>
         private const int VaultStream = 0x7A17;
 
+        /// <summary>Keeps what is in a chest off every other stream.</summary>
+        private const int ChestStream = 0x0CE5;
+
+        /// <summary>
+        /// A stream for whatever a chest on <paramref name="level"/> holds.
+        ///
+        /// Handed out rather than drawn from, because the same answer is needed in
+        /// two places and at two different times: the exit menu names the item from
+        /// the floor above, and the chest itself has to hold that very thing when
+        /// the player gets there.
+        /// </summary>
+        public static Random ChestRandomFor(int level)
+        {
+            return new Random(Roguelike.FloorRngSeed ^ ChestStream ^ (level * 6151));
+        }
+
         private static void BuildVaultOrder(int upTo)
         {
             int seed = Roguelike.FloorRngSeed;
