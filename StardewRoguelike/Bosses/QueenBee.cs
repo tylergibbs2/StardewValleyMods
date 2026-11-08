@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using Netcode;
 using StardewRoguelike.Extensions;
 using StardewValley;
 using StardewValley.Locations;
@@ -30,8 +31,21 @@ namespace StardewRoguelike.Bosses
         private int TicksToChargeWarmup = 0;
         private int ChargeDurationTicks = 0;
 
-        private bool ChargingWarmup = false;
-        private bool MidCharge = false;
+        /// <summary>Where the boss is in a single charge.</summary>
+        private enum ChargeState
+        {
+            /// <summary>Not charging; the next tick picks a target and winds up.</summary>
+            Idle,
+
+            /// <summary>Lined up on the target, waiting out the tell.</summary>
+            Winding,
+
+            /// <summary>Committed, flying along ChargeVector.</summary>
+            Charging
+        }
+
+        private readonly NetEnum<ChargeState> CurrentCharge = new(ChargeState.Idle);
+
         private Vector2 ChargeVector;
 
         private int TimesToCharge = 0;
@@ -64,9 +78,15 @@ namespace StardewRoguelike.Bosses
             moveTowardPlayerThreshold.Value = 20;
         }
 
+        protected override void initNetFields()
+        {
+            base.initNetFields();
+            NetFields.AddField(CurrentCharge);
+        }
+
         public override void behaviorAtGameTick(GameTime time)
         {
-            if (!MidCharge)
+            if (CurrentCharge.Value != ChargeState.Charging)
                 base.behaviorAtGameTick(time);
 
             if (Health <= 0)
@@ -143,46 +163,58 @@ namespace StardewRoguelike.Bosses
 
         public bool IsCharging()
         {
-            return MidCharge || ChargingWarmup;
+            return CurrentCharge.Value != ChargeState.Idle;
         }
 
+        /// <summary>
+        /// Advances one charge by one tick.
+        ///
+        /// This used to dispatch on a pair of bools, ChargingWarmup and MidCharge,
+        /// which between them could also spell a state that means nothing - both
+        /// true - and whose four branches only picked the right one because of the
+        /// order they were written in. There are three states and they are named.
+        /// </summary>
         public void HandleChargeTick()
         {
             if (Player is null || TimesToCharge == 0)
                 return;
 
-            if (MidCharge)
+            switch (CurrentCharge.Value)
             {
-                Position += ChargeVector;
-                rotation = RoguelikeUtility.VectorToRadians(ChargeVector) + RoguelikeUtility.DegreesToRadians(90);
-                ChargeDurationTicks--;
-                if (ChargeDurationTicks == 0)
-                {
-                    MidCharge = false;
-                    TimesToCharge--;
-                }
-            }
-            else if (ChargingWarmup && TicksToChargeWarmup > 0)
-            {
-                rotation = RoguelikeUtility.VectorToRadians(ChargeVector) + RoguelikeUtility.DegreesToRadians(90);
-                TicksToChargeWarmup--;
-            }
-            else if (ChargingWarmup && TicksToChargeWarmup == 0)
-            {
-                currentLocation.playSound("croak");
-                ChargeDurationTicks = Roguelike.HardMode ? 30 : 60;
+                case ChargeState.Idle:
+                    ChargeVector = Player.Position - Position;
+                    ChargeVector.Normalize();
+                    ChargeVector *= this.AdjustRangeForHealth(13, 17);
 
-                ChargingWarmup = false;
-                MidCharge = true;
-            }
-            else if (!ChargingWarmup && TicksToChargeWarmup == 0)
-            {
-                ChargeVector = Player.Position - Position;
-                ChargeVector.Normalize();
-                ChargeVector *= this.AdjustRangeForHealth(13, 17);
+                    TicksToChargeWarmup = 60 - this.AdjustRangeForHealth(0, 55);
+                    CurrentCharge.Value = ChargeState.Winding;
+                    break;
 
-                ChargingWarmup = true;
-                TicksToChargeWarmup = 60 - this.AdjustRangeForHealth(0, 55);
+                case ChargeState.Winding:
+                    rotation = RoguelikeUtility.VectorToRadians(ChargeVector) + RoguelikeUtility.DegreesToRadians(90);
+
+                    if (TicksToChargeWarmup > 0)
+                    {
+                        TicksToChargeWarmup--;
+                        break;
+                    }
+
+                    currentLocation.playSound("croak");
+                    ChargeDurationTicks = Roguelike.HardMode ? 30 : 60;
+                    CurrentCharge.Value = ChargeState.Charging;
+                    break;
+
+                case ChargeState.Charging:
+                    Position += ChargeVector;
+                    rotation = RoguelikeUtility.VectorToRadians(ChargeVector) + RoguelikeUtility.DegreesToRadians(90);
+
+                    ChargeDurationTicks--;
+                    if (ChargeDurationTicks == 0)
+                    {
+                        CurrentCharge.Value = ChargeState.Idle;
+                        TimesToCharge--;
+                    }
+                    break;
             }
         }
 
