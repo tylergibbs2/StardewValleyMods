@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using Microsoft.Xna.Framework;
 using System.Reflection;
 using StardewValley;
 using StardewValley.Buffs;
@@ -62,11 +63,20 @@ namespace StardewRoguelike.Patches
             if (changed || __instance.dirty)
                 ResetIcons?.Invoke(__instance, null);
 
-            // Unconditional, and through the public method rather than reflection, so
-            // there is no path where the icons keep an arrangement made from the back
-            // buffer.
-            __instance.arrangeTheseComponentsInThisRectangle(
-                x, y, BarWidth / IconSize, IconSize, IconSize, IconGap, rightToLeft: true);
+            // The rectangles are written here rather than through
+            // arrangeTheseComponentsInThisRectangle, which was measured leaving them
+            // exactly where they were. Right to left from the right-hand edge of the
+            // bar, which is how the base game lays them out.
+            int slot = 0;
+            foreach (ClickableTextureComponent icon in Icons(__instance))
+            {
+                icon.bounds = new Rectangle(
+                    x + BarWidth - (slot + 1) * (IconSize + IconGap),
+                    y,
+                    IconSize,
+                    IconSize);
+                slot++;
+            }
 
             Report(__instance, changed, before, FirstIconX(__instance));
             return false;
@@ -113,7 +123,10 @@ namespace StardewRoguelike.Patches
                 $"buff icons: box={display.xPositionOnScreen},{display.yPositionOnScreen} " +
                 $"{display.width}x{display.height} ui={Game1.uiViewport.Width} " +
                 $"changed={changed} dirty={display.dirty} resetFound={ResetIcons is not null} " +
-                $"firstIcon {before} -> {after} (expected {display.xPositionOnScreen + BarWidth - IconSize - IconGap})",
+                $"firstIcon {before} -> {after} (wanted {display.xPositionOnScreen + BarWidth - IconSize - IconGap}) " +
+                $"display#{System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(display)} " +
+                $"isGame1={ReferenceEquals(display, Game1.buffsDisplay)} " +
+                $"inHud={Game1.onScreenMenus.Contains(display)}",
                 StardewModdingAPI.LogLevel.Debug);
         }
     }
