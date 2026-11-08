@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Locations;
@@ -63,38 +63,60 @@ namespace StardewRoguelike.TerrainFeatures
             return new((int)Tile.X * 64, (int)Tile.Y * 64, 64, 64);
         }
 
+        /// <summary>How far from an origin tile a shrine will be looked for.</summary>
+        private const int SearchRadius = 12;
+
         /// <summary>
-        /// Puts a shrine on <paramref name="mine"/>, near where the player arrives.
+        /// Puts a shrine on <paramref name="mine"/>, in the middle of the floor.
         ///
-        /// Near the entrance on purpose. The whole point of choosing a shrine at the
-        /// exit is that you get one - having to search the floor for it would put
-        /// back the hunting that choosing an exit is meant to remove.
+        /// It used to stand by the entrance, which was right while the floor could be
+        /// walked straight past. Now that a shrine floor has to be cleared to get off
+        /// it, the middle is where the fight ends up anyway, and a statue standing in
+        /// the middle of the floor is something to walk towards rather than something
+        /// passed on the way in.
         /// </summary>
         public static void PlaceIn(MineShaft mine)
         {
             if (mine.map is null)
                 return;
 
-            Vector2 entrance = mine.tileBeneathLadder;
+            Vector2 middle = new(
+                mine.Map.Layers[0].LayerWidth / 2,
+                mine.Map.Layers[0].LayerHeight / 2);
 
-            for (int radius = 2; radius <= 12; radius++)
+            if (TryPlace(mine, middle))
+                return;
+
+            // A layout with nothing clear in the middle still gets a shrine, rather
+            // than none, since the floor was chosen for it.
+            TryPlace(mine, mine.tileBeneathLadder);
+        }
+
+        /// <summary>Looks outward from <paramref name="origin"/> for somewhere to stand.</summary>
+        private static bool TryPlace(MineShaft mine, Vector2 origin)
+        {
+            for (int radius = 0; radius <= SearchRadius; radius++)
             {
                 for (int dx = -radius; dx <= radius; dx++)
                 {
                     for (int dy = -radius; dy <= radius; dy++)
                     {
-                        if (Math.Abs(dx) != radius && Math.Abs(dy) != radius)
+                        // Only the edge of each ring, so the search spreads outward
+                        // rather than re-checking everything inside it.
+                        if (radius > 0 && Math.Abs(dx) != radius && Math.Abs(dy) != radius)
                             continue;
 
-                        Vector2 tile = new(entrance.X + dx, entrance.Y + dy);
+                        Vector2 tile = new(origin.X + dx, origin.Y + dy);
                         if (!HasRoomFor(mine, tile))
                             continue;
 
                         mine.terrainFeatures.Add(tile, new PerkShrine());
-                        return;
+                        return true;
                     }
                 }
             }
+
+            return false;
         }
 
         /// <summary>

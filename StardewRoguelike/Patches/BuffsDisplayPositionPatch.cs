@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
 using StardewValley;
+using StardewValley.Buffs;
 using StardewValley.Menus;
+using System.Collections.Generic;
 
 namespace StardewRoguelike.Patches
 {
@@ -27,8 +29,8 @@ namespace StardewRoguelike.Patches
         private const int IconSize = 64;
         private const int IconGap = 8;
 
-        /// <summary>Where the icons were last put, so the move is reported once.</summary>
-        private static int reportedX = int.MinValue;
+        /// <summary>When the icons were last described, so it is said rarely.</summary>
+        private static double lastReport;
 
         public static void Postfix(BuffsDisplay __instance)
         {
@@ -44,19 +46,47 @@ namespace StardewRoguelike.Patches
                 IconGap,
                 rightToLeft: true);
 
-            // Said once per resting place rather than every frame. If the buff bar is
-            // still missing and this has not been said at all, the icons are not being
-            // placed here and the fault is upstream of this patch.
-            if (__instance.xPositionOnScreen != reportedX)
+            Report(__instance);
+        }
+
+        /// <summary>
+        /// Says what the display is about to draw, at most once every few seconds.
+        ///
+        /// The icons are placed and counted but still do not appear, so this reports
+        /// the components themselves - where they ended up, whether they are visible,
+        /// what they are drawn from - rather than where this patch meant to put them.
+        /// </summary>
+        private static void Report(BuffsDisplay display)
+        {
+            double now = Game1.currentGameTime?.TotalGameTime.TotalSeconds ?? 0;
+            if (now - lastReport < 3)
+                return;
+
+            var icons = AccessTools.Field(typeof(BuffsDisplay), "buffs")
+                .GetValue(display) as System.Collections.IDictionary;
+
+            if (icons is null || icons.Count == 0)
+                return;
+
+            lastReport = now;
+
+            List<string> described = new();
+            foreach (System.Collections.DictionaryEntry entry in icons)
             {
-                reportedX = __instance.xPositionOnScreen;
-                ModEntry.ModMonitor.Log(
-                    $"buff icons: box={__instance.xPositionOnScreen},{__instance.yPositionOnScreen} " +
-                    $"{__instance.width}x{__instance.height} ui={Game1.uiViewport.Width}x{Game1.uiViewport.Height} " +
-                    $"first icon at {__instance.xPositionOnScreen + __instance.width - IconSize - IconGap} " +
-                    $"showing={__instance.getNumBuffs()}",
-                    StardewModdingAPI.LogLevel.Debug);
+                ClickableTextureComponent icon = (ClickableTextureComponent)entry.Key;
+                Buff buff = (Buff)entry.Value!;
+                described.Add(
+                    $"{buff.id} at {icon.bounds.X},{icon.bounds.Y} {icon.bounds.Width}x{icon.bounds.Height} " +
+                    $"visible={icon.visible} scale={icon.scale} " +
+                    $"tex={(icon.texture is null ? "null" : $"{icon.texture.Width}x{icon.texture.Height}")} " +
+                    $"src={icon.sourceRect} alphaTimer={buff.displayAlphaTimer}");
             }
+
+            ModEntry.ModMonitor.Log(
+                $"buff icons: box={display.xPositionOnScreen},{display.yPositionOnScreen} " +
+                $"{display.width}x{display.height} ui={Game1.uiViewport.Width}x{Game1.uiViewport.Height} :: " +
+                string.Join(" :: ", described),
+                StardewModdingAPI.LogLevel.Debug);
         }
     }
 }
