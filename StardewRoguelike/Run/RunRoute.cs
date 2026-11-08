@@ -38,6 +38,28 @@ namespace StardewRoguelike.Run
             FloorKind.Vault
         };
 
+        /// <summary>How many floors of a kind one cycle may hold; one unless named.</summary>
+        /// <remarks>
+        /// The rule that a kind spends itself reads a second visit as the same
+        /// decision made twice, which is true of every kind whose floor is built the
+        /// same way each time. An arena is the one that is not: the combat floor it
+        /// leads to comes off a bag that advances per arena played, so a second arena
+        /// in a cycle is a different challenge rather than the first one again.
+        ///
+        /// Two, and not simply as many as the player likes. Lifting the limit
+        /// altogether read well for anybody choosing an arena now and then and badly
+        /// for anybody choosing every one offered: that route filled half the run with
+        /// combat and ended it on one shrine, so the keystone it was fighting to use
+        /// never arrived. A second arena costs a shrine, which is a trade worth
+        /// weighing; a fifth costs the build, which is not a trade but a trap. Two
+        /// keeps very nearly all of what lifting the limit was worth to an ordinary
+        /// route and none of what it did to that one.
+        /// </remarks>
+        private static readonly Dictionary<FloorKind, int> PerCycleLimit = new()
+        {
+            [FloorKind.Arena] = 2
+        };
+
         /// <summary>How many levels have to pass between one forge and the next.</summary>
         /// <remarks>
         /// Counted from the forges the group took, not the ones it was offered, since
@@ -99,7 +121,7 @@ namespace StardewRoguelike.Run
         /// the last boss. A cycle that allows three springs is a cycle with one
         /// decision in it repeated; dropping what has been used makes each choice
         /// spend itself, so a cycle reads as a route rather than four draws from the
-        /// same bag.
+        /// same bag, up to the allowance in <see cref="PerCycleLimit"/>.
         ///
         /// The plan hands over its whole pool, so dropping a kind promotes the next
         /// one rather than shortening the menu. If even that is exhausted - a long
@@ -112,7 +134,12 @@ namespace StardewRoguelike.Run
             if (planned.Length <= 1)
                 return planned;
 
-            HashSet<FloorKind> blocked = TakenThisCycle(level);
+            Dictionary<FloorKind, int> taken = TakenThisCycle(level);
+
+            HashSet<FloorKind> blocked = taken
+                .Where(entry => entry.Value >= LimitFor(entry.Key))
+                .Select(entry => entry.Key)
+                .ToHashSet();
 
             // One quiet floor per cycle, so taking either of them spends both.
             if (Friendly.Any(blocked.Contains))
@@ -146,14 +173,14 @@ namespace StardewRoguelike.Run
             return false;
         }
 
-        /// <summary>The kinds the group has chosen since the last boss floor.</summary>
+        /// <summary>How many of each kind the group has chosen since the last boss floor.</summary>
         /// <remarks>
         /// Read back off the route rather than counted forward, so it gives the same
         /// answer on a farmhand that joined mid-run as on the host.
         /// </remarks>
-        private static HashSet<FloorKind> TakenThisCycle(int level)
+        private static Dictionary<FloorKind, int> TakenThisCycle(int level)
         {
-            HashSet<FloorKind> taken = new();
+            Dictionary<FloorKind, int> taken = new();
 
             for (int earlier = level - 1; earlier >= 1; earlier--)
             {
@@ -161,10 +188,19 @@ namespace StardewRoguelike.Run
                     break;
 
                 if (Store.TryGetValue(earlier, out int chosen))
-                    taken.Add((FloorKind)chosen);
+                {
+                    FloorKind kind = (FloorKind)chosen;
+                    taken[kind] = taken.GetValueOrDefault(kind) + 1;
+                }
             }
 
             return taken;
+        }
+
+        /// <summary>How many of <paramref name="kind"/> one cycle may hold.</summary>
+        private static int LimitFor(FloorKind kind)
+        {
+            return PerCycleLimit.GetValueOrDefault(kind, 1);
         }
 
         /// <summary>Which combat floor an Arena at <paramref name="level"/> leads to.</summary>
