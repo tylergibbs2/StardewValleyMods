@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -24,6 +24,15 @@ namespace StardewRoguelike.ChallengeFloors
         /// bunch up.
         /// </summary>
         internal static readonly Rectangle Arena = new(8, 12, 21, 5);
+
+        /// <summary>
+        /// How far inside the arena a target turns back.
+        ///
+        /// The arena is a tile wider than a frame centred on it can show, so a target
+        /// walking right to the edge ends up half off the screen. It turns a tile
+        /// early instead.
+        /// </summary>
+        internal const int PatrolMargin = 1;
 
         private readonly Vector2 upperLeftCorner = new(Arena.Left, Arena.Top);
 
@@ -208,19 +217,58 @@ namespace StardewRoguelike.ChallengeFloors
         }
 
         /// <summary>
-        /// Parks the camera on the arena so the whole shooting field is on screen.
+        /// Decides whether the camera belongs on the arena or on the player.
+        ///
+        /// It used to be parked on the arena from the moment the floor loaded, which
+        /// left the player coming down the ladder somewhere off the bottom of a frame
+        /// they could not move - unable to see themselves, or the chest holding the
+        /// slingshot they had come for. It also stayed parked once the fight was won,
+        /// hiding the reward.
+        ///
+        /// So it is only taken while there is something to aim with and something to
+        /// aim at. Walking in and clearing up afterwards are the player's own.
+        /// </summary>
+        private void UpdateCamera()
+        {
+            if (IsOver || !HoldingSlingshot())
+            {
+                ReleaseCamera();
+                return;
+            }
+
+            FrameArena();
+        }
+
+        private static bool HoldingSlingshot()
+        {
+            foreach (Item item in Game1.player.Items)
+            {
+                if (item is Slingshot)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parks the camera so the whole shooting field is on screen.
         ///
         /// Re-applied every tick rather than set once: warping, a death or anything
         /// else that moves the player will put the camera back on them, and the point
         /// of this floor is that the targets are all visible at once rather than
         /// found by walking around after them.
+        ///
+        /// Centred on the foot of the arena rather than its middle, so that the band
+        /// of targets sits in the upper half of the screen and the ground the player
+        /// shoots from sits in the lower. Centring on the middle put the targets in
+        /// the centre of the frame and the player below its edge.
         /// </summary>
         private static void FrameArena()
         {
             Game1.viewportFreeze = true;
             Game1.viewport.Location = new xTile.Dimensions.Location(
                 Arena.Center.X * 64 - Game1.viewport.Width / 2,
-                Arena.Center.Y * 64 - Game1.viewport.Height / 2);
+                Arena.Bottom * 64 - Game1.viewport.Height / 2);
         }
 
         /// <summary>Hands the camera back to the player.</summary>
@@ -234,7 +282,7 @@ namespace StardewRoguelike.ChallengeFloors
             // Before the host gate: the camera is this machine's business, and the
             // host runs this for mines it is not standing in.
             if (Game1.currentLocation == mine)
-                FrameArena();
+                UpdateCamera();
 
             if (!Context.IsMainPlayer || !Game1.shouldTimePass() || IsOver)
                 return;
@@ -376,9 +424,9 @@ namespace StardewRoguelike.ChallengeFloors
                 // Turn at the edges as well as on the timer. Without this the patrol
                 // walks targets out of the framed arena and they cannot be seen, let
                 // alone shot.
-                if (Position.X <= SlingshotAim.Arena.Left * 64f)
+                if (Position.X <= (SlingshotAim.Arena.Left + SlingshotAim.PatrolMargin) * 64f)
                     isMovingRight = true;
-                else if (Position.X >= SlingshotAim.Arena.Right * 64f)
+                else if (Position.X >= (SlingshotAim.Arena.Right - SlingshotAim.PatrolMargin) * 64f)
                     isMovingRight = false;
 
                 if (isMovingRight)
