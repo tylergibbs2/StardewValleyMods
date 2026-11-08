@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -55,9 +56,43 @@ namespace StardewRoguelike.ChallengeFloors
         /// </summary>
         private const float Smoothing = 0.12f;
 
+        /// <summary>
+        /// The row the player has to walk up to before the camera takes the floor.
+        ///
+        /// Below this they are fetching the slingshot and finding their feet, and the
+        /// camera is theirs. Crossing it is stepping up to shoot, which is when being
+        /// able to see the whole field starts to matter more than being able to see
+        /// where you are standing.
+        /// </summary>
+        private const int FiringLineRow = 22;
+
+        /// <summary>
+        /// How far back over the line the player has to step before the camera is
+        /// handed back, so that standing on it does not flicker.
+        /// </summary>
+        private const float FiringLineSlack = 64f;
+
+        /// <summary>Tiles of air left around the arena when framing it.</summary>
+        private const float ZoomMarginTiles = 2f;
+
+        /// <summary>Tiles of ground below the arena the player shoots from.</summary>
+        private const float ZoomGroundTiles = 6f;
+
+        /// <summary>As far out as the floor will ever pull the camera.</summary>
+        private const float MinimumZoom = 0.5f;
+
+        /// <summary>How much of the way to its mark the zoom closes each tick.</summary>
+        private const float ZoomSmoothing = 0.1f;
+
+        /// <summary>Close enough to the mark to stop, in zoom levels.</summary>
+        private const float ZoomSettled = 0.004f;
+
         /// <summary>Where the camera is now, in world pixels, before rounding.</summary>
         private float cameraX;
         private float cameraY;
+
+        /// <summary>The zoom the floor is asking for, eased toward its mark.</summary>
+        private float zoom;
 
         /// <summary>Whether the camera is this floor's rather than the player's.</summary>
         private bool holdingCamera;
@@ -258,19 +293,38 @@ namespace StardewRoguelike.ChallengeFloors
         /// </summary>
         private void UpdateCamera()
         {
-            if (IsOver || !HoldingSlingshot())
-            {
-                ReleaseCamera();
-                return;
-            }
+            bool wants = !IsOver && HoldingSlingshot() && AtFiringLine();
 
-            // Picked up from where the camera already is, so the first frame of
-            // holding it changes nothing and the glide below does the moving.
-            if (!holdingCamera)
+            // Nothing to do and nothing to undo.
+            if (!wants && !holdingCamera)
+                return;
+
+            // Picked up from where the camera and the zoom already are, so the first
+            // frame of holding them changes nothing and the easing does the moving.
+            if (wants && !holdingCamera)
             {
                 cameraX = Game1.viewport.X + Game1.viewport.Width / 2f;
                 cameraY = Game1.viewport.Y + Game1.viewport.Height / 2f;
+                zoom = Game1.options.baseZoomLevel;
                 holdingCamera = true;
+            }
+
+            float restingZoom = Game1.options.desiredBaseZoomLevel;
+            float targetZoom = wants ? ArenaZoom() : restingZoom;
+
+            zoom += (targetZoom - zoom) * ZoomSmoothing;
+            ApplyZoom();
+
+            if (!wants)
+            {
+                // On the way back out. The zoom keeps easing home while the camera
+                // follows the player again, and the floor lets go once the two agree.
+                Game1.viewportFreeze = false;
+
+                if (Math.Abs(zoom - restingZoom) < ZoomSettled)
+                    ReleaseCamera();
+
+                return;
             }
 
             Game1.viewportFreeze = true;
@@ -281,6 +335,54 @@ namespace StardewRoguelike.ChallengeFloors
             Game1.viewport.Location = new xTile.Dimensions.Location(
                 (int)(cameraX - Game1.viewport.Width / 2f),
                 (int)(cameraY - Game1.viewport.Height / 2f));
+        }
+
+        /// <summary>
+        /// Whether the player has stepped up to shoot.
+        ///
+        /// The line sits a tile lower on the way back than on the way in, so standing
+        /// on it does not hand the camera to and fro every other frame.
+        /// </summary>
+        private bool AtFiringLine()
+        {
+            float line = FiringLineRow * 64f + (holdingCamera ? FiringLineSlack : 0f);
+
+            return Game1.player.Position.Y <= line;
+        }
+
+        /// <summary>
+        /// How far out the camera has to pull for the arena and the ground below it
+        /// to fit on the screen.
+        ///
+        /// Measured rather than picked, so it is right whatever size the window is
+        /// and whatever the player has their own zoom set to. It will only ever pull
+        /// out: a player who plays zoomed further out than this keeps their own view.
+        /// </summary>
+        private static float ArenaZoom()
+        {
+            Viewport screen = Game1.graphics.GraphicsDevice.Viewport;
+
+            float wanted = (Arena.Width + ZoomMarginTiles * 2) * 64f;
+            float tall = (Arena.Height + ZoomGroundTiles + ZoomMarginTiles) * 64f;
+
+            float fit = Math.Min(screen.Width / wanted, screen.Height / tall);
+
+            return Math.Clamp(fit, MinimumZoom, Game1.options.desiredBaseZoomLevel);
+        }
+
+        /// <summary>
+        /// Pushes the eased zoom at the game, when it has moved enough to be worth it.
+        ///
+        /// refreshWindowSettings resizes the viewport and the lightmap, so it is not
+        /// called for changes too small to see.
+        /// </summary>
+        private void ApplyZoom()
+        {
+            if (Math.Abs(Game1.options.baseZoomLevel - zoom) < 0.002f)
+                return;
+
+            Game1.options.baseZoomLevel = zoom;
+            Game1.game1.refreshWindowSettings();
         }
 
         /// <summary>
@@ -338,6 +440,12 @@ namespace StardewRoguelike.ChallengeFloors
         }
 
         /// <summary>Hands the camera back to the player.</summary>
+        /// <summary>
+        /// Hands the camera and the zoom back, at once rather than over time.
+        ///
+        /// Called when the floor is done with them, and from Dispose - a player who
+        /// has walked out of the floor must not be left looking at it from a distance.
+        /// </summary>
         private void ReleaseCamera()
         {
             if (!holdingCamera)
@@ -345,6 +453,13 @@ namespace StardewRoguelike.ChallengeFloors
 
             holdingCamera = false;
             Game1.viewportFreeze = false;
+
+            zoom = Game1.options.desiredBaseZoomLevel;
+            if (Game1.options.baseZoomLevel != zoom)
+            {
+                Game1.options.baseZoomLevel = zoom;
+                Game1.game1.refreshWindowSettings();
+            }
         }
 
         public override void Update(MineShaft mine, GameTime time)
