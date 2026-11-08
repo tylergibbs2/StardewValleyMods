@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Locations;
@@ -44,7 +44,19 @@ namespace StardewRoguelike.Patches
                     targetTrack = Game1.getMusicTrackName();
             }
 
-            if (!Game1.currentSong.IsPlaying || string.IsNullOrEmpty(targetTrack))
+            // currentSong is null whenever nothing is playing, which is precisely what
+            // the line below leaves behind: changeMusicTrack("none") stops the cue and
+            // clears it. Reading IsPlaying off it threw, so the first time this took
+            // that branch it broke itself for the rest of the run - the throw happens
+            // before the track is ever changed, and checkForMusic is called from
+            // Game1.UpdateOther, so it threw out of the update loop every frame after.
+            //
+            // BossManager.Death walks straight into it: it silences the music and
+            // calls checkForMusic on the next line, so a boss kill set this off every
+            // time, and the reward chest it spawns afterwards was never reached.
+            bool playing = Game1.currentSong?.IsPlaying ?? false;
+
+            if (!playing || string.IsNullOrEmpty(targetTrack))
                 Game1.changeMusicTrack("none");
 
             if (targetTrack != Game1.getMusicTrackName() || Game1.getMusicTrackName().EndsWith("_Ambient"))
