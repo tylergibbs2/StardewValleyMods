@@ -28,7 +28,11 @@ namespace StardewRoguelike.Mode
 
         public void Deactivate()
         {
-            ReleaseRunReferences();
+            // The sweep below reaches every PerScreen field and every virtual
+            // property table, which between them hold everything the mod keeps for a
+            // run bar one thing: the spectator toolbar is a menu sitting in
+            // Game1.onScreenMenus, and only SpectatorMode knows how to take it out.
+            SpectatorMode.Reset();
 
             foreach (object container in StateContainers())
             {
@@ -42,29 +46,6 @@ namespace StardewRoguelike.Mode
                         break;
                 }
             }
-        }
-
-        /// <summary>
-        /// Drops the plain statics that outlive a run.
-        ///
-        /// The reflection below only finds PerScreen fields and the virtual property
-        /// tables. These are ordinary statics holding live objects - menus built for
-        /// the last run, and a Farmer from a save that has since been unloaded - and
-        /// nothing else lets go of them when the mode turns off.
-        /// </summary>
-        private static void ReleaseRunReferences()
-        {
-            Merchant.CurrentShop = null;
-            Merchant.CurrentSeedShop = null;
-            Merchant.CurrentHatBoard = null;
-            Merchant.CurseToAdd = null;
-
-            Perks.CurrentMenu = null;
-            ForgeFloor.CurrentForge = null;
-
-            SpectatorMode.Reset();
-
-            ModEntry.Invincible = false;
         }
 
         private static void Clear(object container)
@@ -83,14 +64,14 @@ namespace StardewRoguelike.Mode
 
             if (definition == typeof(PerScreen<>))
             {
-                // Assigning the default re-seeds every screen's copy, which is what
-                // "no run in progress" looks like for all of these.
-                PropertyInfo? value = type.GetProperty("Value");
-                if (value?.CanWrite == true)
-                {
-                    Type held = type.GetGenericArguments()[0];
-                    value.SetValue(container, held.IsValueType ? Activator.CreateInstance(held) : null);
-                }
+                // ResetAllScreens, not the Value setter. Value only ever reaches the
+                // screen the mode switch happened to run under, so in split-screen
+                // the other screen kept a finished run's floor, perks and menus. It
+                // also drops each screen back to the field's own factory rather than
+                // to null or zero, which is what the author declared "no run" to
+                // mean - PerScreen<int> TrueMaxHP reads the farmer's max health
+                // again, instead of becoming nought.
+                type.GetMethod("ResetAllScreens")?.Invoke(container, Array.Empty<object>());
             }
         }
 
