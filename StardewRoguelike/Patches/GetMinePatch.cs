@@ -1,4 +1,4 @@
-using StardewValley.Locations;
+﻿using StardewValley.Locations;
 using System;
 using System.Reflection;
 using StardewRoguelike.VirtualProperties;
@@ -64,7 +64,7 @@ namespace StardewRoguelike.Patches
                 case FloorKind.Arena:
                     newMine.get_MineShaftIsChallengeFloor().Value = true;
                     newMine.get_MineShaftChallengeFloor().Value =
-                        ChallengeFloor.Create(RunPlan.ArenaFor(requestedLevel));
+                        ChallengeFloor.Create(RunRoute.ArenaFor(requestedLevel));
                     break;
 
                 case FloorKind.Shrine:

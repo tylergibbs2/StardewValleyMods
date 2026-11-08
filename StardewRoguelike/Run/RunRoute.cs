@@ -4,6 +4,7 @@ using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Network;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -156,6 +157,27 @@ namespace StardewRoguelike.Run
             }
 
             return taken;
+        }
+
+        /// <summary>Which combat floor an Arena at <paramref name="level"/> leads to.</summary>
+        /// <remarks>
+        /// The debug override is read here, beside the one in <see cref="KindFor"/>,
+        /// rather than in the plan - which answers from the seed alone and should not
+        /// know about debug commands.
+        ///
+        /// Both halves are needed. KindFor turns a forced index into an Arena; without
+        /// this, rdebug forcechallenge gave an endless run of arenas of whatever kind
+        /// the seed happened to name, which is not what it was asked for.
+        /// </remarks>
+        public static ChallengeFloor.ChallengeType ArenaFor(int level)
+        {
+            if (DebugCommands.ForcedChallengeIndex == -1)
+                return RunPlan.ArenaFor(level);
+
+            ChallengeFloor.ChallengeType[] all = Enum.GetValues<ChallengeFloor.ChallengeType>();
+            int index = Math.Clamp(DebugCommands.ForcedChallengeIndex, 0, all.Length - 1);
+
+            return all[index];
         }
 
         /// <summary>Whether <paramref name="mine"/> is a floor the shrine stands on.</summary>
