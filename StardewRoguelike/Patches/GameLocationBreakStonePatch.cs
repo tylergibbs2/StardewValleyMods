@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewRoguelike.HatQuests;
@@ -12,6 +12,9 @@ namespace StardewRoguelike.Patches
     {
         public static void Postfix(GameLocation __instance, string stoneId, int x, int y, Farmer who, Random r)
         {
+            // Every rock, not only the gold: Prospector is about breaking stone.
+            Keystones.OnStoneBroken(__instance, x, y, who);
+
             // gold ore
             if (stoneId != "764" || who != Game1.player)
                 return;

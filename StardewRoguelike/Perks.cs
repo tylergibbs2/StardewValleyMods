@@ -59,6 +59,16 @@ namespace StardewRoguelike
             // sword about forty per cent harder.
             Volatile         = 28,
             Momentum         = 29,
+            Spite            = 32,
+            LastStand        = 33,
+            Flurry           = 34,
+            Prospector       = 35,
+
+            // Fine perks, but not identities: a kill that shoots the next monster
+            // and a kill that sometimes leaves a bomb are both more damage on a
+            // kill, and the player does nothing differently for having them. They
+            // sit with the other rare perks so that the pool a run draws its shape
+            // from holds only things that shape a run.
             Ricochet         = 30,
             Bombardier       = 31
         }
@@ -83,7 +93,8 @@ namespace StardewRoguelike
         public static readonly List<PerkType> RarePerks = new()
         {
             PerkType.Acrobat, PerkType.Desperado, PerkType.RabbitsFoot,
-            PerkType.TurtleShell, PerkType.Leech
+            PerkType.TurtleShell, PerkType.Leech,
+            PerkType.Ricochet, PerkType.Bombardier
         };
 
         /// <summary>
@@ -94,10 +105,21 @@ namespace StardewRoguelike
         /// supporting that. After that they join the ordinary draw, rarely, so a
         /// second one is possible but not expected.
         /// </summary>
+        /// <remarks>
+        /// One for each way of playing, rather than one for each effect. They used to
+        /// all go off on a kill, which meant all four wanted the same support - more
+        /// damage, faster kills, more triggers - so four keystones were one archetype
+        /// wearing four coats. These answer to different verbs, so each one makes a
+        /// different part of the perk list worth having.
+        /// </remarks>
         public static readonly List<PerkType> KeystonePerks = new()
         {
-            PerkType.Volatile, PerkType.Momentum,
-            PerkType.Ricochet, PerkType.Bombardier
+            PerkType.Volatile,    // on a kill
+            PerkType.Momentum,    // on a run of kills
+            PerkType.Spite,       // on being hit
+            PerkType.LastStand,   // on being nearly dead
+            PerkType.Flurry,      // on not being hit
+            PerkType.Prospector   // on breaking rock
         };
 
         private static readonly PerScreen<PerkMenu?> ScreenCurrentMenu = new(() => null);
@@ -227,6 +249,10 @@ namespace StardewRoguelike
                 PerkType.Deconstructor => I18n.PerkTypeName_Deconstructor(),
                 PerkType.Gamer => I18n.PerkTypeName_Gamer(),
                 PerkType.Tiller => I18n.PerkTypeName_Tiller(),
+                PerkType.Spite => I18n.PerkTypeName_Spite(),
+                PerkType.LastStand => I18n.PerkTypeName_LastStand(),
+                PerkType.Flurry => I18n.PerkTypeName_Flurry(),
+                PerkType.Prospector => I18n.PerkTypeName_Prospector(),
                 PerkType.Volatile => I18n.PerkTypeName_Volatile(),
                 PerkType.Momentum => I18n.PerkTypeName_Momentum(),
                 PerkType.Ricochet => I18n.PerkTypeName_Ricochet(),
@@ -267,6 +293,10 @@ namespace StardewRoguelike
                 PerkType.Deconstructor => I18n.PerkTypeDesc_Deconstructor(),
                 PerkType.Gamer => I18n.PerkTypeDesc_Gamer(),
                 PerkType.Tiller => I18n.PerkTypeDesc_Tiller(),
+                PerkType.Spite => I18n.PerkTypeDesc_Spite(),
+                PerkType.LastStand => I18n.PerkTypeDesc_LastStand(),
+                PerkType.Flurry => I18n.PerkTypeDesc_Flurry(),
+                PerkType.Prospector => I18n.PerkTypeDesc_Prospector(),
                 PerkType.Volatile => I18n.PerkTypeDesc_Volatile(),
                 PerkType.Momentum => I18n.PerkTypeDesc_Momentum(),
                 PerkType.Ricochet => I18n.PerkTypeDesc_Ricochet(),
@@ -284,7 +314,7 @@ namespace StardewRoguelike
         /// </summary>
         public static Texture2D GetPerkIconTexture(PerkType perkType)
         {
-            return KeystonePerks.Contains(perkType) ? Game1.objectSpriteSheet : Game1.mouseCursors;
+            return KeystoneIcon(perkType) is null ? Game1.mouseCursors : Game1.objectSpriteSheet;
         }
 
         public static Rectangle GetPerkSourceRect(PerkType perkType)
@@ -299,7 +329,11 @@ namespace StardewRoguelike
         private static int? KeystoneIcon(PerkType perkType) => perkType switch
         {
             PerkType.Volatile => 286,    // cherry bomb
-            PerkType.Momentum => 395,    // coffee
+            PerkType.Momentum => 253,    // triple shot espresso
+            PerkType.Spite => 769,       // void essence
+            PerkType.LastStand => 881,   // bone fragment
+            PerkType.Flurry => 226,      // spicy eel
+            PerkType.Prospector => 386,  // iridium ore
             PerkType.Ricochet => 441,    // explosive ammo
             PerkType.Bombardier => 287,  // bomb
             _ => null

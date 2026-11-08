@@ -103,6 +103,11 @@ namespace StardewRoguelike.Patches
                 if (HatQuest.HasBuffFor(HatQuestType.SQUIRE_HELMET))
                     damage = (int)Math.Round(damage * 0.75f);
 
+                // After everything that reduces it and before it is spent, so Spite
+                // banks what actually got through and Flurry's run ends on a real
+                // hit rather than on one the player shrugged off.
+                Keystones.OnPlayerHurt(damage);
+
                 if (Curse.HasCurse(CurseType.DamageOverTime))
                 {
                     damage = (int)Math.Round(damage * 1.5f);

@@ -3,6 +3,7 @@ using StardewValley;
 using StardewValley.Buffs;
 using StardewValley.Monsters;
 using StardewValley.Projectiles;
+using StardewValley.Tools;
 using System;
 using System.Collections.Generic;
 
@@ -37,6 +38,33 @@ namespace StardewRoguelike
 
         /// <summary>How far Ricochet looks for something else to hit, in tiles.</summary>
         private const int RicochetRange = 12;
+
+        /// <summary>How much of a hit Spite keeps, per level, and the ceiling on it.</summary>
+        private const int SpiteCap = 60;
+
+        /// <summary>What Last Stand counts as nearly dead, and what it pays.</summary>
+        private const float LastStandThreshold = 1f / 3f;
+
+        /// <summary>How many unhit blows Flurry will count.</summary>
+        private const int FlurryMaxStreak = 10;
+
+        /// <summary>What each blow of a Flurry adds, as a share of the weapon's damage.</summary>
+        private const float FlurryStep = 0.06f;
+
+        /// <summary>The same, with the weapon it was written for.</summary>
+        private const float FlurryDaggerStep = 0.12f;
+
+        /// <summary>How hard a rock bursts for Prospector, per level.</summary>
+        private const int ProspectorDamage = 30;
+
+        /// <summary>How likely a broken rock gives up something extra, per level.</summary>
+        private const double ProspectorBonusChance = 0.25;
+
+        /// <summary>Damage taken since the last blow, waiting to be handed back.</summary>
+        private static int banked;
+
+        /// <summary>Blows landed since the player was last touched.</summary>
+        private static int streak;
 
         /// <summary>Momentum's stack count, which decays with the buff.</summary>
         private static int momentumStacks;
@@ -201,11 +229,107 @@ namespace StardewRoguelike
                 effects: effects));
         }
 
-        /// <summary>Forgets the run's momentum. Called when a run begins.</summary>
+        /// <summary>
+        /// Banks what the player just took, and ends their run of untouched blows.
+        /// </summary>
+        /// <param name="damage">What got through, after everything that reduces it.</param>
+        public static void OnPlayerHurt(int damage)
+        {
+            // Flurry is a run of blows without being hit. This is being hit.
+            streak = 0;
+
+            int spite = Perks.PerkLevel(Perks.PerkType.Spite);
+            if (spite == 0 || damage <= 0)
+                return;
+
+            banked = Math.Min(banked + damage * spite, SpiteCap * spite);
+        }
+
+        /// <summary>Counts a blow that landed, for Flurry.</summary>
+        public static void OnMonsterHit()
+        {
+            if (Perks.HasPerk(Perks.PerkType.Flurry))
+                streak = Math.Min(streak + 1, FlurryMaxStreak);
+        }
+
+        /// <summary>
+        /// Puts the keystones that answer to the player's own state into a blow.
+        /// </summary>
+        /// <remarks>
+        /// Three of them meet here because all three change what a swing is worth
+        /// rather than what happens after it: what the player has taken, how long
+        /// they have gone untouched, and how close they are to dying.
+        /// </remarks>
+        public static void ModifyOutgoingDamage(ref int minDamage, ref int maxDamage)
+        {
+            // Last Stand multiplies, so it is applied to the weapon's own numbers
+            // before anything is added to them.
+            int lastStand = Perks.PerkLevel(Perks.PerkType.LastStand);
+            if (lastStand > 0 && Game1.player.health <= Game1.player.maxHealth * LastStandThreshold)
+            {
+                minDamage = (int)(minDamage * (1 + lastStand));
+                maxDamage = (int)(maxDamage * (1 + lastStand));
+            }
+
+            int bonus = 0;
+
+            // Spite hands back everything taken since the last blow, once.
+            if (banked > 0)
+            {
+                bonus += banked;
+                banked = 0;
+            }
+
+            int flurry = Perks.PerkLevel(Perks.PerkType.Flurry);
+            if (flurry > 0 && streak > 0)
+            {
+                // Worth twice as much in the hand it was written for, which is what
+                // makes the weapon part of the build rather than whatever was found
+                // most recently.
+                float step = HoldingDagger() ? FlurryDaggerStep : FlurryStep;
+                bonus += (int)(maxDamage * step * streak * flurry);
+            }
+
+            minDamage += bonus;
+            maxDamage += bonus;
+        }
+
+        private static bool HoldingDagger()
+        {
+            return Game1.player.CurrentTool is MeleeWeapon weapon
+                   && weapon.type.Value == MeleeWeapon.dagger;
+        }
+
+        /// <summary>
+        /// Prospector: the rock goes off, and gives up more of what was in it.
+        /// </summary>
+        public static void OnStoneBroken(GameLocation location, int x, int y, Farmer who)
+        {
+            int level = Perks.PerkLevel(Perks.PerkType.Prospector);
+            if (level == 0 || who != Game1.player)
+                return;
+
+            // Objects are spared: a burst that broke the rock beside it would clear a
+            // floor on its own, and would take a chest with it on a vault floor.
+            location.explode(
+                new Vector2(x, y),
+                1,
+                who,
+                damageFarmers: false,
+                damage_amount: ProspectorDamage * level,
+                destroyObjects: false);
+
+            if (Game1.random.NextDouble() < ProspectorBonusChance * level)
+                Game1.createMultipleObjectDebris("382", x, y, 1, who.UniqueMultiplayerID, location);
+        }
+
+        /// <summary>Forgets what the run was carrying. Called when a run begins.</summary>
         public static void Reset()
         {
             momentumStacks = 0;
             momentumRenewed = 0;
+            banked = 0;
+            streak = 0;
         }
     }
 }

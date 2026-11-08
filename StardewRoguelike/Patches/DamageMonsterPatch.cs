@@ -13,8 +13,10 @@ namespace StardewRoguelike.Patches
     ]
     internal class DamageMonsterPatch
     {
-        public static bool Prefix(ref float knockBackModifier, ref float critChance, ref float critMultiplier)
+        public static bool Prefix(ref int minDamage, ref int maxDamage, ref float knockBackModifier, ref float critChance, ref float critMultiplier)
         {
+            Keystones.ModifyOutgoingDamage(ref minDamage, ref maxDamage);
+
             critMultiplier *= (float)Math.Pow(1.2f, Perks.PerkLevel(Perks.PerkType.Precision));
             critMultiplier += 1.5f * Perks.PerkLevel(Perks.PerkType.Desperado);
 
@@ -36,6 +38,9 @@ namespace StardewRoguelike.Patches
         {
             if (__result)
             {
+                // A blow that landed, which is what a flurry counts.
+                Keystones.OnMonsterHit();
+
                 if (Curse.HasCurse(CurseType.BrittleCrown))
                 {
                     int avg = (maxDamage + minDamage) / 2;
