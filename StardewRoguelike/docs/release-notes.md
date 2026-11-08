@@ -2,6 +2,37 @@
 
 # Release notes
 
+## 1.3.0
+
+Released on 8 November 2026 for SMAPI 4.0.0 or later.
+
+This release makes the way down a decision. The ladder asks where to go
+next, and the floors it offers are different from each other. It also
+corrects faults that stopped the buff bar, the boss rewards and the
+forge.
+
+- Add: The exit asks where to go next. It offers three kinds of floor and tells you what each one gives. You can close it and keep playing the floor.
+- Add: The shrine floor. Clear the floor, then give a curse to choose a perk.
+- Add: The Dark Mineshaft floor. It has no light, more stone, much more of the stone holds gems, and more monsters.
+- Add: The command `rdebug forcefloor`. It makes every floor one kind.
+- Adjust: A boss cycle does not offer the same kind of floor twice. It also holds one quiet floor only: a hot spring or an unguarded chest, not both.
+- Adjust: The eight combat floors come in a random order. All eight come before any of them comes again.
+- Adjust: The merchant floors no longer sell perks, and Gil no longer speaks. Perks come from the shrine.
+- Adjust: A shrine floor must be cleared before you can leave it. It holds more monsters and grows no ore.
+- Adjust: The slingshot floor moves the camera when you step up to the firing line, and moves it back when you step away.
+- Fix: The buff bar showed nothing. The mod put the icons off the right-hand edge of the screen. Curses, and all other buffs, were not visible.
+- Fix: A boss gave no music, no reward chest and a late ladder. The mod gave an error when the boss died.
+- Fix: The forge did not work if you had no cinder shards. A forge floor gives none.
+- Fix: The forge menu showed the cinder shard cost.
+- Fix: Arc the Skeleton Mage stopped an attack to start another one, then finished the first one.
+- Fix: Nadith the Extinct could start two attacks at once after a meteor strike.
+- Fix: Telesto the Full Moon delayed a lightning strike after its warning mark.
+- Fix: Ozul the Shadow King delayed an arrow volley after its warning sound.
+- Fix: The perk list drew its lines in the wrong place and hid most of the list.
+- Fix: The ladder sound played when you clicked the ladder, not when you chose a floor.
+- Fix: A shrine took its curse when it opened. If you closed it without a choice, you kept the curse and got nothing.
+- Fix: The command `rdebug forcechallenge` gave a combat floor of the wrong kind.
+
 ## 1.2.2
 
 Released on 8 November 2026 for SMAPI 4.0.0 or later.
