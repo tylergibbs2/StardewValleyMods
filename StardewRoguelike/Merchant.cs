@@ -692,6 +692,9 @@ namespace StardewRoguelike
                         return false;
 
                     PickAPath pickAPath = (PickAPath)mine.get_MineShaftChallengeFloor().Value;
+                    if (pickAPath.CurrentShop is null)
+                        return false;
+
                     Game1.activeClickableMenu = pickAPath.CurrentShop;
                     return true;
 

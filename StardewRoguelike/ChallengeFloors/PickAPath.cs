@@ -2,6 +2,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 using StardewRoguelike.Extensions;
 using StardewRoguelike.Patches;
 using StardewRoguelike.TerrainFeatures;
@@ -47,7 +48,33 @@ namespace StardewRoguelike.ChallengeFloors
 
         private DwarfGate gateRight = null!;
 
-        private GambaMenu? gambaMenu = null;
+        private readonly PerScreen<GambaMenu?> ScreenGambaMenu = new(() => null);
+
+        private readonly PerScreen<CurseType?> ScreenCurseToAdd = new(() => null);
+
+        private readonly PerScreen<ShopMenu?> ScreenCurrentShop = new(() => null);
+
+        /// <summary>
+        /// The wheel, the curse on offer and the discounted shop, each belonging to
+        /// the player on this screen.
+        ///
+        /// PerScreen on instance fields rather than static ones: there is one
+        /// PickAPath object per mine level, and PlayerEntered fills these in once for
+        /// every local player who walks in. As plain fields two split-screen players
+        /// shared a single set, so the second to arrive replaced the first's curse
+        /// offer and shop - and since a ShopMenu binds its inventory pane to
+        /// Game1.player.Items when it is built, the first player's purchases then
+        /// landed in the second player's bag.
+        ///
+        /// Over the network this was already right: the challenge floor is held in a
+        /// NetRef, so every machine deserialises its own PickAPath carrying its own
+        /// copy of these.
+        /// </summary>
+        private GambaMenu? gambaMenu
+        {
+            get => ScreenGambaMenu.Value;
+            set => ScreenGambaMenu.Value = value;
+        }
 
         private bool initialized = false;
 
@@ -57,9 +84,17 @@ namespace StardewRoguelike.ChallengeFloors
 
         private int tickCounter = 0;
 
-        public CurseType? CurseToAdd { get; private set; }
+        public CurseType? CurseToAdd
+        {
+            get => ScreenCurseToAdd.Value;
+            private set => ScreenCurseToAdd.Value = value;
+        }
 
-        public ShopMenu CurrentShop { get; private set; } = null!;
+        public ShopMenu? CurrentShop
+        {
+            get => ScreenCurrentShop.Value;
+            private set => ScreenCurrentShop.Value = value;
+        }
 
         public PickAPath() : base() { }
 
