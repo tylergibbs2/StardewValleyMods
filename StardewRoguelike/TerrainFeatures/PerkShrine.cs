@@ -31,13 +31,16 @@ namespace StardewRoguelike.TerrainFeatures
 
         private bool used = false;
 
-        /// <summary>
-        /// The two perks this shrine has offered, kept so that closing the menu and
-        /// coming back does not roll a new pair. The shrine makes one offer.
-        /// </summary>
-        private Perks.PerkType? offeredLeft;
-        private Perks.PerkType? offeredRight;
-        private bool hasOffered = false;
+        /// <summary>The level this shrine stands on, which names what it offers.</summary>
+        private int Level => Location is MineShaft mine ? Roguelike.GetLevelFromMineshaft(mine) : 0;
+
+        /// <summary>The two perks this shrine is offering this player.</summary>
+        /// <remarks>
+        /// Asked of the plan rather than rolled, so it is the same pair the exit menu
+        /// named on the floor above - and the same pair however many times the menu is
+        /// opened and closed.
+        /// </remarks>
+        public (Perks.PerkType? Left, Perks.PerkType? Right) Offer => Perks.GetShrineOffer(Level);
 
         /// <summary>Whether the floor has been told the shrine woke up.</summary>
         private bool announced = false;
@@ -167,16 +170,11 @@ namespace StardewRoguelike.TerrainFeatures
             // A choice rather than a random grant, which is what the merchant floors
             // used to give and is the more interesting half of taking a perk.
             //
-            // The same offer every time it is opened. The price is on the other end,
-            // in TakePayment, so walking away costs nothing - which would make a
-            // fresh pair of perks each time a re-roll for free.
-            PerkMenu menu = hasOffered
-                ? new PerkMenu(offeredLeft, offeredRight)
-                : new PerkMenu();
+            // The pair comes from the plan, so it is what the exit menu promised and
+            // does not change if the player closes this and opens it again.
+            (Perks.PerkType? left, Perks.PerkType? right) = Offer;
 
-            offeredLeft = menu.leftPerk;
-            offeredRight = menu.rightPerk;
-            hasOffered = true;
+            PerkMenu menu = new(left, right);
 
             menu.isActive = true;
             menu.informationUp = true;

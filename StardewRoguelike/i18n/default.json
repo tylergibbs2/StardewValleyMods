@@ -198,6 +198,8 @@
   "ExitChoice.BossNext": "The boss is next",
   "ExitChoice.Shrine": "Shrine",
   "ExitChoice.ShrineDesc": "Infested. Clear it, then trade a curse for a perk.",
+  "ExitChoice.ShrineOffer": "Holds {{first}} or {{second}}, for a curse.",
+  "ExitChoice.ShrineOfferOne": "Holds {{perk}}, for a curse.",
   "Shrine.NothingToOffer": "You already have every perk.",
   "Shrine.Dormant": "The shrine is dormant while monsters remain on this floor.",
   "Shrine.Ready": "The shrine is ready.",

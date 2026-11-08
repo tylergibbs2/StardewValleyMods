@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using StardewModdingAPI.Utilities;
 using StardewRoguelike.UI;
 using StardewValley;
@@ -219,6 +219,38 @@ namespace StardewRoguelike
                 perk = GetRandomPerk();
 
             return perk;
+        }
+
+        /// <summary>
+        /// The two perks a shrine on <paramref name="level"/> offers this player.
+        /// </summary>
+        /// <remarks>
+        /// The order comes from the seed, so it is the same answer every time it is
+        /// asked and the exit menu can name it before anyone has walked down there.
+        /// Which two of that order the player gets depends on what they already have,
+        /// which is theirs alone - two players at one shrine are owed different
+        /// offers, and each sees their own.
+        /// </remarks>
+        public static (PerkType?, PerkType?) GetShrineOffer(int level)
+        {
+            PerkType? first = null;
+            PerkType? second = null;
+
+            foreach (PerkType perk in Run.RunPlan.ShrineOrderFor(level))
+            {
+                if (ActivePerks.Contains(perk))
+                    continue;
+
+                if (first is null)
+                    first = perk;
+                else
+                {
+                    second = perk;
+                    break;
+                }
+            }
+
+            return (first, second);
         }
 
         public static (PerkType?, PerkType?) GetTwoRandomUniquePerks()

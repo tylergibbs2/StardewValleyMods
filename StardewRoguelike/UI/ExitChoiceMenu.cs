@@ -263,7 +263,7 @@ namespace StardewRoguelike.UI
                     new Vector2(option.bounds.X + TextInset, top + 20),
                     textRoom, Game1.textColor * alpha);
 
-                DrawFitted(b, FloorKindInfo.Description(kind), Game1.smallFont,
+                DrawFitted(b, FloorKindInfo.Description(kind, level), Game1.smallFont,
                     new Vector2(option.bounds.X + TextInset, top + 60),
                     textRoom, Game1.textColor * (0.8f * alpha));
 

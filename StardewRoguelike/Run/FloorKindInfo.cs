@@ -25,6 +25,33 @@ namespace StardewRoguelike.Run
             _ => I18n.ExitChoice_Boss()
         };
 
+        /// <summary>
+        /// What the floor at <paramref name="level"/> gives, named where it can be.
+        /// </summary>
+        /// <remarks>
+        /// A shrine says which two perks it is holding. Knowing the kind of a floor
+        /// is enough to choose between a fight and a heal, but it is not enough to
+        /// build anything: a player steering towards something has to be able to see
+        /// it from the floor above, or the route cannot serve the build.
+        /// </remarks>
+        public static string Description(FloorKind kind, int level)
+        {
+            if (kind != FloorKind.Shrine)
+                return Description(kind);
+
+            (Perks.PerkType? left, Perks.PerkType? right) = Perks.GetShrineOffer(level);
+
+            if (left is null)
+                return Description(kind);
+
+            if (right is null)
+                return I18n.ExitChoice_ShrineOfferOne(perk: Perks.GetPerkDisplayName(left.Value));
+
+            return I18n.ExitChoice_ShrineOffer(
+                first: Perks.GetPerkDisplayName(left.Value),
+                second: Perks.GetPerkDisplayName(right.Value));
+        }
+
         public static string Description(FloorKind kind) => kind switch
         {
             FloorKind.Normal => I18n.ExitChoice_NormalDesc(),

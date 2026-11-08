@@ -87,6 +87,93 @@ namespace StardewRoguelike.Run
         {
             builtForSeed = -1;
             arenaOrderSeed = -1;
+            shrineOrderSeed = -1;
+        }
+
+        /// <summary>
+        /// The order a shrine on <paramref name="level"/> will offer perks in.
+        ///
+        /// Every perk, once, most likely first. A shrine takes the first two of these
+        /// the player can still take, which keeps the offer fixed before anybody
+        /// reaches it: the exit menu names what is waiting, and naming it means it
+        /// cannot be rolled when the menu opens.
+        ///
+        /// Weighted the way the old roll was - a common perk is about twice as likely
+        /// to come up early as a rare one - but as an order rather than a draw, so
+        /// reading it twice gives the same answer.
+        /// </summary>
+        public static Perks.PerkType[] ShrineOrderFor(int level)
+        {
+            int seed = Roguelike.FloorRngSeed;
+
+            if (shrineOrderSeed != seed)
+            {
+                shrineOrders.Clear();
+                shrineOrderSeed = seed;
+            }
+
+            if (shrineOrders.TryGetValue(level, out Perks.PerkType[]? order))
+                return order;
+
+            order = BuildShrineOrder(seed, level);
+            shrineOrders[level] = order;
+
+            return order;
+        }
+
+        /// <summary>The orders built so far, by level.</summary>
+        private static readonly Dictionary<int, Perks.PerkType[]> shrineOrders = new();
+
+        /// <summary>The seed those were built for; -1 when nothing is built.</summary>
+        private static int shrineOrderSeed = -1;
+
+        /// <summary>Keeps the perk order off the streams the floors are drawn from.</summary>
+        private const int ShrineStream = 0x5A41;
+
+        /// <summary>
+        /// How much likelier a perk of each rarity is to come up early.
+        ///
+        /// The old roll picked a rarity at sixty, thirty and ten per cent and then
+        /// picked evenly inside it, which works out at about five to three to two per
+        /// perk once the pools are different sizes. These are those odds, as weights.
+        /// </summary>
+        private static int WeightOf(Perks.PerkType perk)
+        {
+            return Perks.GetPerkRarity(perk) switch
+            {
+                Perks.PerkRarity.Common => 5,
+                Perks.PerkRarity.Uncommon => 3,
+                _ => 2
+            };
+        }
+
+        private static Perks.PerkType[] BuildShrineOrder(int seed, int level)
+        {
+            // A stream of its own per level, so the order at one shrine says nothing
+            // about the order at the next and extending the floor plan cannot move it.
+            Random rng = new(seed ^ ShrineStream ^ (level * 7919));
+
+            List<Perks.PerkType> pool = new(Enum.GetValues<Perks.PerkType>());
+            List<Perks.PerkType> order = new(pool.Count);
+
+            while (pool.Count > 0)
+            {
+                int total = pool.Sum(WeightOf);
+                int roll = rng.Next(total);
+                int index = 0;
+
+                for (; index < pool.Count - 1; index++)
+                {
+                    roll -= WeightOf(pool[index]);
+                    if (roll < 0)
+                        break;
+                }
+
+                order.Add(pool[index]);
+                pool.RemoveAt(index);
+            }
+
+            return order.ToArray();
         }
 
         /// <summary>
