@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -65,7 +65,20 @@ namespace StardewRoguelike.UI
 
         public bool hasMovedSelection;
 
-        public PerkMenu()
+        /// <summary>
+        /// Called when a perk is taken, and not when the menu is closed without one.
+        ///
+        /// What something charges for a perk belongs on the end of this rather than
+        /// beside the call that opens the menu: the shrine used to take its curse as
+        /// it opened, so closing the menu without choosing left the player paid up
+        /// and empty handed.
+        /// </summary>
+        public Action? OnPerkChosen;
+
+        /// <param name="offeredLeft">A perk to offer instead of rolling one, if the
+        /// caller is re-opening an offer it has already made.</param>
+        /// <param name="offeredRight">The same, for the right-hand perk.</param>
+        public PerkMenu(Perks.PerkType? offeredLeft = null, Perks.PerkType? offeredRight = null)
             : base(Game1.uiViewport.Width / 2 - 384, Game1.uiViewport.Height / 2 - 256, 768, 512)
         {
             isActive = true;
@@ -95,7 +108,11 @@ namespace StardewRoguelike.UI
                 leftNeighborID = region_leftProfession
             };
 
-            var (perk1, perk2) = Perks.GetTwoRandomUniquePerks();
+            // A caller that can be returned to hands back what it offered before, so
+            // closing the menu and opening it again is not a free re-roll.
+            var (perk1, perk2) = offeredLeft.HasValue || offeredRight.HasValue
+                ? (offeredLeft, offeredRight)
+                : Perks.GetTwoRandomUniquePerks();
             if (perk1.HasValue)
                 leftPerk = perk1.Value;
             if (perk2.HasValue)
@@ -217,6 +234,7 @@ namespace StardewRoguelike.UI
                             isActive = false;
                             informationUp = false;
                             alreadyUsed = true;
+                            OnPerkChosen?.Invoke();
                         }
                     }
                     else if (Game1.getMouseX() > xPositionOnScreen + width / 2 && Game1.getMouseX() < xPositionOnScreen + width && rightPerk.HasValue)
@@ -228,6 +246,7 @@ namespace StardewRoguelike.UI
                             isActive = false;
                             informationUp = false;
                             alreadyUsed = true;
+                            OnPerkChosen?.Invoke();
                         }
                     }
                 }

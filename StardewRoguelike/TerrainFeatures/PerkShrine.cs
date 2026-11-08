@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewRoguelike.UI;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.TerrainFeatures;
@@ -29,6 +30,14 @@ namespace StardewRoguelike.TerrainFeatures
         private const int WickedStatue = 83;
 
         private bool used = false;
+
+        /// <summary>
+        /// The two perks this shrine has offered, kept so that closing the menu and
+        /// coming back does not roll a new pair. The shrine makes one offer.
+        /// </summary>
+        private Perks.PerkType? offeredLeft;
+        private Perks.PerkType? offeredRight;
+        private bool hasOffered = false;
 
         /// <summary>Whether the floor has been told the shrine woke up.</summary>
         private bool announced = false;
@@ -155,34 +164,57 @@ namespace StardewRoguelike.TerrainFeatures
                 return false;
             }
 
-            // The price. Running out of curses to give does not block the trade: the
-            // player has already paid for every one they are carrying.
-            CurseType? curse = Curse.GetRandomUniqueCurse();
-            if (curse.HasValue)
-            {
-                Curse.AddCurse(curse.Value);
+            // A choice rather than a random grant, which is what the merchant floors
+            // used to give and is the more interesting half of taking a perk.
+            //
+            // The same offer every time it is opened. The price is on the other end,
+            // in TakePayment, so walking away costs nothing - which would make a
+            // fresh pair of perks each time a re-roll for free.
+            PerkMenu menu = hasOffered
+                ? new PerkMenu(offeredLeft, offeredRight)
+                : new PerkMenu();
 
-                // Said out loud. The curse was being applied silently and the perk
-                // menu opened over the top of it, so the price went unseen and the
-                // shrine looked like it was giving perks away.
-                Game1.chatBox?.addMessage(
-                    I18n.Shrine_Cursed(curse: Curse.GetCurseDisplayName(curse.Value)),
-                    Color.OrangeRed);
-            }
+            offeredLeft = menu.leftPerk;
+            offeredRight = menu.rightPerk;
+            hasOffered = true;
 
+            menu.isActive = true;
+            menu.informationUp = true;
+            menu.OnPerkChosen = TakePayment;
+
+            Perks.CurrentMenu = menu;
+            Game1.activeClickableMenu = menu;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Takes the curse, once a perk has actually been taken.
+        ///
+        /// Charged here rather than when the menu opens. It used to be taken up
+        /// front, so closing the menu without choosing left the player cursed with
+        /// nothing to show for it, and the shrine - marked spent at the same moment -
+        /// would not open again to make good on it.
+        /// </summary>
+        private void TakePayment()
+        {
             used = true;
             Game1.playSound("debuffSpell");
 
-            // A choice rather than a random grant, which is what the merchant floors
-            // used to give and is the more interesting half of taking a perk.
-            Perks.CurrentMenu = new()
-            {
-                isActive = true,
-                informationUp = true
-            };
-            Game1.activeClickableMenu = Perks.CurrentMenu;
+            // Running out of curses to give does not block the trade: the player has
+            // already paid for every one they are carrying.
+            CurseType? curse = Curse.GetRandomUniqueCurse();
+            if (!curse.HasValue)
+                return;
 
-            return true;
+            Curse.AddCurse(curse.Value);
+
+            // Said out loud. The curse was being applied silently and the perk menu
+            // drawn over the top of it, so the price went unseen and the shrine
+            // looked like it was giving perks away.
+            Game1.chatBox?.addMessage(
+                I18n.Shrine_Cursed(curse: Curse.GetCurseDisplayName(curse.Value)),
+                Color.OrangeRed);
         }
 
         /// <summary>
