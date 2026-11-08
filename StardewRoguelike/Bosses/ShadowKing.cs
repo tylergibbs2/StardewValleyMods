@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Netcode;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Monsters;
 using StardewValley.Projectiles;
@@ -148,6 +149,19 @@ namespace StardewRoguelike.Bosses
         /// </summary>
         private readonly NetEvent0 ShockwaveEvent = new();
 
+        /// <summary>
+        /// Fired by whoever lands a hit. The host decides whether it lights a fuse,
+        /// because only the host keeps the cooldown that gates one.
+        /// </summary>
+        private readonly NetEvent0 OnAttackedEvent = new();
+
+        /// <summary>
+        /// Whether a fuse is burning. The glow itself is a plain field on Character
+        /// and so is local to each machine; this is what every machine drives it
+        /// from, the way Skelly syncs its own glows.
+        /// </summary>
+        private readonly NetBool FuseLit = new();
+
         private readonly int ExplosionCooldownTicks = 300;
 
         private readonly int Width;
@@ -205,8 +219,10 @@ namespace StardewRoguelike.Bosses
         protected override void initNetFields()
         {
             base.initNetFields();
-            NetFields.AddField(Encountered).AddField(CurrentPhase).AddField(ShockwaveEvent);
+            NetFields.AddField(Encountered).AddField(CurrentPhase).AddField(ShockwaveEvent)
+                .AddField(OnAttackedEvent).AddField(FuseLit);
             ShockwaveEvent.onEvent += Shockwave;
+            OnAttackedEvent.onEvent += OnAttacked;
 
         }
 
@@ -225,6 +241,12 @@ namespace StardewRoguelike.Bosses
         {
             base.update(time, location);
             ShockwaveEvent.Poll();
+            OnAttackedEvent.Poll();
+
+            if (FuseLit.Value && !isGlowing)
+                startGlowing(Color.Red, true, 0.5f);
+            else if (!FuseLit.Value && isGlowing)
+                stopGlowing();
 
             if (Health > 0 && !MapChangesEnabled && Encountered.Value)
                 EnableMapChanges();
@@ -271,7 +293,7 @@ namespace StardewRoguelike.Bosses
 
                 if (TicksToExplode == 0)
                 {
-                    stopGlowing();
+                    FuseLit.Value = false;
                     currentLocation.netAudio.StopPlaying("fuse");
 
                     currentLocation.playSound("explosion");
@@ -418,7 +440,7 @@ namespace StardewRoguelike.Bosses
                     // the red glow it lit, and the cooldown it spent. Dropping the
                     // phase has to drop all three.
                     currentLocation.netAudio.StopPlaying("fuse");
-                    stopGlowing();
+                    FuseLit.Value = false;
                     TicksSinceLastExplosion = 0;
                     TicksToExplode = 0;
 
@@ -473,6 +495,25 @@ namespace StardewRoguelike.Bosses
             }
         }
 
+        /// <summary>
+        /// Decides whether a hit lights a fuse. Host only, by necessity.
+        ///
+        /// This test used to live in takeDamage, which runs on the machine that
+        /// swung - damageMonster is local to the attacker and the host never runs it
+        /// for someone else's hit. The cooldown it reads is a plain int that only
+        /// behaviorAtGameTick advances, and that runs on the host alone, so on a
+        /// farmhand it sat at zero forever and the test could never pass. The boss
+        /// never once exploded in response to a farmhand's attack.
+        /// </summary>
+        private void OnAttacked()
+        {
+            if (!Context.IsMainPlayer || Health <= 0)
+                return;
+
+            if (CurrentPhase.Value != Phase.Frenzy && TicksSinceLastExplosion > ExplosionCooldownTicks && TicksToExplode == 0)
+                StartExplosion();
+        }
+
         private void StartExplosion()
         {
             if (CurrentPhase.Value == Phase.Volleys)
@@ -489,7 +530,7 @@ namespace StardewRoguelike.Bosses
             }
 
             Halt();
-            startGlowing(Color.Red, true, 0.5f);
+            FuseLit.Value = true;
             currentLocation.netAudio.StartPlaying("fuse");
         }
 
@@ -666,8 +707,7 @@ namespace StardewRoguelike.Bosses
             if (isBomb)
                 return 0;
 
-            if (CurrentPhase.Value != Phase.Frenzy && TicksSinceLastExplosion > ExplosionCooldownTicks && TicksToExplode == 0)
-                StartExplosion();
+            OnAttackedEvent.Fire();
 
             int result = base.takeDamage(damage, xTrajectory, yTrajectory, isBomb, addedPrecision, who);
             if (Health <= 0)
