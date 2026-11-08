@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using System.Reflection;
 using StardewValley;
 using StardewValley.Buffs;
@@ -33,6 +33,7 @@ namespace StardewRoguelike.Patches
         private const int BarHeight = 64;
 
         /// <summary>The icons are 64px squares with an 8px gap, which is also the inset.</summary>
+        private const int IconSize = 64;
         private const int IconGap = 8;
 
         private static readonly MethodBase? ResetIcons =
@@ -46,52 +47,73 @@ namespace StardewRoguelike.Patches
             int x = Game1.uiViewport.Width - RightMargin - BarWidth;
             int y = IconGap;
 
-            if (x != __instance.xPositionOnScreen
-                || y != __instance.yPositionOnScreen
-                || BarWidth != __instance.width
-                || BarHeight != __instance.height)
-            {
-                __instance.xPositionOnScreen = x;
-                __instance.yPositionOnScreen = y;
-                __instance.width = BarWidth;
-                __instance.height = BarHeight;
+            bool changed = x != __instance.xPositionOnScreen
+                           || y != __instance.yPositionOnScreen
+                           || BarWidth != __instance.width
+                           || BarHeight != __instance.height;
 
-                // resetIcons lays them out from the fields just set, so there is no
-                // second arrangement here to disagree with it.
+            __instance.xPositionOnScreen = x;
+            __instance.yPositionOnScreen = y;
+            __instance.width = BarWidth;
+            __instance.height = BarHeight;
+
+            int before = FirstIconX(__instance);
+
+            if (changed || __instance.dirty)
                 ResetIcons?.Invoke(__instance, null);
-            }
 
-            Report(__instance);
+            // Unconditional, and through the public method rather than reflection, so
+            // there is no path where the icons keep an arrangement made from the back
+            // buffer.
+            __instance.arrangeTheseComponentsInThisRectangle(
+                x, y, BarWidth / IconSize, IconSize, IconSize, IconGap, rightToLeft: true);
+
+            Report(__instance, changed, before, FirstIconX(__instance));
             return false;
         }
 
-        /// <summary>Says where the icons ended up, at most once every few seconds.</summary>
-        private static void Report(BuffsDisplay display)
+        /// <summary>Where the first icon sits, or int.MinValue when there are none.</summary>
+        private static int FirstIconX(BuffsDisplay display)
         {
-            double now = Game1.currentGameTime?.TotalGameTime.TotalSeconds ?? 0;
-            if (now - lastReport < 3)
-                return;
+            foreach (ClickableTextureComponent icon in Icons(display))
+                return icon.bounds.X;
 
+            return int.MinValue;
+        }
+
+        private static IEnumerable<ClickableTextureComponent> Icons(BuffsDisplay display)
+        {
             var icons = AccessTools.Field(typeof(BuffsDisplay), "buffs")
                 .GetValue(display) as System.Collections.IDictionary;
 
-            if (icons is null || icons.Count == 0)
+            if (icons is null)
+                yield break;
+
+            foreach (System.Collections.DictionaryEntry entry in icons)
+                yield return (ClickableTextureComponent)entry.Key;
+        }
+
+        /// <summary>
+        /// Says what the arrangement did, at most once every few seconds.
+        ///
+        /// Reports the icon position either side of the call rather than afterwards
+        /// alone: the icons keep ending up at the back buffer's origin however they
+        /// are placed, and before/after says whether this patch is failing to move
+        /// them or something is moving them back.
+        /// </summary>
+        private static void Report(BuffsDisplay display, bool changed, int before, int after)
+        {
+            double now = Game1.currentGameTime?.TotalGameTime.TotalSeconds ?? 0;
+            if (now - lastReport < 3 || before == int.MinValue)
                 return;
 
             lastReport = now;
 
-            List<string> described = new();
-            foreach (System.Collections.DictionaryEntry entry in icons)
-            {
-                ClickableTextureComponent icon = (ClickableTextureComponent)entry.Key;
-                Buff buff = (Buff)entry.Value!;
-                described.Add($"{buff.id} at {icon.bounds.X},{icon.bounds.Y}");
-            }
-
             ModEntry.ModMonitor.Log(
                 $"buff icons: box={display.xPositionOnScreen},{display.yPositionOnScreen} " +
-                $"{display.width}x{display.height} ui={Game1.uiViewport.Width}x{Game1.uiViewport.Height} :: " +
-                string.Join(" :: ", described),
+                $"{display.width}x{display.height} ui={Game1.uiViewport.Width} " +
+                $"changed={changed} dirty={display.dirty} resetFound={ResetIcons is not null} " +
+                $"firstIcon {before} -> {after} (expected {display.xPositionOnScreen + BarWidth - IconSize - IconGap})",
                 StardewModdingAPI.LogLevel.Debug);
         }
     }
