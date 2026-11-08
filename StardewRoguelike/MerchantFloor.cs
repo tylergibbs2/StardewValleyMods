@@ -63,8 +63,13 @@ namespace StardewRoguelike
         {
             random ??= Game1.random;
 
+            // A copy, and never a cast. Callers pass any IList<T>: EggHunt hands over
+            // a NetCollection<Egg>, which this cast would have thrown on the moment
+            // it held fewer eggs than the three asked for. Returning the caller's own
+            // list was wrong even when the cast happened to succeed, since whoever
+            // got it back could then mutate the source.
             if (numToPick > source.Count)
-                return (List<T>)source;
+                return source.ToList();
 
             List<T> pickedElements = new();
             while (pickedElements.Count < numToPick)
