@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,9 +52,12 @@ namespace StardewRoguelike
                 new Rectangle(255, 1436, 12, 14)   // merchant backpack, see Merchant.Draw
             }),
 
+            // The sheet is 159 wide, so a 24-wide region starting at 136 ends one
+            // pixel past it and SMAPI refuses the whole edit - which is why the
+            // cinder shard icon the mod paints out was still showing.
             ["LooseSprites/ForgeMenu"] = ("assets/TileSheets/ForgeMenu.png", new[]
             {
-                new Rectangle(136, 16, 24, 24)
+                new Rectangle(136, 16, 23, 24)
             }),
 
             ["TileSheets/Projectiles"] = ("assets/TileSheets/Projectiles.png", new[]
