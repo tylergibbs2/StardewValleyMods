@@ -97,6 +97,15 @@ namespace StardewRoguelike.ChallengeFloors
         /// <summary>The zoom the floor is asking for, eased toward its mark.</summary>
         private float zoom;
 
+        /// <summary>
+        /// The player's own zoom, taken when the floor takes the camera and given
+        /// back when it lets go.
+        ///
+        /// Held rather than read each tick, because the field it is read from is the
+        /// same one the floor writes to while it has the camera.
+        /// </summary>
+        private float restingZoom = 1f;
+
         /// <summary>Whether the camera is this floor's rather than the player's.</summary>
         private bool holdingCamera;
 
@@ -308,11 +317,11 @@ namespace StardewRoguelike.ChallengeFloors
             {
                 cameraX = Game1.viewport.X + Game1.viewport.Width / 2f;
                 cameraY = Game1.viewport.Y + Game1.viewport.Height / 2f;
-                zoom = Game1.options.baseZoomLevel;
+                restingZoom = Game1.options.desiredBaseZoomLevel;
+                zoom = restingZoom;
                 holdingCamera = true;
             }
 
-            float restingZoom = Game1.options.desiredBaseZoomLevel;
             float targetZoom = wants ? ArenaZoom() : restingZoom;
 
             zoom += (targetZoom - zoom) * ZoomSmoothing;
@@ -364,13 +373,24 @@ namespace StardewRoguelike.ChallengeFloors
         /// </summary>
         private bool AtFiringLine()
         {
+            Vector2 tile = Game1.player.Tile;
+
+            // A tile of give once the camera is held, so standing on the line does
+            // not hand it to and fro every other frame.
+            int slack = holdingCamera ? FiringLineSlack : 0;
+
+            // Across as well as up. The ladder in sits at (4, 22) - on the firing
+            // line's row, but off to the west of the river - so walking in and out of
+            // the floor took the camera with it. Standing in front of the targets
+            // means being in front of them.
+            if (tile.X < Arena.Left - slack || tile.X > Arena.Right + slack)
+                return false;
+
             // Counted in tile rows rather than pixels. The water is rows eighteen to
             // twenty-one and the line sits just below it, so comparing raw positions
             // put a player standing on that very row on either side of it depending
             // on where in the tile they had stopped.
-            float line = FiringLineRow + (holdingCamera ? FiringLineSlack : 0);
-
-            return Game1.player.Tile.Y <= line;
+            return tile.Y <= FiringLineRow + slack;
         }
 
         /// <summary>
@@ -381,7 +401,7 @@ namespace StardewRoguelike.ChallengeFloors
         /// and whatever the player has their own zoom set to. It will only ever pull
         /// out: a player who plays zoomed further out than this keeps their own view.
         /// </summary>
-        private static float ArenaZoom()
+        private float ArenaZoom()
         {
             Viewport screen = Game1.graphics.GraphicsDevice.Viewport;
 
@@ -390,22 +410,30 @@ namespace StardewRoguelike.ChallengeFloors
 
             float fit = Math.Min(screen.Width / wanted, screen.Height / tall);
 
-            return Math.Clamp(fit, MinimumZoom, Game1.options.desiredBaseZoomLevel);
+            return Math.Clamp(fit, MinimumZoom, restingZoom);
         }
 
         /// <summary>
         /// Pushes the eased zoom at the game, when it has moved enough to be worth it.
-        ///
-        /// refreshWindowSettings resizes the viewport and the lightmap, so it is not
-        /// called for changes too small to see.
         /// </summary>
+        /// <remarks>
+        /// Written to desiredBaseZoomLevel rather than baseZoomLevel. Game1 re-asserts
+        /// one from the other on every tick, so setting the applied zoom put the two
+        /// permanently at odds: the game reset it, forced a viewport snap and
+        /// refreshed the window every single frame, and the refresh stamped on the
+        /// pan. That is why this only ever worked when the player happened to already
+        /// be at the zoom the floor wanted - then there was nothing to disagree about.
+        ///
+        /// Setting the wanted zoom instead lets the game apply it once, in its own
+        /// order, and settle. It also means the game does the window refresh, so the
+        /// viewport and the lightmap are resized once per step rather than twice.
+        /// </remarks>
         private void ApplyZoom()
         {
-            if (Math.Abs(Game1.options.baseZoomLevel - zoom) < 0.002f)
+            if (Math.Abs(Game1.options.desiredBaseZoomLevel - zoom) < 0.002f)
                 return;
 
-            Game1.options.baseZoomLevel = zoom;
-            Game1.game1.refreshWindowSettings();
+            Game1.options.desiredBaseZoomLevel = zoom;
         }
 
         /// <summary>
@@ -477,12 +505,8 @@ namespace StardewRoguelike.ChallengeFloors
             holdingCamera = false;
             Game1.viewportFreeze = false;
 
-            zoom = Game1.options.desiredBaseZoomLevel;
-            if (Game1.options.baseZoomLevel != zoom)
-            {
-                Game1.options.baseZoomLevel = zoom;
-                Game1.game1.refreshWindowSettings();
-            }
+            zoom = restingZoom;
+            Game1.options.desiredBaseZoomLevel = restingZoom;
         }
 
         public override void Update(MineShaft mine, GameTime time)
