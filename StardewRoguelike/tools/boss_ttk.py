@@ -137,16 +137,25 @@ BOSSES: list[BossSpec] = [
     BossSpec("slime", "Goobins the Gelatinous Sludge", 5, 400, 6, 0),
     BossSpec("skelly", "Arc the Skeleton Mage", 11, 900, 10, 1, crusader=True),
     BossSpec("thunder", "Thunder Kid", 17, 1150, 10, 2),
-    BossSpec("dragon", "Cavrag the Dragon Prince", 23, 900, 25, 0),
-    BossSpec("bigbug", "Big Bug", 29, 1680, 25, 1),
-    BossSpec("queenbee", "Queen Bee", 35, 1700, 25, 1),
-    BossSpec("shadowking", "Shadow King", 41, 5000, 30, 2, crusader=True),
-    BossSpec("modulo", "Modulosaurus", 47, 2850, 25, 0),  # ctor sets resilience 0
+    BossSpec("dragon", "Cavrag the Dragon Prince", 23, 1200, 25, 0),
+    BossSpec("bigbug", "Big Bug", 29, 2100, 25, 1),
+    BossSpec("queenbee", "Queen Bee", 35, 2300, 25, 1),
+    BossSpec("shadowking", "Shadow King", 41, 4200, 30, 2, crusader=True),
+    BossSpec("modulo", "Modulosaurus", 47, 6000, 25, 0),  # ctor sets resilience 0
 ]
 
 
+def health_difficulty(level: int, hard: bool) -> float:
+    """BossFloor.GetHealthDifficulty - health only, on a steeper curve."""
+    modifier = 1.0 + (0.25 if hard else 0.0)
+    difficulty = round(level / 24.0, 2) + modifier
+    if level > 48:
+        difficulty += 0.25 * ((level - 48) / 6.0)
+    return difficulty
+
+
 def level_difficulty(level: int, hard: bool) -> float:
-    """BossFloor.GetLevelDifficulty."""
+    """BossFloor.GetLevelDifficulty - everything except health."""
     modifier = 1.0 + (0.25 if hard else 0.0)
     difficulty = round(level / 48.0, 2) + modifier
     if level > 48:
@@ -887,7 +896,7 @@ class BossRuntime:
     t: float = 0.0
 
     def __post_init__(self) -> None:
-        self.max_hp = int(self.spec.base_hp * self.difficulty)
+        self.max_hp = int(self.spec.base_hp * health_difficulty(self.spec.floor, self.hard))
         self.hp = self.max_hp
 
     @property
@@ -969,7 +978,7 @@ class Skelly(BossRuntime):
             self.mages_spawned = True
             self.invincible = True
             # five SkellyMinion mages at 50 * difficulty, at fixed spots
-            self.adds = [int(round(50 * self.difficulty)) for _ in range(5)]
+            self.adds = [int(round(50 * self.difficulty)) for _ in range(3)]
             self.gate_hp = sum(self.adds)
 
         if self.invincible and not self.adds:
@@ -1046,7 +1055,7 @@ class Dragon(BossRuntime):
             self.prev = attack
             if attack in ("fire", "random"):
                 self.state = self.ATTACKING
-                self.timer = self.adjust_range(2000, 4000) / TICK_MS
+                self.timer = (2000 + 2500 - self.adjust_range(2000, 2500)) / TICK_MS
             else:
                 self.state = self.CHARGEUP
                 ms = 4000 - self.adjust_range(0, 3000)
@@ -1102,8 +1111,8 @@ class BigBug(BossRuntime):
     def tick(self, rng: random.Random) -> tuple[bool, float]:
         self.offscreen -= 1
         if self.offscreen <= 0:
-            for _ in range(rng.randint(1, 2)):
-                self.adds.append(int(100 * self.difficulty))
+            for _ in range(min(rng.randint(1, 2), max(0, 12 - len(self.adds)))):
+                self.adds.append(int(65 * self.difficulty))
             self.offscreen = rng.randint(6 * 60, 10 * 60)
             if self.hard:
                 self.offscreen -= rng.randint(60, 180)
@@ -1114,8 +1123,9 @@ class BigBug(BossRuntime):
             if self.eggs[i] <= 0:
                 self.eggs.pop(i)
                 n = rng.randint(2, 3) + (1 if self.hard else 0)  # Next(2, 4)
-                for _ in range(n):
-                    self.adds.append(int(100 * self.difficulty))
+                n = min(n, 12 - len(self.adds))                  # MinionsPerPlayer
+                for _ in range(max(0, n)):
+                    self.adds.append(int(65 * self.difficulty))
 
         if self.state == self.NORMAL:
             self.lay_timer -= 1
@@ -1155,7 +1165,7 @@ class BigBug(BossRuntime):
 
     def add_damage(self) -> int:
         # Aggressive doubles it; the state rotates, so this is the average
-        return int(12 * self.difficulty * 1.25)
+        return int(12 * self.difficulty * 1.25)  # BigBugMinion damage is unchanged
 
     def add_distraction(self) -> float:
         away = 0.4 if self.state == self.MOVING else 0.0
@@ -1202,8 +1212,9 @@ class QueenBee(BossRuntime):
             self.timer = shots * fire_rate
         elif attack == 1:
             n = int(self.adjust_range(4, 8)) + (2 if self.hard else 0)
-            for _ in range(n):
-                self.adds.append(int(round(60 * self.difficulty)))
+            n = min(n, 10 - len(self.adds))                      # BeesPerPlayer
+            for _ in range(max(0, n)):
+                self.adds.append(int(round(45 * self.difficulty)))
             self.state = self.IDLE
             self.timer = 60 * 5
         else:
@@ -1218,6 +1229,8 @@ class QueenBee(BossRuntime):
     def add_distraction(self) -> float:
         # a charge is 13-17 px a tick straight through you: nothing to swing at
         moving = 0.35 if self.state == self.CHARGE else 0.0
+        # extra MovePosition calls now fall from five to one as it dies
+        moving += 0.10 * self.frac
         stingers = 0.15 if self.state == self.STINGERS else 0.0
         return min(0.55, 0.04 * len(self.adds) + moving + stingers)
 
@@ -1565,8 +1578,7 @@ def run(trials: int, player_counts: list[int], hard: bool, seed: int,
         print("-" * len(header))
 
         for i, spec in enumerate(BOSSES):
-            difficulty = level_difficulty(spec.floor, hard)
-            hp = int(spec.base_hp * difficulty)
+            hp = int(spec.base_hp * health_difficulty(spec.floor, hard))
             cells, wipes = [], []
             for quality in ("bad", "avg", "good"):
                 kills, dead = [], 0
