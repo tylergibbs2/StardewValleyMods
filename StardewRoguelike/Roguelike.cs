@@ -866,6 +866,7 @@ namespace StardewRoguelike
             Perks.RemoveAllPerks();
             Keystones.Reset();
             Sustain.Reset();
+            Patches.PerAttacker.Reset();
 
             // After the removals above, not before: taking a curse off logs that it
             // was lifted, and a fresh run should start with an empty history.
