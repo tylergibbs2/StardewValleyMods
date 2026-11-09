@@ -295,8 +295,37 @@ namespace StardewRoguelike.Bosses
             }
         }
 
+        /// <summary>How many of its bugs one player may be facing at once.</summary>
+        /// <remarks>
+        /// Nothing bounded the swarm. Nine egg sites, each hatching two or three, with
+        /// more drifting in off the edges every few seconds and the boss retrying the
+        /// moment the board was full - so a player who fell behind did not fall behind
+        /// by a fixed amount, they fell behind faster the further behind they got.
+        ///
+        /// Per player, because the spawn counts are per player too: the swarm is the
+        /// fight, and a party that outnumbers it is not having one.
+        /// </remarks>
+        private const int MinionsPerPlayer = 12;
+
+        private static int PlayerCount => Math.Max(1, Game1.getOnlineFarmers().Count);
+
+        /// <summary>How much room is left under the cap.</summary>
+        private int MinionRoom()
+        {
+            int alive = 0;
+            foreach (NPC character in currentLocation.characters)
+            {
+                if (character is BigBugMinion minion && minion.Health > 0)
+                    alive++;
+            }
+
+            return MinionsPerPlayer * PlayerCount - alive;
+        }
+
         public void SpawnOffScreenBugs(int amount)
         {
+            amount = Math.Min(amount * PlayerCount, MinionRoom());
+
             while (amount > 0)
             {
                 Vector2 spawnLocation = Vector2.Zero;
@@ -334,6 +363,14 @@ namespace StardewRoguelike.Bosses
             int bugsToSpawn = Game1.random.Next(2, 4);
             if (Curse.AnyFarmerHasCurse(CurseType.MoreEnemiesLessHealth))
                 bugsToSpawn++;
+
+            // Per player, and never past the cap. The counts were written for one
+            // player and stayed that way however many turned up, so the swarm - the
+            // only thing in this fight that is not a health bar - was the first thing
+            // co-op turned off.
+            bugsToSpawn = Math.Min(bugsToSpawn * PlayerCount, MinionRoom());
+            if (bugsToSpawn <= 0)
+                return;
 
             tileLocation *= 64;
 

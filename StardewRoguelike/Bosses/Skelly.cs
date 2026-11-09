@@ -9,6 +9,7 @@ using StardewValley.Monsters;
 using StardewValley.Projectiles;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace StardewRoguelike.Bosses
@@ -419,9 +420,23 @@ namespace StardewRoguelike.Bosses
             IsWalkingTowardPlayer = true;
         }
 
+        /// <summary>How many mages a single player has to put down to carry on.</summary>
+        /// <remarks>
+        /// Three of the five spots, not all five. The boss is invincible until the
+        /// last of them dies, so this is a gate rather than a fight, and five spread
+        /// across the arena made most of it walking - at the eleventh floor, with
+        /// whatever the second shop sold. One more per extra player, so a party does
+        /// not clear the gate in the time it takes one of them to cross it.
+        /// </remarks>
+        private const int MagesForOnePlayer = 3;
+
         private void SpawnMages()
         {
-            foreach (Vector2 tilePosition in MageSpawnLocations)
+            int count = Math.Min(
+                MageSpawnLocations.Count,
+                MagesForOnePlayer + Math.Max(0, Game1.getOnlineFarmers().Count - 1));
+
+            foreach (Vector2 tilePosition in MageSpawnLocations.Take(count))
             {
                 SkellyMinion mage = new(tilePosition * 64f, Difficulty, isMage: true);
                 if (!Roguelike.HardMode)

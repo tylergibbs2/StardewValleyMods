@@ -14,7 +14,9 @@ namespace StardewRoguelike.Bosses
         {
             setTileLocation(position);
 
-            MaxHealth = (int)Math.Round(60 * difficulty);
+            // See BigBugMinion: a swarm has to be answerable to be a swarm rather
+            // than a timer.
+            MaxHealth = (int)Math.Round(45 * difficulty);
             Health = MaxHealth;
 
             DamageToFarmer = (int)Math.Round(15 * difficulty);

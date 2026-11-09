@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
@@ -26,7 +26,11 @@ namespace StardewRoguelike.Bosses
         {
             CurrentState.Value = state;
 
-            MaxHealth = (int)(100 * difficulty);
+            // Sixty-five, not a hundred. At the twenty-ninth floor a hundred came to
+            // a hundred and sixty apiece, which is several swings of a mid-tier
+            // weapon each while the next egg is already hatching - so clearing them
+            // was only ever possible for a run that did not need to.
+            MaxHealth = (int)(65 * difficulty);
             Health = MaxHealth;
             DamageToFarmer = (int)(12 * difficulty);
 

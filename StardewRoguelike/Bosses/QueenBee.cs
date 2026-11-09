@@ -234,10 +234,34 @@ namespace StardewRoguelike.Bosses
             currentLocation.projectiles.Add(proj);
         }
 
+        /// <summary>How many bees one player may be facing at once.</summary>
+        /// <remarks>See BigBug.MinionsPerPlayer; the same swarm, at half the rate.</remarks>
+        private const int BeesPerPlayer = 10;
+
+        private static int PlayerCount => Math.Max(1, Game1.getOnlineFarmers().Count);
+
+        /// <summary>How much room is left under the cap.</summary>
+        private int BeeRoom()
+        {
+            int alive = 0;
+            foreach (NPC character in currentLocation.characters)
+            {
+                if (character is QueenBeeMinion bee && bee.Health > 0)
+                    alive++;
+            }
+
+            return BeesPerPlayer * PlayerCount - alive;
+        }
+
         public void SummonBees(int amount)
         {
             if (Curse.AnyFarmerHasCurse(CurseType.MoreEnemiesLessHealth))
                 amount += 2;
+
+            // Per player, and never past the cap - see BigBug.SpawnBugs.
+            amount = Math.Min(amount * PlayerCount, BeeRoom());
+            if (amount <= 0)
+                return;
 
             for (int i = 0; i < amount; i++)
             {
