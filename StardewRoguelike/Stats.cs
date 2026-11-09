@@ -1,4 +1,4 @@
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using System;
@@ -72,51 +72,90 @@ namespace StardewRoguelike
             Seed = null;
         }
 
-        /// <summary>
-        /// Gets all the statistics as a list of user-friendly strings.
-        /// </summary>
-        /// <returns>Key:Value formatted strings with parsed statistics data.</returns>
-        public List<string> GetLines()
+        /// <summary>Which stat a row is, so the menu knows how to dress it.</summary>
+        /// <remarks>
+        /// The identity travels with the row and the look is chosen from it by the
+        /// menu. Stats knows what the numbers are; what colour a number is drawn in
+        /// and which icon sits beside it is not its business.
+        /// </remarks>
+        public enum StatId
         {
-            List<string> lines = new();
-
-            if (EndTime is not null && StartTime is not null)
-            {
-                TimeSpan span = (TimeSpan)(EndTime - StartTime);
-                lines.Add($"{I18n.Stats_Duration()}:{span:hh\\h\\ mm\\m\\ ss\\s}");
-            }
-            else if (EndTime is null && StartTime is not null)
-            {
-                TimeSpan span = (TimeSpan)(DateTime.UtcNow - StartTime);
-                lines.Add($"{I18n.Stats_Duration()}:{span:hh\\h\\ mm\\m\\ ss\\s}");
-            }
-            else
-                lines.Add($"{I18n.Stats_Duration()}:{I18n.Stats_NotStarted()}");
-
-            if (DinoKillEndTime is not null && StartTime is not null)
-            {
-                TimeSpan span = (TimeSpan)(DinoKillEndTime - StartTime);
-                lines.Add($"{I18n.Stats_CompletionTime()}:{span:hh\\h\\ mm\\m\\ ss\\s}");
-            }
-            else if (DinoKillEndTime is null && StartTime is not null && EndTime is null)
-            {
-                TimeSpan span = (TimeSpan)(DateTime.UtcNow - StartTime);
-                lines.Add($"{I18n.Stats_CompletionTime()}:{span:hh\\h\\ mm\\m\\ ss\\s}");
-            }
-            else
-                lines.Add($"{I18n.Stats_CompletionTime()}:{I18n.Stats_NotStarted()}");
-
-            lines.Add($"{I18n.Stats_FloorsDescended()}:{FloorsDescended}");
-            lines.Add($"{I18n.Stats_MonstersKilled()}:{MonstersKilled}");
-            lines.Add($"{I18n.Stats_BossesDefeated()}:{BossesDefeated}");
-            lines.Add($"{I18n.Stats_DamageDealt()}:{DamageDealt}");
-            lines.Add($"{I18n.Stats_DamageTaken()}:{DamageTaken}");
-            lines.Add($"{I18n.Stats_TotalHealing()}:{TotalHealing}");
-            lines.Add($"{I18n.Stats_GoldEarned()}:{GoldEarned}");
-            lines.Add($"{I18n.Stats_GoldSpent()}:{GoldSpent}");
-
-            return lines;
+            Duration,
+            CompletionTime,
+            FloorsDescended,
+            MonstersKilled,
+            BossesDefeated,
+            DamageDealt,
+            DamageTaken,
+            TotalHealing,
+            GoldEarned,
+            GoldSpent
         }
+
+        /// <summary>One line of the stats menu.</summary>
+        public readonly record struct StatRow(StatId Id, string Label, string Value);
+
+        /// <summary>A headed group of them.</summary>
+        public readonly record struct StatSection(string Title, List<StatRow> Rows);
+
+        /// <summary>How long the run has been going, or went on for.</summary>
+        private string Elapsed(DateTime? until)
+        {
+            if (StartTime is null)
+                return I18n.Stats_NotStarted();
+
+            TimeSpan span = (until ?? DateTime.UtcNow) - StartTime.Value;
+
+            // Hours only once there are some. A run is usually minutes, and "00h"
+            // in front of every reading is three characters of nothing.
+            return span.TotalHours >= 1
+                ? $"{span:h\\h\\ mm\\m\\ ss\\s}"
+                : $"{span:m\\m\\ ss\\s}";
+        }
+
+        /// <summary>
+        /// The statistics as the menu shows them: grouped, ordered and formatted.
+        /// </summary>
+        /// <remarks>
+        /// This used to hand back "Label:Value" strings that the menu split on the
+        /// colon, which meant no value could ever contain one - a real constraint
+        /// on a menu that shows durations - and left the menu with nothing to tell
+        /// gold from damage by, so every line was drawn identically in black.
+        /// </remarks>
+        public List<StatSection> GetSections()
+        {
+            return new()
+            {
+                new(I18n.UI_StatsMenu_Section_Progress(), new()
+                {
+                    new(StatId.Duration, I18n.Stats_Duration(), Elapsed(EndTime)),
+                    new(StatId.CompletionTime, I18n.Stats_CompletionTime(),
+                        DinoKillEndTime is null && EndTime is not null
+                            ? I18n.Stats_NotStarted()
+                            : Elapsed(DinoKillEndTime)),
+                    new(StatId.FloorsDescended, I18n.Stats_FloorsDescended(), Count(FloorsDescended))
+                }),
+
+                new(I18n.UI_StatsMenu_Section_Combat(), new()
+                {
+                    new(StatId.MonstersKilled, I18n.Stats_MonstersKilled(), Count(MonstersKilled)),
+                    new(StatId.BossesDefeated, I18n.Stats_BossesDefeated(), Count(BossesDefeated)),
+                    new(StatId.DamageDealt, I18n.Stats_DamageDealt(), Count(DamageDealt)),
+                    new(StatId.DamageTaken, I18n.Stats_DamageTaken(), Count(DamageTaken)),
+                    new(StatId.TotalHealing, I18n.Stats_TotalHealing(), Count(TotalHealing))
+                }),
+
+                new(I18n.UI_StatsMenu_Section_Gold(), new()
+                {
+                    new(StatId.GoldEarned, I18n.Stats_GoldEarned(), Count(GoldEarned)),
+                    new(StatId.GoldSpent, I18n.Stats_GoldSpent(), Count(GoldSpent))
+                })
+            };
+        }
+
+        /// <summary>Grouped by thousands, because damage dealt runs to five figures.</summary>
+        private static string Count(int value) => value.ToString("N0");
+
         /// <summary>
         /// Event handler for checking if certain stats have changed.
         /// This handles checking for gold and HP differences.
