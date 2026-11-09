@@ -295,6 +295,11 @@ namespace StardewRoguelike
                 ));
             }
 
+            // Holds Momentum open while something is still near, for the tier that
+            // does that. Quiet for every other build.
+            Keystones.Update();
+            Sustain.Update();
+
             if (Game1.player.Stamina < 0 && Game1.player.health > 0)
             {
                 Game1.player.health = 0;
@@ -394,6 +399,10 @@ namespace StardewRoguelike
             {
                 int level = GetLevelFromMineshaft(mine);
                 Game1.player.get_FarmerCurrentLevel().Value = level;
+
+                // A new floor hands back what is spent per floor - Last Stand's
+                // second wind being the one that is.
+                Keystones.OnFloorEntered();
 
                 if (Merchant.IsMerchantFloor(level))
                     Merchant.SetupForLocalPlayer(mine);
@@ -856,6 +865,7 @@ namespace StardewRoguelike
             Curse.RemoveAllCurses();
             Perks.RemoveAllPerks();
             Keystones.Reset();
+            Sustain.Reset();
 
             Game1.player.set_FarmerActiveHatQuest(null);
 

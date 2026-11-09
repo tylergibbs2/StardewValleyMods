@@ -34,12 +34,22 @@ namespace StardewRoguelike.Patches
             return true;
         }
 
-        public static void Postfix(bool __result, int minDamage, int maxDamage)
+        public static void Postfix(GameLocation __instance, Rectangle areaOfEffect, bool __result, int minDamage, int maxDamage)
         {
             if (__result)
             {
-                // A blow that landed, which is what a flurry counts.
-                Keystones.OnMonsterHit();
+                // A blow a keystone spread onto a neighbour is not a blow the player
+                // struck, and nothing below here should count it. Everything in this
+                // method is written per swing - a leech roll, a crown payout - and a
+                // sweep that hits five monsters would otherwise run all of it five
+                // times.
+                if (Keystones.IsSpreading)
+                    return;
+
+                // A blow that landed, which is what a flurry counts. The area is
+                // handed over with it, since the tiers that spread a blow onto the
+                // target's neighbours have no other way to know where it landed.
+                Keystones.OnMonsterHit(__instance, areaOfEffect, minDamage, maxDamage);
 
                 if (Curse.HasCurse(CurseType.BrittleCrown))
                 {
@@ -53,7 +63,7 @@ namespace StardewRoguelike.Patches
                 // it reads as happening more often rather than harder.
                 int leech = Perks.PerkLevel(Perks.PerkType.Leech);
                 if (leech > 0 && Game1.random.NextDouble() < 0.25 * leech)
-                    Game1.player.health = Math.Min(Game1.player.health + 1, Game1.player.maxHealth);
+                    Sustain.Heal(1);
             }
         }
     }

@@ -85,13 +85,20 @@ namespace StardewRoguelike.Patches
                 }
                 Rumble.rumble(0.75f, 150f);
                 int effectiveDamage = damage - effectiveResilience;
+                int damageBeforeArmour = damage;
                 damage = Math.Max(1, effectiveDamage);
+                int damageBlocked = Math.Max(0, damageBeforeArmour - damage);
 
                 // Compounding rather than adding, so three levels take off a little
                 // less than a third and no amount of it can reach immunity.
                 int shield = Perks.PerkLevel(Perks.PerkType.Shield);
                 if (shield > 0)
                     damage = (int)Math.Round(damage * (float)Math.Pow(0.9f, shield));
+
+                // Before the rest of what reduces a hit, so a braced player gets the
+                // percentage off the whole blow rather than off what survived
+                // everything else.
+                Keystones.ModifyIncomingDamage(ref damage);
 
                 if (Perks.HasPerk(Perks.PerkType.TurtleShell) && ShellCooldownSeconds == 0)
                 {
@@ -111,7 +118,13 @@ namespace StardewRoguelike.Patches
                 // After everything that reduces it and before it is spent, so Spite
                 // banks what actually got through and Flurry's run ends on a real
                 // hit rather than on one the player shrugged off.
-                Keystones.OnPlayerHurt(damage);
+                Keystones.OnPlayerHurt(damage, damageBlocked);
+
+                // Trims a killing blow rather than stepping in after it. Everything
+                // that makes being hit survivable - the invincible window, the
+                // knockback, the sound - is further down this method, so a save that
+                // returned here would leave the player standing with no mercy frames.
+                Keystones.TrySecondWind(ref damage);
 
                 if (Curse.HasCurse(CurseType.DamageOverTime))
                 {

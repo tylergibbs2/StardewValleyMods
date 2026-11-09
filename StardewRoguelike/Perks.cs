@@ -176,8 +176,14 @@ namespace StardewRoguelike
             PerkType.Deconstructor or PerkType.Indecisive or PerkType.Gamer
                 or PerkType.Fisherman or PerkType.Sturdy => 1,
 
-            _ => 3
+            // Three, unless a keystone has a trait waiting deeper than that. Read off
+            // the trait table rather than written down twice, so a trait cannot be
+            // declared at a tier the perk does not reach.
+            _ => Math.Max(DefaultMaxLevel, KeystoneTraits.MaxTier(perkType))
         };
+
+        /// <summary>How deep a perk goes when nothing deeper is declared for it.</summary>
+        private const int DefaultMaxLevel = 3;
 
         /// <summary>How many times the player has taken <paramref name="perkType"/>.</summary>
         public static int PerkLevel(PerkType perkType)
@@ -258,6 +264,71 @@ namespace StardewRoguelike
                 PerkType.Ricochet => I18n.PerkTypeName_Ricochet(),
                 PerkType.Bombardier => I18n.PerkTypeName_Bombardier(),
                 _ => "Not Implemented"
+            };
+        }
+
+        /// <summary>What a perk does, at the tier the caller is showing.</summary>
+        /// <remarks>
+        /// A keystone with traits does something different at each tier, so one
+        /// description for all of them would describe the first and silently omit the
+        /// rest. Asked for a tier that grants a trait, this answers with what that
+        /// tier grants - which is what a shrine needs to say about the level it is
+        /// offering, and what the perk list needs to say about the level that is held.
+        ///
+        /// It replaces the plain description rather than being added to it. Both
+        /// menus draw this as a single line, so a tier list would need its own layout
+        /// in two places to be worth having; what the player is deciding about is the
+        /// tier in front of them.
+        /// </remarks>
+        public static string GetPerkDescription(PerkType perkType, int atLevel)
+        {
+            if (TierDescription(perkType, atLevel) is string tiered)
+                return tiered;
+
+            return GetPerkDescription(perkType);
+        }
+
+        /// <summary>What one tier of a keystone grants, or null if it grants nothing new.</summary>
+        /// <remarks>
+        /// Written out per tier rather than built up from the trait names in
+        /// <see cref="KeystoneTraits"/>. A tier can grant two traits at once -
+        /// Prospector's fourth grants both a wider burst and boulders - and two
+        /// fragments stitched together read like a changelog rather than a sentence.
+        /// <see cref="KeystoneTraits.GrantsAnythingAt"/> is the check that keeps the
+        /// two in step.
+        /// </remarks>
+        private static string? TierDescription(PerkType perkType, int atLevel)
+        {
+            if (!KeystoneTraits.GrantsAnythingAt(perkType, atLevel))
+                return null;
+
+            return (perkType, atLevel) switch
+            {
+                (PerkType.Prospector, 2) => I18n.PerkTierDesc_Prospector2(),
+                (PerkType.Prospector, 3) => I18n.PerkTierDesc_Prospector3(),
+                (PerkType.Prospector, 4) => I18n.PerkTierDesc_Prospector4(),
+
+                (PerkType.Volatile, 2) => I18n.PerkTierDesc_Volatile2(),
+                (PerkType.Volatile, 3) => I18n.PerkTierDesc_Volatile3(),
+                (PerkType.Volatile, 4) => I18n.PerkTierDesc_Volatile4(),
+
+                (PerkType.Momentum, 2) => I18n.PerkTierDesc_Momentum2(),
+                (PerkType.Momentum, 3) => I18n.PerkTierDesc_Momentum3(),
+                (PerkType.Momentum, 4) => I18n.PerkTierDesc_Momentum4(),
+
+                (PerkType.Spite, 2) => I18n.PerkTierDesc_Spite2(),
+                (PerkType.Spite, 3) => I18n.PerkTierDesc_Spite3(),
+                (PerkType.Spite, 4) => I18n.PerkTierDesc_Spite4(),
+
+                (PerkType.LastStand, 2) => I18n.PerkTierDesc_LastStand2(),
+                (PerkType.LastStand, 3) => I18n.PerkTierDesc_LastStand3(),
+                (PerkType.LastStand, 4) => I18n.PerkTierDesc_LastStand4(),
+
+                (PerkType.Flurry, 2) => I18n.PerkTierDesc_Flurry2(),
+                (PerkType.Flurry, 3) => I18n.PerkTierDesc_Flurry3(),
+                (PerkType.Flurry, 4) => I18n.PerkTierDesc_Flurry4(),
+
+                _ => null
             };
         }
 

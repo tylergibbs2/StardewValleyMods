@@ -227,7 +227,7 @@ namespace StardewRoguelike.UI
             string perkName = Perks.GetPerkDisplayName(perkType);
             if (level > 1)
                 perkName += " " + Perks.Numeral(level);
-            string perkDescription = Perks.GetPerkDescription(perkType);
+            string perkDescription = Perks.GetPerkDescription(perkType, level);
             string rarityText = PerkMenu.GetRarityText(rarity);
 
             Vector2 nameSize = Game1.dialogueFont.MeasureString(perkName);

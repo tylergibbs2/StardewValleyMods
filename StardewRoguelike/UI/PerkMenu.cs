@@ -160,10 +160,15 @@ namespace StardewRoguelike.UI
 
             // The offer name rather than the plain one, so a perk the player already
             // carries says which level taking it would reach.
+            // The tier this offer would reach, to match the name above it: a shrine
+            // offering Prospector III has to say what the third tier grants, not what
+            // the first one did.
+            int offeredLevel = Perks.PerkLevel(perkType.Value) + 1;
+
             return new()
             {
                 Perks.GetOfferDisplayName(perkType.Value),
-                Perks.GetPerkDescription(perkType.Value)
+                Perks.GetPerkDescription(perkType.Value, offeredLevel)
             };
         }
 
