@@ -1,4 +1,4 @@
-﻿using StardewValley;
+using StardewValley;
 using StardewValley.Locations;
 using StardewRoguelike.VirtualProperties;
 using System;
