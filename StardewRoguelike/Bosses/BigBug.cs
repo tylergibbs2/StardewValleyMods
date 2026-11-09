@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewRoguelike.Extensions;
@@ -57,6 +57,19 @@ namespace StardewRoguelike.Bosses
 
         private readonly NetEvent1Field<Vector2, NetVector2> despawnEggEvent = new();
 
+        private readonly NetEvent1Field<Vector2, NetVector2> squashEggEvent = new();
+
+        /// <summary>
+        /// Where the eggs are, as every machine sees it.
+        ///
+        /// <see cref="Eggs"/> is the host's clock and is never synced, so a farmhand
+        /// has no idea where the eggs are and could not swing at one. The tiles are
+        /// laid down on every machine by <see cref="SpawnEgg"/>, so this is kept
+        /// beside them: the positions everybody knows, without the fuses only the
+        /// host needs.
+        /// </summary>
+        private readonly HashSet<Vector2> eggTiles = new();
+
         private readonly NetEvent0 OnAttackedEvent = new();
 
         private Vector2 TargetEggSpot;
@@ -107,9 +120,10 @@ namespace StardewRoguelike.Bosses
             // it is laying, and updateAnimation - which runs on every machine - never
             // showed the laying pose.
             NetFields.AddField(SpawnEggEvent).AddField(despawnEggEvent).AddField(OnAttackedEvent)
-                .AddField(CurrentState).AddField(CurrentMinionState);
+                .AddField(CurrentState).AddField(CurrentMinionState).AddField(squashEggEvent);
             SpawnEggEvent.onEvent += SpawnEgg;
             despawnEggEvent.onEvent += DespawnEgg;
+            squashEggEvent.onEvent += SquashEgg;
             OnAttackedEvent.onEvent += OnAttacked;
         }
 
@@ -250,7 +264,12 @@ namespace StardewRoguelike.Bosses
 
         public void CheckAllEggs()
         {
-            foreach (Vector2 tileLocation in Eggs.Keys)
+            // Over a copy of the keys. Firing the despawn takes the egg straight back
+            // out of this dictionary - NetEvent.Fire polls itself, so the handler runs
+            // before Fire returns - and relying on Dictionary.Remove being allowed
+            // mid-enumeration is a .NET implementation detail to be leaning on in a
+            // method that hatches things.
+            foreach (Vector2 tileLocation in new List<Vector2>(Eggs.Keys))
             {
                 if (Eggs[tileLocation] == 0)
                     continue;
@@ -330,6 +349,8 @@ namespace StardewRoguelike.Bosses
 
         public void SpawnEgg(Vector2 tileLocation)
         {
+            eggTiles.Add(tileLocation);
+
             MineShaft mine = (MineShaft)currentLocation;
             mine.SetTile((int)tileLocation.X, (int)tileLocation.Y, "Front", "bugLandTiles", 92, 1000, new int[] { 92, 86, 92, 102 });
             mine.SetTile((int)tileLocation.X + 1, (int)tileLocation.Y, "Front", "bugLandTiles", 93, 1000, new int[] { 93, 87, 93, 103 });
@@ -339,8 +360,16 @@ namespace StardewRoguelike.Bosses
             Game1.playSound("fishSlap");
         }
 
-        public void DespawnEgg(Vector2 tileLocation)
+        /// <summary>Takes the egg off the map, however it came to an end.</summary>
+        /// <remarks>
+        /// Shared by hatching and squashing so the two cannot fall out of step over
+        /// which tiles an egg occupies, and so only the part that differs - the sound,
+        /// and whether anything is left behind - lives in the two callers.
+        /// </remarks>
+        private void RemoveEggTiles(Vector2 tileLocation)
         {
+            eggTiles.Remove(tileLocation);
+
             MineShaft mine = (MineShaft)currentLocation;
             xTile.Dimensions.Location tile = new((int)tileLocation.X, (int)tileLocation.Y);
             mine.removeTile(tile, "Front");
@@ -348,10 +377,80 @@ namespace StardewRoguelike.Bosses
             mine.removeTile(new(tile.X, tile.Y + 1), "Front");
             mine.removeTile(new(tile.X + 1, tile.Y + 1), "Front");
 
-            Game1.playSound("slimeHit");
-
             if (Context.IsMainPlayer)
                 Eggs.Remove(tileLocation);
+        }
+
+        public void DespawnEgg(Vector2 tileLocation)
+        {
+            RemoveEggTiles(tileLocation);
+            Game1.playSound("slimeHit");
+        }
+
+        /// <summary>
+        /// Whether a swing reached an egg, and squashes the first one it did.
+        /// </summary>
+        /// <remarks>
+        /// The egg was the one thing in this fight with no answer to it: it was laid
+        /// with a fuse and hatched whatever the player did, so the only counterplay
+        /// was catching the boss mid-lay at a spot it had flown off to, and a player
+        /// who missed that window lost to the arena filling up rather than to
+        /// anything they could see going wrong.
+        ///
+        /// Fired as an event rather than resolved here, because the fuse lives on the
+        /// host and the tiles live on every machine - and the player who swung may be
+        /// neither.
+        /// </remarks>
+        public bool TrySquashEgg(Rectangle area)
+        {
+            Vector2? hit = null;
+
+            foreach (Vector2 tileLocation in eggTiles)
+            {
+                // Two tiles square, laid from its top-left corner.
+                Rectangle egg = new((int)tileLocation.X * 64, (int)tileLocation.Y * 64, 128, 128);
+
+                if (area.Intersects(egg))
+                {
+                    hit = tileLocation;
+                    break;
+                }
+            }
+
+            if (hit is null)
+                return false;
+
+            // Fired after the search rather than inside it. NetEvent.Fire polls
+            // itself, so the handler - which takes the egg out of this very set -
+            // runs before Fire returns, and firing mid-loop threw on the collection
+            // having been modified.
+            squashEggEvent.Fire(hit.Value);
+            return true;
+        }
+
+        /// <summary>An egg that was stood on rather than left to hatch.</summary>
+        public void SquashEgg(Vector2 tileLocation)
+        {
+            RemoveEggTiles(tileLocation);
+
+            Vector2 center = new((tileLocation.X + 1) * 64f, (tileLocation.Y + 1) * 64f);
+
+            Game1.playSound("slimedead");
+
+            // Chunks off the boss's own sheet, so what bursts out of an egg looks
+            // like what would have crawled out of it.
+            Game1.createRadialDebris(
+                currentLocation, TextureName, new Rectangle(0, 0, 16, 16), 8,
+                (int)center.X, (int)center.Y, 10, (int)tileLocation.Y + 1,
+                Color.White, 3f);
+
+            Utility.makeTemporarySpriteJuicier(
+                new TemporaryAnimatedSprite(44, center - new Vector2(32f, 32f), Color.YellowGreen, 10)
+                {
+                    interval = 55f,
+                    scale = 0.8f
+                },
+                currentLocation);
         }
 
         protected override void updateAnimation(GameTime time)
@@ -372,6 +471,7 @@ namespace StardewRoguelike.Bosses
             base.update(time, location);
             SpawnEggEvent.Poll();
             despawnEggEvent.Poll();
+            squashEggEvent.Poll();
             OnAttackedEvent.Poll();
         }
 
