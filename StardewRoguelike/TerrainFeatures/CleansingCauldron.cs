@@ -3,6 +3,7 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.TerrainFeatures;
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 namespace StardewRoguelike.TerrainFeatures
@@ -15,20 +16,30 @@ namespace StardewRoguelike.TerrainFeatures
         /// <summary>The cauldron with nothing in it.</summary>
         private const string EmptyTexture = "TerrainFeatures\\CleansingCauldronEmpty";
 
-        private string textureName = EmptyTexture;
+        private readonly Lazy<Texture2D> fullTexture = new(() => Game1.content.Load<Texture2D>(FullTexture));
 
-        private Lazy<Texture2D> texture = null!;
+        private readonly Lazy<Texture2D> emptyTexture = new(() => Game1.content.Load<Texture2D>(EmptyTexture));
 
-        private bool used = false;
+        /// <summary>The players who have already had a curse taken off them here.</summary>
+        /// <remarks>
+        /// A set of players rather than one flag, for the reason the shrine keeps one:
+        /// a curse hangs off a single farmer, so cleansing is a player's own reward,
+        /// and one bool made it one cleansing for the floor. In split-screen, where
+        /// both local players share this object, the first to use it took the second
+        /// player's turn with it.
+        ///
+        /// Local on purpose, not a net field - see <see cref="PerkShrine.usedBy"/>.
+        /// </remarks>
+        private readonly HashSet<long> usedBy = new();
 
-        /// <summary>Whether the floor has been told the cauldron filled.</summary>
-        private bool announced = false;
+        /// <summary>Whether the player looking at it has already used it.</summary>
+        private bool UsedByMe => usedBy.Contains(Game1.player.UniqueMultiplayerID);
+
+        /// <summary>The players who have been told the cauldron filled.</summary>
+        private readonly HashSet<long> announcedTo = new();
 
         /// <summary>Ticks so it can notice the last monster dying.</summary>
-        public CleansingCauldron() : base(needsTick: true)
-        {
-            ResetTexture();
-        }
+        public CleansingCauldron() : base(needsTick: true) { }
 
         /// <summary>
         /// Whether the cauldron will take a curse.
@@ -37,33 +48,19 @@ namespace StardewRoguelike.TerrainFeatures
         /// decision is worth a floor of work; otherwise a cauldron is a free walk to
         /// a pot, and the curse the shrine charged stops being a price at all.
         /// </summary>
-        private bool Ready => !used && Location is MineShaft mine && mine.EnemyCount == 0;
+        private bool Ready => !UsedByMe && Location is MineShaft mine && mine.EnemyCount == 0;
 
         public override bool tickUpdate(GameTime time)
         {
             // Said once, when the last monster dies, and the pot fills to match. The
             // colour is the only thing telling the player it is waiting on anything.
-            if (!used && !announced && Ready)
+            if (Ready && announcedTo.Add(Game1.player.UniqueMultiplayerID))
             {
-                announced = true;
-                textureName = FullTexture;
-                ResetTexture();
-
                 Game1.chatBox?.addMessage(I18n.Cauldron_Ready(), Color.Gold);
                 Location?.localSound("bubbles");
             }
 
             return false;
-        }
-
-        protected void ResetTexture()
-        {
-            texture = new(new Func<Texture2D>(LoadTexture));
-        }
-
-        protected Texture2D LoadTexture()
-        {
-            return Game1.content.Load<Texture2D>(textureName);
         }
 
         public override Rectangle getBoundingBox()
@@ -143,7 +140,7 @@ namespace StardewRoguelike.TerrainFeatures
 
         public override bool performUseAction(Vector2 tileLocation)
         {
-            if (used)
+            if (UsedByMe)
                 return false;
 
             if (!Ready)
@@ -160,9 +157,7 @@ namespace StardewRoguelike.TerrainFeatures
                 return false;
             }
 
-            used = true;
-            textureName = EmptyTexture;
-            ResetTexture();
+            usedBy.Add(Game1.player.UniqueMultiplayerID);
             Game1.playSound("glug");
             // Cleansing, and nothing else. It handed over a perk as well while it
             // was a room behind one of two doors, on a floor nobody could count on
@@ -187,7 +182,7 @@ namespace StardewRoguelike.TerrainFeatures
 
         public override void draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(texture.Value, Game1.GlobalToLocal(Game1.viewport, Tile * 64f), new Rectangle(0, 0, 48, 48), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, (Tile.Y + 2f) * 64f / 10000f);
+            spriteBatch.Draw(Ready ? fullTexture.Value : emptyTexture.Value, Game1.GlobalToLocal(Game1.viewport, Tile * 64f), new Rectangle(0, 0, 48, 48), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, (Tile.Y + 2f) * 64f / 10000f);
         }
     }
 }

@@ -5,6 +5,7 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.TerrainFeatures;
 using System;
+using System.Collections.Generic;
 
 namespace StardewRoguelike.TerrainFeatures
 {
@@ -29,7 +30,24 @@ namespace StardewRoguelike.TerrainFeatures
         /// </summary>
         private const int WickedStatue = 83;
 
-        private bool used = false;
+        /// <summary>The players who have already traded here.</summary>
+        /// <remarks>
+        /// A set of players rather than one flag, because what the shrine hands over
+        /// is a player's own: perks are per screen, curses hang off each farmer, and
+        /// <see cref="Offer"/> is computed from the perks of whoever is asking - two
+        /// players at this statue are offered different pairs. A single bool made it
+        /// one trade for the floor, so in split-screen the first player to use it
+        /// locked the second out of an offer that had been worked out for them.
+        ///
+        /// Deliberately not a net field. Each player's entitlement is their own
+        /// business, so there is nothing here the other machines need to agree about,
+        /// and keeping it local is also what makes the statue look spent to the
+        /// player who spent it and ready to the player who has not.
+        /// </remarks>
+        private readonly HashSet<long> usedBy = new();
+
+        /// <summary>Whether the player looking at it has already traded here.</summary>
+        private bool UsedByMe => usedBy.Contains(Game1.player.UniqueMultiplayerID);
 
         /// <summary>The level this shrine stands on, which names what it offers.</summary>
         private int Level => Location is MineShaft mine ? Roguelike.GetLevelFromMineshaft(mine) : 0;
@@ -42,8 +60,13 @@ namespace StardewRoguelike.TerrainFeatures
         /// </remarks>
         public (Perks.PerkType? Left, Perks.PerkType? Right) Offer => Perks.GetShrineOffer(Level);
 
-        /// <summary>Whether the floor has been told the shrine woke up.</summary>
-        private bool announced = false;
+        /// <summary>The players who have been told the shrine woke up.</summary>
+        /// <remarks>
+        /// Per player for the same reason, and because the chat box it writes to is:
+        /// one flag on a statue two local players share announced it to whichever
+        /// screen happened to tick first and left the other wondering.
+        /// </remarks>
+        private readonly HashSet<long> announcedTo = new();
 
         /// <summary>Ticks so it can notice the last monster dying.</summary>
         public PerkShrine() : base(needsTick: true) { }
@@ -56,13 +79,15 @@ namespace StardewRoguelike.TerrainFeatures
         /// </summary>
         private bool Ready => Location is MineShaft mine && mine.EnemyCount == 0;
 
+        /// <summary>Whether this player can still trade here, and the floor is clear.</summary>
+        private bool ReadyForMe => !UsedByMe && Ready;
+
         public override bool tickUpdate(GameTime time)
         {
             // Said once, when the last monster dies, so the player is not left
             // guessing why the statue has changed colour.
-            if (!used && !announced && Ready)
+            if (ReadyForMe && announcedTo.Add(Game1.player.UniqueMultiplayerID))
             {
-                announced = true;
                 Game1.chatBox?.addMessage(I18n.Shrine_Ready(), Color.Gold);
                 Location?.localSound("secret1");
             }
@@ -150,7 +175,7 @@ namespace StardewRoguelike.TerrainFeatures
 
         public override bool performUseAction(Vector2 tileLocation)
         {
-            if (used)
+            if (UsedByMe)
                 return false;
 
             if (!Ready)
@@ -196,7 +221,7 @@ namespace StardewRoguelike.TerrainFeatures
         /// </summary>
         private void TakePayment()
         {
-            used = true;
+            usedBy.Add(Game1.player.UniqueMultiplayerID);
             Game1.playSound("debuffSpell");
 
             // Running out of curses to give does not block the trade: the player has
@@ -223,7 +248,7 @@ namespace StardewRoguelike.TerrainFeatures
         /// </summary>
         private Color Tint()
         {
-            if (used)
+            if (UsedByMe)
                 return Color.Gray * 0.55f;
 
             if (!Ready)
@@ -239,7 +264,7 @@ namespace StardewRoguelike.TerrainFeatures
 
         public override bool isActionable()
         {
-            return !used;
+            return !UsedByMe;
         }
 
         public override void draw(SpriteBatch spriteBatch)
