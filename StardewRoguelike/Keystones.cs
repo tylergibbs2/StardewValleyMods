@@ -772,10 +772,27 @@ namespace StardewRoguelike
             return true;
         }
 
-        /// <summary>Hands the floor's second wind back. Called on arriving at one.</summary>
+        /// <summary>Hands back what is spent per floor. Called on arriving at one.</summary>
+        /// <remarks>
+        /// Spite's bank is emptied here because nothing else ever emptied it. It is
+        /// documented as the damage taken since the last blow, but the only thing
+        /// that cleared it was spending it, and a run lasts forty floors - so a
+        /// player could stand in front of something harmless on a quiet floor,
+        /// chip themselves to the ceiling, walk to the boss and open the fight with
+        /// the whole bank. Every other keystone already lapses on its own: a streak
+        /// ends on being hit, a momentum stack times out. This one had no clock at
+        /// all, which made the ceiling a target to be filled at leisure rather than
+        /// a bound on what one fight could give back.
+        ///
+        /// The payout the splash follows goes with it. It is read on the next blow
+        /// that lands, and a swing that paid the bank and then missed left it set,
+        /// so the first hit on the new floor would splash the last floor's bank.
+        /// </remarks>
         public static void OnFloorEntered()
         {
             Current.SecondWindSpent = false;
+            Current.Banked = 0;
+            Current.SpitePaid = 0;
         }
 
         /// <summary>Counts a blow that landed, for Flurry.</summary>
