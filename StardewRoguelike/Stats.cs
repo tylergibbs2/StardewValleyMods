@@ -129,10 +129,7 @@ namespace StardewRoguelike
                 new(I18n.UI_StatsMenu_Section_Progress(), new()
                 {
                     new(StatId.Duration, I18n.Stats_Duration(), Elapsed(EndTime)),
-                    new(StatId.CompletionTime, I18n.Stats_CompletionTime(),
-                        DinoKillEndTime is null && EndTime is not null
-                            ? I18n.Stats_NotStarted()
-                            : Elapsed(DinoKillEndTime)),
+                    new(StatId.CompletionTime, I18n.Stats_CompletionTime(), Completion()),
                     new(StatId.FloorsDescended, I18n.Stats_FloorsDescended(), Count(FloorsDescended))
                 }),
 
@@ -151,6 +148,30 @@ namespace StardewRoguelike
                     new(StatId.GoldSpent, I18n.Stats_GoldSpent(), Count(GoldSpent))
                 })
             };
+        }
+
+        /// <summary>Shown where a run has no reading to give. An em dash.</summary>
+        /// <remarks>
+        /// A run that ended without the final kill has no completion time, and
+        /// saying "Not Started" of it was wrong twice over - it had been started,
+        /// and it was over. A dash is the ordinary way a table says "no value", and
+        /// it does not read as a number the way a zero would.
+        /// </remarks>
+        public const string NoReading = "\u2014";
+
+        /// <summary>
+        /// How long the run took to finish, if it did.
+        /// </summary>
+        /// <remarks>
+        /// Counts up while the run is still going, because until it ends this is a
+        /// speedrun clock rather than a record.
+        /// </remarks>
+        private string Completion()
+        {
+            if (DinoKillEndTime is not null)
+                return Elapsed(DinoKillEndTime);
+
+            return StartTime is not null && EndTime is null ? Elapsed(null) : NoReading;
         }
 
         /// <summary>Grouped by thousands, because damage dealt runs to five figures.</summary>
