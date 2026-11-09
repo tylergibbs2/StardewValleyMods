@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewRoguelike.Extensions;
@@ -138,7 +138,21 @@ namespace StardewRoguelike.Bosses
                 if (CurrentAttack.Value == AttackType.FireBreath || CurrentAttack.Value == AttackType.RandomFire)
                 {
                     NextFireTime = 60;
-                    TotalFireTime = this.AdjustRangeForHealth(2000, 4000);
+                    // Two and a half seconds of breath at full health, two at none.
+                    // takeDamage refuses everything while this runs, so on the old
+                    // curve - two seconds rising to four - the boss became harder to
+                    // damage the nearer it was to dying, and the last quarter of the
+                    // fight was spent waiting out longer and longer immunity.
+                    //
+                    // Narrowed rather than simply reversed. Swapping the ends fixed
+                    // the finish by making the opening worse: four seconds of breath
+                    // at full health took the share of the fight this boss cannot be
+                    // touched for from a sixth to better than a quarter. Held near its
+                    // old opening value, the share stays flat across the fight instead
+                    // of ramping, and the escalation is left where it belongs - the
+                    // boss attacks almost twice as often at death's door as it does at
+                    // the start, which TimeUntilNextAttack does on its own.
+                    TotalFireTime = this.AdjustRangeForHealthInverted(2000, 2500);
                     CurrentState.Value = State.Attacking;
                 }
                 else if (CurrentAttack.Value == AttackType.Charge)

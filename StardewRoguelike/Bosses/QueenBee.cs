@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
@@ -275,7 +275,13 @@ namespace StardewRoguelike.Bosses
 
         public override void MovePosition(GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
         {
-            int extraMovement = this.AdjustRangeForHealth(1, 5);
+            // Inverted: five extra moves a tick at full health down to one at none.
+            // It is a glider at Slipperiness 12 and the hardest thing in the run to
+            // land a blow on already; scaling that up as it died meant the last tenth
+            // of its health was the longest part of the fight. Its stingers, charges
+            // and fire rate all still escalate - the fight gets more dangerous as it
+            // closes, without getting harder to end.
+            int extraMovement = this.AdjustRangeForHealthInverted(1, 5);
             for (int i = 0; i < extraMovement; i++)
                 base.MovePosition(time, viewport, currentLocation);
         }

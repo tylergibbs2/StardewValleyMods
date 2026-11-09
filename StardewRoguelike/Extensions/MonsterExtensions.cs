@@ -22,6 +22,23 @@ namespace StardewRoguelike.Extensions
             return Math.Min(Math.Max(min, max - toSubtract), max);
         }
 
+        /// <summary>
+        /// The same the other way round: <paramref name="max"/> at full health,
+        /// falling to <paramref name="min"/> at none.
+        /// </summary>
+        /// <remarks>
+        /// For the things that should ease off as a boss dies rather than tighten.
+        /// <see cref="AdjustRangeForHealth(Monster, int, int)"/> rises as health
+        /// falls, which is what a boss's aggression should do - more shots, more
+        /// charges, shorter gaps. Applied to the windows where a boss cannot be hit
+        /// at all, it does the opposite of what a fight wants: the kill gets slower
+        /// and quieter the closer it comes.
+        /// </remarks>
+        public static int AdjustRangeForHealthInverted(this Monster monster, int min, int max)
+        {
+            return min + max - monster.AdjustRangeForHealth(min, max);
+        }
+
         public static void KeepInMap(this Monster monster)
         {
             if (monster.Position.X < 0f)
