@@ -651,9 +651,28 @@ namespace StardewRoguelike
         /// the pre-<c>Data/Shops</c> stock helpers. The roguelike already overrode its
         /// behaviour with a Harmony patch, so this keeps that logic directly.
         /// </summary>
+        /// <summary>
+        /// Puts <paramref name="obj"/> on the shelf at <paramref name="buyPrice"/> each.
+        /// </summary>
+        /// <remarks>
+        /// The stack on the item handed in is flattened to one, because the shop
+        /// charges by the unit bought and hands over that many of the item's own
+        /// stack:
+        ///
+        ///     int price = stock.Price * stockToBuy;
+        ///     int stacksToBuy = stockToBuy * item.Stack;
+        ///
+        /// So a template carrying a stack of four was four for the price of one, and
+        /// every caller here had written the quantity twice - once as the stack and
+        /// once as the limit - which reads exactly like saying how many are for sale.
+        /// How many are for sale is <paramref name="limitedQuantity"/>, and this is
+        /// the one place that can make sure the two never get confused again.
+        /// </remarks>
         public static void AddStock(Dictionary<ISalable, ItemStockInformation> stock, Item obj, int buyPrice = -1, int limitedQuantity = -1)
         {
             int price = buyPrice == -1 ? obj.salePrice() : buyPrice;
+
+            obj.Stack = 1;
 
             int stackCount = ShopMenu.infiniteStock;
             if (obj is SObject sobj && sobj.IsRecipe)
@@ -747,11 +766,11 @@ namespace StardewRoguelike
         {
             Dictionary<ISalable, ItemStockInformation> stock = new();
 
-            AddStock(stock, new SObject("472", 5), 50, 5);   // Parsnip Seeds
-            AddStock(stock, new SObject("479", 5), 100, 5);  // Melon Seeds
-            AddStock(stock, new SObject("490", 5), 150, 5);  // Pumpkin Seeds
-            AddStock(stock, new SObject("486", 5), 200, 5);  // Starfruit Seeds
-            AddStock(stock, new SObject("347", 5), 250, 5);  // Rare Seeds
+            AddStock(stock, new SObject("472", 1), 50, 5);   // Parsnip Seeds
+            AddStock(stock, new SObject("479", 1), 100, 5);  // Melon Seeds
+            AddStock(stock, new SObject("490", 1), 150, 5);  // Pumpkin Seeds
+            AddStock(stock, new SObject("486", 1), 200, 5);  // Starfruit Seeds
+            AddStock(stock, new SObject("347", 1), 250, 5);  // Rare Seeds
 
             return stock;
         }
@@ -786,14 +805,14 @@ namespace StardewRoguelike
             int foodQuantity = Curse.HasCurse(CurseType.CheaperMerchant) ? 1 : 3;
             int foodPriceOffset = Curse.HasCurse(CurseType.CheaperMerchant) ? -100 : 0;
 
-            AddStock(stock, new SObject("194", foodQuantity), buyPrice: (int)((200 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Fried Egg
-            AddStock(stock, new SObject("196", foodQuantity), buyPrice: (int)((300 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Salad
-            AddStock(stock, new SObject("773", foodQuantity), buyPrice: (int)((500 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Life Elixir
+            AddStock(stock, new SObject("194", 1), buyPrice: (int)((200 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Fried Egg
+            AddStock(stock, new SObject("196", 1), buyPrice: (int)((300 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Salad
+            AddStock(stock, new SObject("773", 1), buyPrice: (int)((500 + foodPriceOffset) * priceAdjustment), limitedQuantity: foodQuantity);  // Life Elixir
 
             int totalMilksInGame = (Roguelike.MaxHP - Roguelike.StartingHP) / 25;
             int milkQuantity = totalMilksInGame - Roguelike.MilksBought;
             if (milkQuantity > 0)
-                AddStock(stock, new SObject("803", milkQuantity), buyPrice: (int)(500 * priceAdjustment), limitedQuantity: milkQuantity);  // Iridium Milk
+                AddStock(stock, new SObject("803", 1), buyPrice: (int)(500 * priceAdjustment), limitedQuantity: milkQuantity);  // Iridium Milk
 
             return stock;
         }
