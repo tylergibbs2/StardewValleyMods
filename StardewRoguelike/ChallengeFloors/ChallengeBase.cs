@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI.Events;
@@ -117,6 +117,57 @@ namespace StardewRoguelike.ChallengeFloors
         public virtual bool ShouldSpawnLadder(MineShaft mine)
         {
             return true;
+        }
+
+        /// <summary>A tile beside <paramref name="origin"/> that a chest will fit on.</summary>
+        /// <remarks>
+        /// Falls back to the origin itself rather than to zero. Three floors each kept
+        /// their own copy of this walk and two of them started the fallback at
+        /// Vector2.Zero, which put the reward in the top-left corner of the map where
+        /// nobody could reach it, so a floor could be won with nothing to show for it.
+        ///
+        /// Searched in rings rather than over the whole three-by-three block at once,
+        /// so a chest lands against the ladder where the player is looking before it
+        /// lands two tiles out.
+        /// </remarks>
+        protected static Vector2 RewardSpot(MineShaft mine, Vector2 origin, int maxRings = 4)
+        {
+            for (int ring = 1; ring <= maxRings; ring++)
+            {
+                for (int i = -ring; i <= ring; i++)
+                {
+                    for (int j = -ring; j <= ring; j++)
+                    {
+                        // Only the edge of this ring; the inside was already walked.
+                        if (Math.Abs(i) != ring && Math.Abs(j) != ring)
+                            continue;
+
+                        Vector2 candidate = new((int)origin.X + i, (int)origin.Y + j);
+
+                        if (mine.CanItemBePlacedHere(candidate) && !mine.overlayObjects.ContainsKey(candidate))
+                            return candidate;
+                    }
+                }
+            }
+
+            return origin;
+        }
+
+        /// <summary>Draws one of the HUD readouts the timed floors stack down the left.</summary>
+        /// <remarks>
+        /// Takes the slot rather than a position so that a floor showing three
+        /// readings does not have to measure the two above to place the third, which
+        /// is what the hand-added text heights in the older floors were doing.
+        /// </remarks>
+        protected static void DrawHudReading(SpriteBatch b, int slot, string text)
+        {
+            Vector2 size = Game1.smallFont.MeasureString(text);
+            Point at = new(100, 16 + slot * ((int)size.Y + 24));
+
+            StardewValley.Menus.IClickableMenu.drawTextureBox(
+                b, at.X - 15, at.Y - 12, (int)size.X + 33, (int)size.Y + 20, Color.White);
+
+            Utility.drawTextWithShadow(b, text, Game1.smallFont, new Vector2(at.X, at.Y), Color.Black);
         }
 
         private void DisposeHandler(object? sender, ReturnedToTitleEventArgs e)

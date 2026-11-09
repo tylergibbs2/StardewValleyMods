@@ -1,4 +1,4 @@
-using StardewValley;
+﻿using StardewValley;
 using StardewValley.Locations;
 using StardewRoguelike.VirtualProperties;
 using System;
@@ -29,7 +29,10 @@ namespace StardewRoguelike
             HiddenBoss   = 9,
             PickAPath    = 10,
             Speedrun     = 11,
-            GambaChests  = 12
+            GambaChests  = 12,
+            Horde        = 13,
+            Quarry       = 14,
+            Countdown    = 15
         }
         #pragma warning restore format
 
@@ -139,6 +142,9 @@ namespace StardewRoguelike
                 ChallengeType.PickAPath => new PickAPath(),
                 ChallengeType.Speedrun => new Speedrun(),
                 ChallengeType.GambaChests => new GambaChests(),
+                ChallengeType.Horde => new Horde(),
+                ChallengeType.Quarry => new Quarry(),
+                ChallengeType.Countdown => new Countdown(),
                 _ => throw new NotImplementedException()
             };
         }

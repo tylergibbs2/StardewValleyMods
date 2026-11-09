@@ -79,7 +79,10 @@ namespace StardewRoguelike.Run
             ChallengeFloor.ChallengeType.JOTPK,
             ChallengeFloor.ChallengeType.HiddenBoss,
             ChallengeFloor.ChallengeType.EggHunt,
-            ChallengeFloor.ChallengeType.Speedrun
+            ChallengeFloor.ChallengeType.Speedrun,
+            ChallengeFloor.ChallengeType.Horde,
+            ChallengeFloor.ChallengeType.Quarry,
+            ChallengeFloor.ChallengeType.Countdown
         };
 
         /// <summary>

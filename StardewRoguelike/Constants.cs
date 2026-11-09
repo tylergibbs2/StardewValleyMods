@@ -21,6 +21,17 @@ namespace StardewRoguelike
             "custom-1", "custom-2", "custom-3", "custom-8"
         };
 
+        /// <summary>The plain rock the quarry floor lays out.</summary>
+        /// <remarks>
+        /// The four the base game settles on for the top of the mine once it has
+        /// narrowed its own roll down, so they are the ones that read as rock on
+        /// every map in the list rather than only on the dark ones.
+        /// </remarks>
+        public static readonly List<string> QuarryStoneIds = new()
+        {
+            "32", "34", "36", "38"
+        };
+
 
         public static readonly List<int> ScalingOrder = new() { 6, 12, 18, 24, 30, 36, 42, 48 };
         public static readonly int DangerousThreshold = 24;
