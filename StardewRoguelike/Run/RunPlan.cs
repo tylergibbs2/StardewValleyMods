@@ -24,6 +24,16 @@ namespace StardewRoguelike.Run
         /// <summary>How many exits a floor offers, when it offers a choice at all.</summary>
         public const int OfferCount = 3;
 
+        /// <summary>The first exit that offers a choice at all.</summary>
+        /// <remarks>
+        /// Two, not one. A run opens on the merchant - IsMerchantFloor names level
+        /// one outright, beside every sixth floor - so the first ladder out of the
+        /// lobby has nothing to decide, and Plan returns on the forced kinds long
+        /// before it reaches the pool. Level two is the first exit that asks the
+        /// player anything, and so the first one a guarantee can be made about.
+        /// </remarks>
+        public const int FirstChoiceLevel = 2;
+
         /// <summary>
         /// Forges are a power spike, so they are kept apart.
         ///
@@ -446,6 +456,23 @@ namespace StardewRoguelike.Run
                 pool.RemoveAll(candidate => candidate.Kind == picked);
             }
 
+            // The first exit that offers a choice always has a shrine on it.
+            //
+            // A run takes its keystone at a shrine and spends the rest of itself
+            // supporting that choice, so a route that did not meet one for several
+            // floors spent those floors as a character with no idea what it was -
+            // and which floors a run meets is the seed's business, so some runs got
+            // their identity at the first exit and some at the fifth.
+            //
+            // Offered rather than forced. A player who would rather open on an arena
+            // still can; they cannot be denied the choice.
+            //
+            // Hoisted before Promote, which only ever swaps into the last of the
+            // shown places, so the guarantee that something worth playing is on the
+            // menu still holds and cannot displace this.
+            if (level == FirstChoiceLevel)
+                Hoist(offers, FloorKind.Shrine);
+
             // There has to be a floor worth playing rather than only a heal and a
             // chest, or a hurt player with no gold is left with nothing to pick. Only
             // the head of the list is shown, so that is where one has to be.
@@ -458,6 +485,17 @@ namespace StardewRoguelike.Run
         /// Moves a mining or combat floor into the shown part of the list, if the draw
         /// did not put one there.
         /// </summary>
+        /// <summary>Moves <paramref name="kind"/> to the head, if the list holds it.</summary>
+        private static void Hoist(List<FloorKind> offers, FloorKind kind)
+        {
+            int found = offers.IndexOf(kind);
+            if (found <= 0)
+                return;
+
+            offers.RemoveAt(found);
+            offers.Insert(0, kind);
+        }
+
         private static void Promote(List<FloorKind> offers)
         {
             for (int i = 0; i < Math.Min(OfferCount, offers.Count); i++)
