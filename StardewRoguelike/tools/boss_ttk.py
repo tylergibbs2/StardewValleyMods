@@ -145,22 +145,27 @@ BOSSES: list[BossSpec] = [
 ]
 
 
+def hard_mode_scale(level: int, hard: bool) -> float:
+    """BossFloor.HardModeScale - a quarter, ramped in over a first pass."""
+    if not hard:
+        return 1.0
+    return 1.0 + 0.25 * min(1.0, level / 48.0)
+
+
 def health_difficulty(level: int, hard: bool) -> float:
     """BossFloor.GetHealthDifficulty - health only, on a steeper curve."""
-    modifier = 1.0 + (0.25 if hard else 0.0)
-    difficulty = round(level / 24.0, 2) + modifier
+    difficulty = round(level / 24.0, 2) + 1.0
     if level > 48:
         difficulty += 0.25 * ((level - 48) / 6.0)
-    return difficulty
+    return difficulty * hard_mode_scale(level, hard)
 
 
 def level_difficulty(level: int, hard: bool) -> float:
     """BossFloor.GetLevelDifficulty - everything except health."""
-    modifier = 1.0 + (0.25 if hard else 0.0)
-    difficulty = round(level / 48.0, 2) + modifier
+    difficulty = round(level / 48.0, 2) + 1.0
     if level > 48:
         difficulty += 0.25 * ((level - 48) / 6.0)
-    return difficulty
+    return difficulty * hard_mode_scale(level, hard)
 
 
 # ---------------------------------------------------------------------------

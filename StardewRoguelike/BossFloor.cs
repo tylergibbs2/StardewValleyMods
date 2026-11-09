@@ -61,13 +61,47 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="level">The level.</param>
         /// <returns>The floor's difficulty.</returns>
+        /// <summary>The most hard mode ever multiplies a floor's difficulty by.</summary>
+        private const float HardModeCeiling = 0.25f;
+
+        /// <summary>
+        /// What hard mode is worth on <paramref name="level"/>, as a multiplier.
+        /// </summary>
+        /// <remarks>
+        /// It used to be a quarter added to the difficulty, which is not a quarter of
+        /// anything: the number it was added to grows all run, so the same constant
+        /// was worth a fifth more boss health on the fifth floor and a twelfth more on
+        /// the forty-seventh. Hard mode bit hardest at the start and faded, which is
+        /// backwards for the mode meant to be the harder one - and the early floors
+        /// are where it hurt most, since a slime with a fifth more health is fought
+        /// with whatever the first shop sold.
+        ///
+        /// A multiplier that climbs with the floor instead, so hard mode is worth
+        /// almost nothing at the first boss and a full quarter by the last. The early
+        /// floors are still harder than normal's - the extra volleys, the extra bees,
+        /// the darker mineshafts and the quarter more damage every monster deals are
+        /// untouched by this - they are just no longer harder by way of a health bar.
+        ///
+        /// Capped at the end of a first pass. Past that the loop has an escalation of
+        /// its own and hard mode stays a flat quarter on top of it, rather than the
+        /// two compounding without a ceiling.
+        /// </remarks>
+        private static float HardModeScale(int level)
+        {
+            if (!Roguelike.HardMode)
+                return 1f;
+
+            float through = Math.Min(1f, level / (float)Constants.ScalingOrder[^1]);
+
+            return 1f + HardModeCeiling * through;
+        }
+
         public static float GetLevelDifficulty(int level)
         {
             if (DebugCommands.ForcedDifficulty != 0f)
                 return DebugCommands.ForcedDifficulty;
 
-            float modifier = 1f + (Roguelike.HardMode ? 0.25f : 0f);
-            float difficulty = (float)Math.Round(level / (float)Constants.ScalingOrder[^1], 2) + modifier;
+            float difficulty = (float)Math.Round(level / (float)Constants.ScalingOrder[^1], 2) + 1f;
 
             if (level > Constants.ScalingOrder[^1])
             {
@@ -75,7 +109,7 @@ namespace StardewRoguelike
                 difficulty += 0.25f * (levelsPostLoop / 6f);
             }
 
-            return difficulty;
+            return difficulty * HardModeScale(level);
         }
 
         /// <summary>How fast boss health climbs; see <see cref="GetHealthDifficulty"/>.</summary>
@@ -109,8 +143,7 @@ namespace StardewRoguelike
             if (DebugCommands.ForcedDifficulty != 0f)
                 return DebugCommands.ForcedDifficulty;
 
-            float modifier = 1f + (Roguelike.HardMode ? 0.25f : 0f);
-            float difficulty = (float)Math.Round(level / HealthScaleDivisor, 2) + modifier;
+            float difficulty = (float)Math.Round(level / HealthScaleDivisor, 2) + 1f;
 
             // The loop is left on the rate it already had. It is unmeasured ground and
             // the first pass is what this was written against.
@@ -120,7 +153,7 @@ namespace StardewRoguelike
                 difficulty += 0.25f * (levelsPostLoop / 6f);
             }
 
-            return difficulty;
+            return difficulty * HardModeScale(level);
         }
 
         /// <summary>The same, for a mine rather than a level.</summary>
