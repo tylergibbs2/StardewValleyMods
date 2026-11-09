@@ -157,21 +157,25 @@ namespace StardewRoguelike
         /// <summary>How near a monster has to be to hold momentum open, in tiles.</summary>
         private const int MomentumHoldRange = 10;
 
-        /// <summary>The most momentum will ever give, however deep it is taken.</summary>
+        /// <summary>
+        /// The ceiling on what momentum gives is the tier it was taken to.
+        /// </summary>
         /// <remarks>
-        /// Stacks and level both used to multiply this, so the top tier handed out
-        /// eight stacks times four levels - Speed 32 and Attack 32. Swift, this mod's
-        /// own speed perk, gives one a level and stops at three; vanilla's strongest
-        /// speed buff is one. Thirty-two was eleven times the whole of Swift, and fast
-        /// enough to be unplayable rather than strong.
+        /// One and one at the first tier, four and four at the fourth.
         ///
-        /// Twice Swift for the speed, and an attack bonus in the range of the game's
-        /// better rings. Depth still reaches the ceiling sooner and holds it more
-        /// easily, which is what the stacking is for.
+        /// It used to be the stack count multiplied by the tier, which is two
+        /// level-scaled numbers in a product and reads far smaller than it is: at
+        /// the top that was eight stacks by four tiers, Speed 32 and Attack 32, and
+        /// capping the product at six and twelve only hid the shape. Even then the
+        /// first tier alone gave five of each, because five stacks times one tier is
+        /// five - a keystone's shallowest form handing out five times vanilla's
+        /// strongest speed buff.
+        ///
+        /// The tier being the ceiling means the stacks ramp towards it rather than
+        /// multiplying it. At the first tier that ceiling is reached on the first
+        /// kill and the rest of the stack only holds the buff open; from the second
+        /// tier up, climbing the stack is how the ceiling is reached at all.
         /// </remarks>
-        private const int MomentumSpeedCap = 6;
-
-        private const int MomentumAttackCap = 12;
 
         /// <summary>How many ticks pass between one check for that and the next.</summary>
         private const int HoldCheckInterval = 30;
@@ -518,8 +522,8 @@ namespace StardewRoguelike
                 return;
 
             BuffEffects effects = new();
-            effects.Speed.Value = Math.Min(Current.MomentumStacks * level, MomentumSpeedCap);
-            effects.Attack.Value = Math.Min(Current.MomentumStacks * level, MomentumAttackCap);
+            effects.Speed.Value = Math.Min(Current.MomentumStacks, level);
+            effects.Attack.Value = Math.Min(Current.MomentumStacks, level);
 
             Game1.player.applyBuff(new Buff(
                 id: MomentumBuffId,
