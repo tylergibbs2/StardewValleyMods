@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Locations;
+using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
 using System;
 using System.Collections.Generic;
@@ -157,15 +159,84 @@ namespace StardewRoguelike.TerrainFeatures
                 return false;
             }
 
-            usedBy.Add(Game1.player.UniqueMultiplayerID);
-            Game1.playSound("glug");
             // Cleansing, and nothing else. It handed over a perk as well while it
             // was a room behind one of two doors, on a floor nobody could count on
             // reaching. As a floor of its own that is two rewards for no price, and
             // it would be strictly better than the shrine it is meant to be the
             // other half of: the shrine sells a perk for a curse, this buys the
             // curse back, and a run has to decide which it wants a floor for.
-            Curse.RemoveRandomCurse();
+            //
+            // Which curse it takes is the player's call. It used to take one at
+            // random, which made the cauldron a floor spent on a dice roll - and the
+            // shrine charges deliberately now, so undoing it blind was the one half
+            // of the pair still deciding something important on the player's behalf.
+            List<Response> responses = new();
+            foreach (CurseType curse in Curse.HeldCurses())
+            {
+                responses.Add(new Response(
+                    ((int)curse).ToString(),
+                    Curse.GetCurseDisplayName(curse)));
+            }
+
+            // Walking away has to be possible: the pot is spent on use, so a player
+            // who opened it to read what they were carrying should not lose the floor
+            // for it.
+            responses.Add(new Response(CancelKey, I18n.UI_Cancel()));
+
+            pending.Value = this;
+            Location?.createQuestionDialogue(
+                I18n.Cauldron_Choose(), responses.ToArray(), QuestionKey);
+
+            return true;
+        }
+
+        /// <summary>The key the cauldron's question is asked under.</summary>
+        private const string QuestionKey = "cauldronCleanse";
+
+        /// <summary>The response that takes nothing and spends nothing.</summary>
+        private const string CancelKey = "none";
+
+        /// <summary>
+        /// The cauldron whose question is open on this screen.
+        ///
+        /// A dialogue answer arrives through the location rather than through the
+        /// thing that asked, so the cauldron has to be remembered to be marked spent.
+        /// Per screen, because two local players can each have their own question up.
+        /// </summary>
+        private static readonly PerScreen<CleansingCauldron?> pending = new(() => null);
+
+        /// <summary>Takes the curse the player picked out of the pot.</summary>
+        public static bool AnswerDialogueAction(string questionAndAnswer)
+        {
+            if (!questionAndAnswer.StartsWith($"{QuestionKey}_"))
+                return false;
+
+            CleansingCauldron? cauldron = pending.Value;
+            pending.Value = null;
+
+            string answer = questionAndAnswer[(QuestionKey.Length + 1)..];
+            if (answer == CancelKey || cauldron is null)
+                return true;
+
+            if (!int.TryParse(answer, out int id) || !Enum.IsDefined(typeof(CurseType), id))
+                return true;
+
+            CurseType curse = (CurseType)id;
+
+            // Re-checked rather than trusted: the answer arrives a frame or more after
+            // the question, and anything that can take a curse off in between - another
+            // local player's pot, a run reset - would leave this removing nothing and
+            // spending the floor for it.
+            if (!Curse.HasCurse(curse))
+                return true;
+
+            cauldron.usedBy.Add(Game1.player.UniqueMultiplayerID);
+            Game1.playSound("glug");
+            Curse.RemoveCurse(curse);
+
+            Game1.chatBox?.addMessage(
+                I18n.Cauldron_Cleansed(curse: Curse.GetCurseDisplayName(curse)),
+                Color.Gold);
 
             return true;
         }

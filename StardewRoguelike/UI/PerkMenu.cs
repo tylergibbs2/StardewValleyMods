@@ -73,12 +73,22 @@ namespace StardewRoguelike.UI
         /// it opened, so closing the menu without choosing left the player paid up
         /// and empty handed.
         /// </summary>
-        public Action? OnPerkChosen;
+        public Action<Perks.PerkType>? OnPerkChosen;
+
+        /// <summary>What the left-hand perk costs, if the caller charges for it.</summary>
+        private readonly CurseType? leftCurse;
+
+        private readonly CurseType? rightCurse;
 
         /// <param name="offeredLeft">A perk to offer instead of rolling one, if the
         /// caller is re-opening an offer it has already made.</param>
         /// <param name="offeredRight">The same, for the right-hand perk.</param>
-        public PerkMenu(Perks.PerkType? offeredLeft = null, Perks.PerkType? offeredRight = null)
+        /// <param name="costLeft">The curse taking the left-hand perk would cost, for
+        /// a caller that charges one. Drawn under the perk so the pair is one offer;
+        /// null for the callers that give perks away.</param>
+        /// <param name="costRight">The same, for the right-hand perk.</param>
+        internal PerkMenu(Perks.PerkType? offeredLeft = null, Perks.PerkType? offeredRight = null,
+                        CurseType? costLeft = null, CurseType? costRight = null)
             : base(Game1.uiViewport.Width / 2 - 384, Game1.uiViewport.Height / 2 - 256, 768, 512)
         {
             isActive = true;
@@ -117,6 +127,9 @@ namespace StardewRoguelike.UI
                 leftPerk = perk1.Value;
             if (perk2.HasValue)
                 rightPerk = perk2.Value;
+
+            leftCurse = costLeft;
+            rightCurse = costRight;
 
             leftPerkDescription = GetPerkDescription(leftPerk);
             rightPerkDescription = GetPerkDescription(rightPerk);
@@ -243,7 +256,7 @@ namespace StardewRoguelike.UI
                             isActive = false;
                             informationUp = false;
                             alreadyUsed = true;
-                            OnPerkChosen?.Invoke();
+                            OnPerkChosen?.Invoke(leftPerk.Value);
                         }
                     }
                     else if (Game1.getMouseX() > xPositionOnScreen + width / 2 && Game1.getMouseX() < xPositionOnScreen + width && rightPerk.HasValue)
@@ -255,11 +268,11 @@ namespace StardewRoguelike.UI
                             isActive = false;
                             informationUp = false;
                             alreadyUsed = true;
-                            OnPerkChosen?.Invoke();
+                            OnPerkChosen?.Invoke(rightPerk.Value);
                         }
                     }
                 }
-                height = 512;
+                height = 576;
             }
             oldMouseState = Game1.input.GetMouseState();
             if (isActive && !informationUp && starIcon is not null)
@@ -282,6 +295,66 @@ namespace StardewRoguelike.UI
             }
             else
                 okButton.scale = Math.Max(1f, okButton.scale - 0.05f);
+        }
+
+        /// <summary>
+        /// Draws a perk's description, and reports the y it finished at.
+        ///
+        /// Measured rather than counted. Each entry used to advance a flat 64
+        /// pixels, which is the height of one line - so a description that wrapped
+        /// onto three had whatever came next drawn through the middle of it.
+        /// </summary>
+        private float DrawDescription(SpriteBatch b, List<string> description, Color color,
+                                      int x, int wrapWidth)
+        {
+            float y = yPositionOnScreen + spaceToClearTopBorder + 128 + 8 + 64 * 2;
+
+            for (int i = 1; i < description.Count; i++)
+            {
+                string parsed = Game1.parseText(description[i], Game1.smallFont, wrapWidth);
+                b.DrawString(Game1.smallFont, parsed, new Vector2(x, y), color);
+                y += Math.Max(64f, Game1.smallFont.MeasureString(parsed).Y);
+            }
+
+            return y;
+        }
+
+        /// <summary>
+        /// Draws the curse a perk costs, under the perk it belongs to.
+        ///
+        /// With the icon the curse already wears in the buff bar, because that is
+        /// the thing the player will be looking at for the rest of the run and it
+        /// says "debuff" without having to be read. The words stay in the menu's own
+        /// colour: a block of red reads as an error rather than as a price, and it
+        /// does not belong to this palette.
+        /// </summary>
+        private void DrawCost(SpriteBatch b, CurseType? curse, int x, float y)
+        {
+            if (!curse.HasValue)
+                return;
+
+            y += 12f;
+
+            Rectangle icon = Game1.getSourceRectForStandardTileSheet(
+                Game1.buffsIcons, Curse.IconId, 16, 16);
+
+            Utility.drawWithShadow(
+                b, Game1.buffsIcons, new Vector2(x, y),
+                icon, Color.White, 0f, Vector2.Zero, 3f, flipped: false, 0.88f);
+
+            float textX = x + 16 * 3 + 12;
+
+            b.DrawString(
+                Game1.smallFont,
+                I18n.UI_PerkMenu_Curse(),
+                new Vector2(textX, y - 4f),
+                Game1.textColor);
+
+            b.DrawString(
+                Game1.smallFont,
+                Game1.parseText(Curse.GetCurseDisplayName(curse.Value), Game1.smallFont, width / 3 - 112),
+                new Vector2(textX, y + 20f),
+                Game1.textColor);
         }
 
         public void okButtonClicked()
@@ -324,8 +397,12 @@ namespace StardewRoguelike.UI
                     b.DrawString(Game1.dialogueFont, leftPerkDescription[0], new Vector2(xPositionOnScreen + spaceToClearSideBorder + 32, yPositionOnScreen + spaceToClearTopBorder + 160), leftPerkColor);
                     b.DrawString(Game1.smallFont, Game1.parseText(GetRarityText(leftPerkRarity), Game1.smallFont, width / 3 - 64), new Vector2(xPositionOnScreen + spaceToClearSideBorder + 32, yPositionOnScreen + spaceToClearTopBorder + 208), GetRarityColor(leftPerkRarity));
                     b.Draw(Perks.GetPerkIconTexture(leftPerk.Value), new Vector2(xPositionOnScreen + spaceToClearSideBorder + width / 2 - 112, yPositionOnScreen + spaceToClearTopBorder + 160 - 16), Perks.GetPerkSourceRect(leftPerk.Value), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
-                    for (int j = 1; j < leftPerkDescription.Count; j++)
-                        b.DrawString(Game1.smallFont, Game1.parseText(leftPerkDescription[j], Game1.smallFont, width / 3 - 64), new Vector2(-4 + xPositionOnScreen + spaceToClearSideBorder + 32, yPositionOnScreen + spaceToClearTopBorder + 128 + 8 + 64 * (j + 1)), leftPerkColor);
+                    float leftBottom = DrawDescription(
+                        b, leftPerkDescription, leftPerkColor,
+                        -4 + xPositionOnScreen + spaceToClearSideBorder + 32, width / 3 - 64);
+
+                    DrawCost(b, leftCurse,
+                        -4 + xPositionOnScreen + spaceToClearSideBorder + 32, leftBottom);
                 }
 
                 // right perk
@@ -334,8 +411,12 @@ namespace StardewRoguelike.UI
                     b.DrawString(Game1.dialogueFont, rightPerkDescription[0], new Vector2(xPositionOnScreen + spaceToClearSideBorder + width / 2, yPositionOnScreen + spaceToClearTopBorder + 160), rightPerkColor);
                     b.DrawString(Game1.smallFont, Game1.parseText(GetRarityText(rightPerkRarity), Game1.smallFont, width / 3 - 64), new Vector2(xPositionOnScreen + spaceToClearSideBorder + width / 2, yPositionOnScreen + spaceToClearTopBorder + 208), GetRarityColor(rightPerkRarity));
                     b.Draw(Perks.GetPerkIconTexture(rightPerk.Value), new Vector2(xPositionOnScreen + spaceToClearSideBorder + width - 128, yPositionOnScreen + spaceToClearTopBorder + 160 - 16), Perks.GetPerkSourceRect(rightPerk.Value), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
-                    for (int i = 1; i < rightPerkDescription.Count; i++)
-                        b.DrawString(Game1.smallFont, Game1.parseText(rightPerkDescription[i], Game1.smallFont, width / 3 - 48), new Vector2(-4 + xPositionOnScreen + spaceToClearSideBorder + width / 2, yPositionOnScreen + spaceToClearTopBorder + 128 + 8 + 64 * (i + 1)), rightPerkColor);
+                    float rightBottom = DrawDescription(
+                        b, rightPerkDescription, rightPerkColor,
+                        -4 + xPositionOnScreen + spaceToClearSideBorder + width / 2, width / 3 - 48);
+
+                    DrawCost(b, rightCurse,
+                        -4 + xPositionOnScreen + spaceToClearSideBorder + width / 2, rightBottom);
                 }
 
                 if (!leftPerk.HasValue && !rightPerk.HasValue)

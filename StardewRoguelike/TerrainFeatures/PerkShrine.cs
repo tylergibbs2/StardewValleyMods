@@ -199,7 +199,12 @@ namespace StardewRoguelike.TerrainFeatures
             // does not change if the player closes this and opens it again.
             (Perks.PerkType? left, Perks.PerkType? right) = Offer;
 
-            PerkMenu menu = new(left, right);
+            // Each perk is shown with the curse it costs, so the two sides of the
+            // shrine are two bargains rather than one choice and one dice roll.
+            PerkMenu menu = new(
+                left, right,
+                left.HasValue ? Curse.CurseFor(Level, left.Value) : null,
+                right.HasValue ? Curse.CurseFor(Level, right.Value) : null);
 
             menu.isActive = true;
             menu.informationUp = true;
@@ -219,14 +224,18 @@ namespace StardewRoguelike.TerrainFeatures
         /// nothing to show for it, and the shrine - marked spent at the same moment -
         /// would not open again to make good on it.
         /// </summary>
-        private void TakePayment()
+        private void TakePayment(Perks.PerkType chosen)
         {
             usedBy.Add(Game1.player.UniqueMultiplayerID);
             Game1.playSound("debuffSpell");
 
+            // The curse the menu named beside the perk that was taken, rather than a
+            // fresh roll: the price was part of the offer, so charging anything else
+            // would make the thing the player read and weighed a decoration.
+            //
             // Running out of curses to give does not block the trade: the player has
             // already paid for every one they are carrying.
-            CurseType? curse = Curse.GetRandomUniqueCurse();
+            CurseType? curse = Curse.CurseFor(Level, chosen);
             if (!curse.HasValue)
                 return;
 

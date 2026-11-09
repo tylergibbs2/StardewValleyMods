@@ -413,6 +413,40 @@ namespace StardewRoguelike
             return false;
         }
 
+        /// <summary>Keeps the pairing off every other stream drawn from the seed.</summary>
+        private const int PairingStream = 0x0C45;
+
+        /// <summary>
+        /// The curse a shrine on <paramref name="level"/> charges for a given perk.
+        /// </summary>
+        /// <remarks>
+        /// A perk and its price are one offer, so the two perks a shrine shows are two
+        /// bargains rather than a choice of perk followed by a roll of the dice. The
+        /// player can weigh a perk they want slightly less against a curse they can
+        /// live with, which is the decision the shrine was supposed to be making them
+        /// take and never was.
+        ///
+        /// Worked out from the seed, so asking twice gives the same answer: the menu
+        /// names the price before the perk is taken, and closing the menu and opening
+        /// it again must not re-roll it. Drawn from the curses the asking player does
+        /// not already carry, which is theirs alone - two players at one shrine are
+        /// owed their own prices, as they are their own perks.
+        /// </remarks>
+        public static CurseType? CurseFor(int level, Perks.PerkType perk)
+        {
+            List<CurseType> available = Enum.GetValues<CurseType>()
+                .Where(curse => !HasCurse(curse))
+                .ToList();
+
+            if (available.Count == 0)
+                return null;
+
+            Random random = new(
+                Roguelike.FloorRngSeed ^ PairingStream ^ (level * 7703) ^ ((int)perk * 131));
+
+            return available[random.Next(available.Count)];
+        }
+
         public static CurseType? GetRandomUniqueCurse(Random? random = null)
         {
             random ??= Game1.random;
@@ -424,6 +458,16 @@ namespace StardewRoguelike
                 return null;
 
             return curseTypes[random.Next(curseTypes.Count)];
+        }
+
+        /// <summary>The curses the local player carries, in the enum's own order.</summary>
+        /// <remarks>
+        /// For the cauldron, which has to name them to let one be chosen. The stored
+        /// set is a list of ints, so this is where they become curses again.
+        /// </remarks>
+        public static List<CurseType> HeldCurses()
+        {
+            return Enum.GetValues<CurseType>().Where(HasCurse).ToList();
         }
 
         public static void RemoveRandomCurse()

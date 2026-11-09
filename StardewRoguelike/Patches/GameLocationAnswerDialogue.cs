@@ -1,4 +1,5 @@
-using HarmonyLib;
+﻿using HarmonyLib;
+using StardewRoguelike.TerrainFeatures;
 using StardewValley;
 using StardewValley.Locations;
 
@@ -10,6 +11,9 @@ namespace StardewRoguelike.Patches
         public static void Postfix(GameLocation __instance, ref bool __result, string questionAndAnswer, string[] questionParams)
         {
             if (Roguelike.AnswerDialogueAction(__instance, questionAndAnswer, questionParams))
+                __result = true;
+
+            if (CleansingCauldron.AnswerDialogueAction(questionAndAnswer))
                 __result = true;
 
             if (__instance is MineShaft mine)
