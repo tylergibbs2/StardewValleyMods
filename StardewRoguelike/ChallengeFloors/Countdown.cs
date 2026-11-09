@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -110,7 +110,10 @@ namespace StardewRoguelike.ChallengeFloors
             if (Curse.AnyFarmerHasCurse(CurseType.MoreEnemiesLessHealth))
                 count++;
 
-            mine.SpawnMonsters(count * Game1.getOnlineFarmers().Count);
+            // Chasers: a wave that will not come to the player is a wave that has
+            // to be gone and found, on a floor whose whole shape is standing your
+            // ground for one more wave.
+            mine.SpawnMonsters(count * Game1.getOnlineFarmers().Count, chasersOnly: true);
 
             float scale = 1f + (wave.Value - 1) * WaveScaling;
 

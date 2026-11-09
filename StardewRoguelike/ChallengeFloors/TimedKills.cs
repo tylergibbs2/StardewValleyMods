@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -37,7 +37,10 @@ namespace StardewRoguelike.ChallengeFloors
             if (Curse.AnyFarmerHasCurse(CurseType.MoreEnemiesLessHealth))
                 toSpawn += Game1.random.Next(3, 5);
 
-            mine.SpawnMonsters(toSpawn);
+            // Chasers only: the floor is a minute long and asks for fifteen kills,
+            // which is not a thing a player can do while hunting a dust spirit
+            // around the map.
+            mine.SpawnMonsters(toSpawn, chasersOnly: true);
 
             spawnedMonsters = true;
         }

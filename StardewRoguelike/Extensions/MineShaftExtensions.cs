@@ -10,36 +10,90 @@ namespace StardewRoguelike.Extensions
 {
     public static class MineShaftExtensions
     {
-        public static void SpawnMonsters(this MineShaft mine, int amount)
+        /// <summary>
+        /// Puts <paramref name="amount"/> monsters somewhere on the floor.
+        /// </summary>
+        /// <remarks>
+        /// Every clear tile is gathered and the list shuffled, rather than sweeping
+        /// the map rolling a small chance per tile and stopping the moment enough
+        /// have been placed. That sweep ran x outermost, so the monsters it placed
+        /// were whichever tiles it reached first: with a two per cent chance per
+        /// tile, four monsters were all placed inside the leftmost slice of the map
+        /// and the rest of the floor never saw one. On a floor that will not end
+        /// until the room is clear, that is not a spawn pattern, it is a walk.
+        /// </remarks>
+        public static void SpawnMonsters(this MineShaft mine, int amount, bool chasersOnly = false)
         {
-            float spawnChance = 0.022f;
+            mine.SpawnMonstersWithin(amount, null, 0, 0, chasersOnly);
+        }
 
-            // Each pass sweeps the map and places a monster on a small chance per
-            // tile, so a map offering no tile that is both clear and far enough from
-            // the start would sweep forever. Give up instead of hanging.
-            int sweeps = 0;
-            while (amount > 0 && sweeps++ < 200)
+        /// <summary>
+        /// The same, but kept within reach of <paramref name="origin"/>.
+        /// </summary>
+        /// <param name="nearest">How close to the origin a monster may appear.</param>
+        /// <param name="furthest">And how far away, before the tile is no use.</param>
+        public static void SpawnMonstersWithin(
+            this MineShaft mine, int amount, Vector2? origin, int nearest, int furthest,
+            bool chasersOnly = false)
+        {
+            if (amount <= 0 || mine.map is null)
+                return;
+
+            List<Vector2> candidates = new();
+
+            int width = mine.map.GetLayer("Back").LayerWidth;
+            int height = mine.map.GetLayer("Back").LayerHeight;
+
+            for (int x = 0; x < width; x++)
             {
-                for (int i = 0; i < mine.map.GetLayer("Back").LayerWidth; i++)
+                for (int y = 0; y < height; y++)
                 {
-                    if (amount == 0)
-                        break;
-                    for (int j = 0; j < mine.map.GetLayer("Back").LayerHeight; j++)
-                    {
-                        if (amount == 0)
-                            break;
-                        else if (!mine.isTileClearForMineObjects(i, j))
-                            continue;
+                    if (!mine.isTileClearForMineObjects(x, y))
+                        continue;
 
-                        if (Game1.random.NextDouble() <= spawnChance && mine.getDistanceFromStart(i, j) > 5f)
-                        {
-                            Monster monster = mine.BuffMonsterIfNecessary(mine.getMonsterForThisLevel(mine.mineLevel, i, j));
-                            Roguelike.AdjustMonster(mine, ref monster);
-                            mine.characters.Add(monster);
-                            amount--;
-                        }
+                    if (origin is null)
+                    {
+                        // Clear of the entrance, so nothing is standing on the
+                        // player as the floor loads.
+                        if (mine.getDistanceFromStart(x, y) <= 5f)
+                            continue;
                     }
+                    else
+                    {
+                        float distance = Vector2.Distance(new Vector2(x, y), origin.Value);
+                        if (distance < nearest || distance > furthest)
+                            continue;
+                    }
+
+                    candidates.Add(new Vector2(x, y));
                 }
+            }
+
+            Shuffle(candidates);
+
+            foreach (Vector2 tile in candidates)
+            {
+                if (amount == 0)
+                    break;
+
+                Monster monster = chasersOnly
+                    ? MonsterRoster.ChaserFor(mine, (int)tile.X, (int)tile.Y)
+                    : mine.getMonsterForThisLevel(mine.mineLevel, (int)tile.X, (int)tile.Y);
+
+                monster = mine.BuffMonsterIfNecessary(monster);
+                Roguelike.AdjustMonster(mine, ref monster);
+
+                mine.characters.Add(monster);
+                amount--;
+            }
+        }
+
+        private static void Shuffle(List<Vector2> tiles)
+        {
+            for (int i = tiles.Count - 1; i > 0; i--)
+            {
+                int j = Game1.random.Next(i + 1);
+                (tiles[i], tiles[j]) = (tiles[j], tiles[i]);
             }
         }
 

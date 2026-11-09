@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
@@ -268,7 +268,11 @@ namespace StardewRoguelike.ChallengeFloors
             }
             else if (loadedMap == "custom-egg")
             {
-                Monster monster = mine.BuffMonsterIfNecessary(mine.getMonsterForThisLevel(mine.mineLevel, (int)spawnTile.X, (int)spawnTile.Y));
+                // A chaser: the floor is won by holding ground against things that
+                // come for it, and a monster that stays where it spawned is not
+                // contesting anything.
+                Monster monster = mine.BuffMonsterIfNecessary(
+                    MonsterRoster.ChaserFor(mine, (int)spawnTile.X, (int)spawnTile.Y));
                 Roguelike.AdjustMonster(mine, ref monster);
                 return monster;
             }

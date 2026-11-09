@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
@@ -134,7 +134,16 @@ namespace StardewRoguelike.ChallengeFloors
 
             foreach (Vector2 tile in spawnTiles)
             {
-                Monster monster = mine.BuffMonsterIfNecessary(mine.getMonsterForThisLevel(mine.mineLevel, (int)tile.X, (int)tile.Y));
+                // A chaser, because this floor spawns at the edge of the arena and
+                // then waits for the arena to be empty before it will end. A rock
+                // crab sets its own threshold back to zero every tick and sits in
+                // its shell; a duggy only surfaces on a diggable tile and this map
+                // has none, so it stays invisible - and an invisible monster cannot
+                // be damaged but is still counted. Either one hangs the floor for
+                // good.
+                Monster monster = mine.BuffMonsterIfNecessary(
+                    MonsterRoster.ChaserFor(mine, (int)tile.X, (int)tile.Y));
+
                 Roguelike.AdjustMonster(mine, ref monster);
                 monster.moveTowardPlayerThreshold.Value = 50;
 

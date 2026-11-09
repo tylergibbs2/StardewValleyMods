@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -272,7 +272,9 @@ namespace StardewRoguelike.ChallengeFloors
             // player's own hands: digging faster is worth more and costs more.
             while (monstersSent < broken.Value / StonesPerMonster)
             {
-                mine.SpawnMonsters(1);
+                // The one thing a woken monster has to do is come and interrupt the
+                // mining; a rock crab sitting across the map does not.
+                mine.SpawnMonsters(1, chasersOnly: true);
                 monstersSent++;
             }
 

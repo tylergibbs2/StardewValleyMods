@@ -401,7 +401,10 @@ namespace StardewRoguelike.ChallengeFloors
                     topLeftTile.X + Game1.random.Next(0, 6),
                     topLeftTile.Y + Game1.random.Next(0, 6)
                 );
-                Monster monster = mine.BuffMonsterIfNecessary(mine.getMonsterForThisLevel(mine.mineLevel, (int)tileLocation.X, (int)tileLocation.Y));
+                // This room does not open until it is empty, so everything in it has
+                // to be both reachable and willing to be fought.
+                Monster monster = mine.BuffMonsterIfNecessary(
+                    MonsterRoster.ChaserFor(mine, (int)tileLocation.X, (int)tileLocation.Y));
                 Roguelike.AdjustMonster(mine, ref monster);
 
                 mine.characters.Add(monster);
