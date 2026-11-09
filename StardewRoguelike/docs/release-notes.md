@@ -2,6 +2,52 @@
 
 # Release notes
 
+## 1.4.0
+
+Released on 9 November 2026 for SMAPI 4.0.0 or later.
+
+This release gives a run something to build towards. Perks can be taken
+more than once, six keystone perks change what you do rather than how
+much of it, and the shrine names both the perk and the curse it costs
+before you commit. The map tab draws the run you have actually taken.
+
+- Add: Keystone perks. Six of them, and a run with none is offered nothing else at its first shrine. Each answers to something different: killing, a run of kills, being hit, being nearly dead, going untouched, breaking rock.
+- Add: Perks have levels. Most can be taken three times, keystones four, and each level of a keystone past the first adds something it did not do before.
+- Add: The map tab shows the run. A floor to a line, the forks each exit offered, which one you took, and the perk or curse each floor gave you. Press M.
+- Add: Three combat floors. A horde of one-hit slimes against the clock, a quarry of rock that wakes something every few stones, and a countdown of waves you choose when to leave.
+- Add: The cauldron floor. Clear it, then choose a curse for the pot to take.
+- Add: The exit names what a shrine is holding, a floor before you reach it.
+- Add: Each perk at a shrine carries its own price. The two sides are two bargains, not one choice and then a dice roll.
+- Adjust: A shrine offers one perk you do not have and one you can take further.
+- Adjust: The first exit that offers a choice always offers a shrine. You can still walk past it.
+- Adjust: A boss cycle may hold two combat floors. Everything else is still once a cycle.
+- Adjust: The chests, the gambling chests and the two doors can be reached again. They are treasure floors now rather than combat ones.
+- Adjust: A treasure chest holds something worth having and charges for it — a curse, a third of your health, or gold. The exit names the price a floor ahead.
+- Adjust: The cauldron must have its floor cleared, and stands in the middle of it. The pot is full when it will take a curse and empty when it will not.
+- Adjust: The merchant floors no longer sell curses.
+- Adjust: Hard mode is worth more the deeper a run goes, instead of fading out by the end.
+- Adjust: A boss has its own health curve. The eighth boss of a run is no longer easier than the first.
+- Adjust: The Hivemother and the Queen Bee cap their swarms, by player. Falling behind no longer makes you fall behind faster.
+- Adjust: The combat floors only spawn monsters that come to you.
+- Adjust: Cave bugs no longer appear. They walk in a line, never notice you, and an armoured one cannot be hurt without the right enchantment.
+- Adjust: Monsters on a timed floor are spread over the whole map rather than gathered at one edge.
+- Adjust: A wave on the race floor arrives near each player.
+- Adjust: Flurry is drawn as a dagger.
+- Adjust: The statistics screen is laid out in two columns, with icons and a seed.
+- Fix: The shop charged for one and handed over the whole shelf. Buying one iridium milk bought every milk the run would sell you. Seeds, food and the special foods were all wrong the same way.
+- Fix: A combat floor could never end. A duggy spawned on the prairie king floor stays underground, cannot be hurt, and still counts as alive.
+- Fix: Journey of the Prairie King and the race floor sent you walking. Monsters spawned at one edge of the map, and some of them never moved at all.
+- Fix: The Dragon and the Shadow King became harder to kill as they died, by holding the windows where they cannot be hit for longer.
+- Fix: A bug egg can be squashed before it hatches.
+- Fix: In split-screen, a monster's mercy window was shared, so two players at one monster lost most of their damage.
+- Fix: In split-screen, the shrine, the cauldron and the fortune teller could each be used once between both players rather than once each.
+- Fix: In split-screen, run statistics counted both players as one, the minigame winnings went to whoever quit first, and a keystone's state was shared.
+- Fix: Lightning from Telesto the Full Moon put one player's hit through another player's armour.
+- Fix: Healing from hitting and killing is capped. A vampire ring and a sweeping keystone together healed more than a crowd could take off you.
+- Fix: A critical hit could be worth nine times a normal one. Precision and Desperado multiplied each other.
+- Fix: Spite's banked damage is emptied on a new floor. It could be filled on a quiet floor and spent on a boss.
+- Fix: Momentum gave five speed and five attack at its first level, which is five times the strongest buff in the game.
+
 ## 1.3.0
 
 Released on 8 November 2026 for SMAPI 4.0.0 or later.
