@@ -24,7 +24,7 @@ namespace StardewRoguelike.Mode
             events.GameLoop.SaveLoaded += Roguelike.SaveLoaded;
             events.GameLoop.TimeChanged += Roguelike.TimeChanged;
 
-            events.GameLoop.UpdateTicked += ModEntry.ActiveStats.WatchChanges;
+            events.GameLoop.UpdateTicked += Stats.WatchChanges;
             events.GameLoop.UpdateTicked += Roguelike.UpdateTicked;
             events.GameLoop.UpdateTicked += SpectatorMode.Update;
             events.GameLoop.UpdateTicked += Curse.UpdateTicked;
@@ -50,7 +50,7 @@ namespace StardewRoguelike.Mode
             events.GameLoop.SaveLoaded -= Roguelike.SaveLoaded;
             events.GameLoop.TimeChanged -= Roguelike.TimeChanged;
 
-            events.GameLoop.UpdateTicked -= ModEntry.ActiveStats.WatchChanges;
+            events.GameLoop.UpdateTicked -= Stats.WatchChanges;
             events.GameLoop.UpdateTicked -= Roguelike.UpdateTicked;
             events.GameLoop.UpdateTicked -= SpectatorMode.Update;
             events.GameLoop.UpdateTicked -= Curse.UpdateTicked;

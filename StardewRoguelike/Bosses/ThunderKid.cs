@@ -327,11 +327,23 @@ namespace StardewRoguelike.Bosses
             Game1.playSound("thunder");
             Utility.drawLightningBolt(lightningEvent.boltPosition, currentLocation);
 
-            foreach (Farmer farmer in currentLocation.farmers)
-            {
-                if (farmer.currentLocation == currentLocation && farmer.GetBoundingBox().Intersects(new Rectangle((int)Math.Round(playerLocation.X - 32), (int)Math.Round(playerLocation.Y - 32), 64, 64)))
-                    farmer.takeDamage((int)Math.Round(DamageToFarmer * 1.25f), true, null);
-            }
+            // This screen's player and no other, though the bolt still catches
+            // everyone standing in it: the event this runs from is delivered to
+            // every client, so each one answers for its own farmer and between
+            // them the bolt lands on all of them once.
+            //
+            // It used to walk currentLocation.farmers and damage each in turn,
+            // which put one player's hit through another player's mitigation. The
+            // takeDamage patch reads the perks, curses and keystones of whoever the
+            // screen belongs to, so a bolt catching someone else filled your Spite
+            // bank, spent your once-a-floor second wind, burned your Turtle Shell,
+            // fired your Reflect and ticked your hat quest - for damage you had not
+            // taken. Every other way the mod hurts a player already goes through
+            // Game1.player, which is also what vanilla does everywhere.
+            Farmer player = Game1.player;
+
+            if (player.currentLocation == currentLocation && player.GetBoundingBox().Intersects(new Rectangle((int)Math.Round(playerLocation.X - 32), (int)Math.Round(playerLocation.Y - 32), 64, 64)))
+                player.takeDamage((int)Math.Round(DamageToFarmer * 1.25f), true, null);
         }
 
         private void LightningStrikeWarning(Vector2 position)

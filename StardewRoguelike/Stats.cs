@@ -123,7 +123,17 @@ namespace StardewRoguelike
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="UpdateTickedEventArgs"/> instance containing the event data.</param>
-        public void WatchChanges(object? sender, UpdateTickedEventArgs e)
+        /// <remarks>
+        /// Static, and resolving the stats per call. Subscribing an instance method
+        /// would bind whichever screen's stats happened to exist when the handler
+        /// was hooked, and then feed it every screen's ticks.
+        /// </remarks>
+        public static void WatchChanges(object? sender, UpdateTickedEventArgs e)
+        {
+            ModEntry.ActiveStats.WatchTick();
+        }
+
+        private void WatchTick()
         {
             if (Roguelike.CurrentLevel == 0)
                 return;

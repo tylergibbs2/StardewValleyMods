@@ -46,10 +46,18 @@ namespace StardewRoguelike
 
         public static IMonitor ModMonitor { get; private set; } = null!;
 
+        private static readonly PerScreen<Stats> ScreenActiveStats = new(() => new());
+
         /// <summary>
-        /// Tracks the statistics of the game.
+        /// Tracks the statistics of the run on this screen.
+        ///
+        /// Per screen, because every number in it is one player's and the watcher
+        /// that fills it runs once per screen. Shared, it compared this tick's
+        /// player against last tick's - a different person - so two local players
+        /// holding 500g and 100g booked 400 gold spent and then 400 earned, every
+        /// tick, forever. Health did the same into healing and damage taken.
         /// </summary>
-        public static readonly Stats ActiveStats = new();
+        public static Stats ActiveStats => ScreenActiveStats.Value;
 
         private static readonly PerScreen<bool> ScreenInvincible = new(() => false);
 

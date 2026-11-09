@@ -1,7 +1,9 @@
 ﻿using Netcode;
 using StardewRoguelike.ChallengeFloors;
 using StardewRoguelike.Netcode;
+using StardewValley;
 using StardewValley.Locations;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace StardewRoguelike.VirtualProperties
@@ -100,20 +102,38 @@ namespace StardewRoguelike.VirtualProperties
         }
     }
 
+    /// <summary>
+    /// Which players have had their fortune told on a floor.
+    ///
+    /// A set of players rather than one flag, because what the teller hands over is
+    /// a curse, and a curse hangs off a single farmer. One flag made it one sale for
+    /// the floor, so in split-screen - where both local players share the MineShaft
+    /// object - the first to buy locked the second out with no message, and the
+    /// second never got the thing the first had paid for. The same reasoning as
+    /// <see cref="StardewRoguelike.TerrainFeatures.PerkShrine"/>, which had the same
+    /// bug.
+    /// </summary>
     public static class MineShaftUsedFortune
     {
-        internal class Holder { public bool Value { get; set; } }
+        internal class Holder { public readonly HashSet<long> Value = new(); }
 
         internal static ConditionalWeakTable<MineShaft, Holder> values = new();
 
+        /// <summary>Records, or forgets, that the player on this screen has bought.</summary>
         public static void set_MineShaftUsedFortune(this MineShaft mine, bool value)
         {
-            values.GetOrCreateValue(mine).Value = value;
+            HashSet<long> usedBy = values.GetOrCreateValue(mine).Value;
+
+            if (value)
+                usedBy.Add(Game1.player.UniqueMultiplayerID);
+            else
+                usedBy.Remove(Game1.player.UniqueMultiplayerID);
         }
 
+        /// <summary>Whether the player on this screen has already bought here.</summary>
         public static bool get_MineShaftUsedFortune(this MineShaft mine)
         {
-            return values.GetOrCreateValue(mine).Value;
+            return values.GetOrCreateValue(mine).Value.Contains(Game1.player.UniqueMultiplayerID);
         }
     }
 
