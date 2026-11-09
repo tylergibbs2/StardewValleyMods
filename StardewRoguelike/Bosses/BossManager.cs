@@ -40,6 +40,68 @@ namespace StardewRoguelike.Bosses
             typeof(LoopedSlime)
         };
 
+        private static readonly Dictionary<Type, string> displayNames = new();
+
+        /// <summary>The name a boss goes by, without building one to ask it.</summary>
+        /// <remarks>
+        /// DisplayName is an instance property, so reading it normally means having a
+        /// boss - and a boss constructor exists to put a monster on a floor, which is
+        /// not what a menu wanting a name should be doing. Every one of these names is
+        /// a literal with no instance state behind it, so the object is allocated
+        /// without running its constructor and asked for the name alone.
+        ///
+        /// Cached, because the answer cannot change for a type, and falling back to
+        /// the type's own name if a boss ever does compute its title from state.
+        /// </remarks>
+        public static string DisplayNameFor(Type bossType)
+        {
+            if (displayNames.TryGetValue(bossType, out string? cached))
+                return cached;
+
+            string name = bossType.Name;
+
+            try
+            {
+                if (System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(bossType) is IBossMonster boss)
+                    name = boss.DisplayName;
+            }
+            catch
+            {
+                // Keeps the type name, which is wrong but readable.
+            }
+
+            displayNames[bossType] = name;
+            return name;
+        }
+
+        /// <summary>
+        /// Which boss stands on <paramref name="level"/>, where that can be known.
+        /// </summary>
+        /// <remarks>
+        /// Null where a tier holds more than one candidate, because which of them
+        /// turns up is drawn from the floor RNG when the floor is built - so naming
+        /// one before then would be a guess the map would have to take back.
+        /// </remarks>
+        public static Type? BossTypeFor(int level)
+        {
+            int index = BossFloor.GetBossIndexForFloor(level);
+            if (index < 0 || index >= mainBossTypes.Count)
+                return null;
+
+            List<Type> options = mainBossTypes[index];
+            if (options.Count != 1)
+                return null;
+
+            // Past the planned end the run loops, and the first tier's slime is
+            // swapped for the looped one on the way in. A map that did not know
+            // that named - and drew - the wrong boss for every cycle after the
+            // first.
+            if (options[0] == typeof(TutorialSlime) && level > Constants.ScalingOrder[^1])
+                return typeof(LoopedSlime);
+
+            return options[0];
+        }
+
         public static List<Type> GetFlattenedBosses()
         {
             var flattened = new List<Type>();

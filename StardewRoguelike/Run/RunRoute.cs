@@ -277,6 +277,19 @@ namespace StardewRoguelike.Run
             RunPlan.IsForced(level) || Store.ContainsKey(level);
 
         /// <summary>
+        /// Whether somebody actually chose <paramref name="level"/> at an exit.
+        /// </summary>
+        /// <remarks>
+        /// Narrower than <see cref="IsSettled"/>, which also counts the floors
+        /// nobody chooses because they are forced - every merchant and every boss,
+        /// at any depth. That is the right answer for the exit, which only has to
+        /// know whether to offer a menu, and the wrong one for anything asking what
+        /// the group knows about the road: a boss forty floors down is settled and
+        /// has never been seen.
+        /// </remarks>
+        public static bool WasChosen(int level) => Store.ContainsKey(level);
+
+        /// <summary>
         /// Commits <paramref name="kind"/> for <paramref name="level"/>.
         ///
         /// Routed through the host rather than written locally: the route is a team

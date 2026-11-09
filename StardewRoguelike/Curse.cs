@@ -457,6 +457,7 @@ namespace StardewRoguelike
 
             Curse curse = new(curseType);
             Game1.player.get_FarmerCurses().Add((int)curseType);
+            RunLog.CurseGained(curseType);
             Game1.player.applyBuff(curse);
             bool result = HasCurse(curseType);
 
@@ -493,6 +494,8 @@ namespace StardewRoguelike
         {
             if (!HasCurse(curseType))
                 return true;
+
+            RunLog.CurseLifted(curseType);
 
             switch (curseType)
             {

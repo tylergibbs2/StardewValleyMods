@@ -591,6 +591,10 @@ namespace StardewRoguelike
             if (!CanTake(perkType))
                 return;
 
+            // Noted here rather than at the shrine, because a perk can arrive from a
+            // merchant or a debug command too, and the map should show all of them.
+            RunLog.PerkTaken(perkType, PerkLevel(perkType) + 1);
+
             // The one-off half of a perk - a profession, a lump of health - happens
             // when it is first taken. Taking it again only deepens what it already
             // does, which the effects read back off the level.

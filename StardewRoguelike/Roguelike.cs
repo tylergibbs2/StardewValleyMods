@@ -867,6 +867,10 @@ namespace StardewRoguelike
             Keystones.Reset();
             Sustain.Reset();
 
+            // After the removals above, not before: taking a curse off logs that it
+            // was lifted, and a fresh run should start with an empty history.
+            RunLog.Reset();
+
             Game1.player.set_FarmerActiveHatQuest(null);
 
             ModEntry.Invincible = false;
