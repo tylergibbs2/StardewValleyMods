@@ -1,4 +1,4 @@
-using StardewRoguelike.Bosses;
+﻿using StardewRoguelike.Bosses;
 using StardewRoguelike.VirtualProperties;
 using StardewValley;
 using StardewValley.Locations;
@@ -78,6 +78,57 @@ namespace StardewRoguelike
             return difficulty;
         }
 
+        /// <summary>How fast boss health climbs; see <see cref="GetHealthDifficulty"/>.</summary>
+        /// <remarks>
+        /// Half the divisor the general difficulty uses, so health rises at twice the
+        /// rate of everything else that scales with the floor.
+        /// </remarks>
+        private const float HealthScaleDivisor = 24f;
+
+        /// <summary>
+        /// How much health a boss carries over its base, for the floor it stands on.
+        /// </summary>
+        /// <remarks>
+        /// Health is on a steeper curve than the rest of the difficulty, because it is
+        /// the only part that has to keep pace with the player rather than with the
+        /// floor number. A run's damage multiplies from several directions at once -
+        /// the weapon alone goes from three to ninety over a first pass, and the
+        /// professions, the hat, the forge, the keystone and the crit perks all stack
+        /// on top of it - while <see cref="GetLevelDifficulty"/> does no more than
+        /// double across the same stretch. Measured on that curve, bosses died faster
+        /// the further a run got: the eighth took a third as long to kill as the
+        /// first.
+        ///
+        /// Damage deliberately stays on the general curve. Raising what a boss hits
+        /// for alongside its health would make the late floors quicker to lose and
+        /// slower to win, which is the opposite of the point - a boss should take
+        /// longer to kill, not be faster at killing you.
+        /// </remarks>
+        public static float GetHealthDifficulty(int level)
+        {
+            if (DebugCommands.ForcedDifficulty != 0f)
+                return DebugCommands.ForcedDifficulty;
+
+            float modifier = 1f + (Roguelike.HardMode ? 0.25f : 0f);
+            float difficulty = (float)Math.Round(level / HealthScaleDivisor, 2) + modifier;
+
+            // The loop is left on the rate it already had. It is unmeasured ground and
+            // the first pass is what this was written against.
+            if (level > Constants.ScalingOrder[^1])
+            {
+                int levelsPostLoop = level - Constants.ScalingOrder[^1];
+                difficulty += 0.25f * (levelsPostLoop / 6f);
+            }
+
+            return difficulty;
+        }
+
+        /// <summary>The same, for a mine rather than a level.</summary>
+        public static float GetHealthDifficulty(MineShaft mine)
+        {
+            return GetHealthDifficulty(Roguelike.GetLevelFromMineshaft(mine));
+        }
+
         public static void Setup(MineShaft mine)
         {
             var spawnedBoss = SpawnBoss(mine);
@@ -115,7 +166,7 @@ namespace StardewRoguelike
                 bossType = typeof(LoopedSlime);
 
             Monster boss = (Monster)Activator.CreateInstance(bossType, new object[] { difficulty })!;
-            boss.MaxHealth = (int)(BossManager.GetBaseHealth(mine, bossType) * difficulty);
+            boss.MaxHealth = (int)(BossManager.GetBaseHealth(mine, bossType) * GetHealthDifficulty(mine));
             boss.Health = boss.MaxHealth;
             boss.DamageToFarmer = (int)(BossManager.GetBaseDamageToFarmer(mine, bossType) * difficulty);
             mine.characters.Add(boss);
@@ -133,7 +184,7 @@ namespace StardewRoguelike
             float difficulty = GetLevelDifficulty(mine);
 
             Monster boss = (Monster)Activator.CreateInstance(whichBoss, new object[] { difficulty })!;
-            boss.MaxHealth = (int)(BossManager.GetBaseHealth(mine, whichBoss) * difficulty);
+            boss.MaxHealth = (int)(BossManager.GetBaseHealth(mine, whichBoss) * GetHealthDifficulty(mine));
             boss.Health = boss.MaxHealth;
             boss.DamageToFarmer = (int)(BossManager.GetBaseDamageToFarmer(mine, whichBoss) * difficulty);
             mine.characters.Add(boss);

@@ -154,15 +154,35 @@ namespace StardewRoguelike.Bosses
             else if (boss == typeof(ThunderKid))
                 return 1150;
             else if (boss == typeof(Dragon))
-                return 900;
+                // Low for its floor on purpose. GetHealthDifficulty does the scaling
+                // now, so these say how big a fight is rather than where it sits, and
+                // a glider that is immune through its fire breath and its charge
+                // wind-up costs far more time per point than a number suggests. It
+                // carried Arc's nine hundred, which was a floor-eleven number by
+                // accident rather than by design.
+                return 1200;
             else if (boss == typeof(BigBug))
-                return 1680;
+                // Up, because its minions came down. The swarm is the fight, and
+                // capping it and halving what a bug is worth took most of the
+                // difficulty out of a boss that was already among the quickest in the
+                // back half of a run.
+                return 2100;
             else if (boss == typeof(QueenBee))
-                return 1700;
+                // The same trade as BigBug, and it was the softest of the late
+                // bosses even before its bees were capped.
+                return 2300;
             else if (boss == typeof(ShadowKing))
-                return 5000;
+                // Down. It does not need to be the wall of the run to be the
+                // penultimate fight - having something larger behind it is what makes
+                // it stop being the peak, and on the health curve five thousand was
+                // killing players who had earned the floor.
+                return 4200;
             else if (boss == typeof(Modulosaurus))
-                return 2850;
+                // More than the Shadow King, which it had less than half of. A run
+                // peaked on the seventh boss and then eased for the eighth, so the
+                // thing standing between the player and the end of the run was the
+                // floor before it.
+                return 6000;
             else if (boss == typeof(HiddenLurker))
                 return GetBaseDamageToFarmer(mine, boss) * (Roguelike.HardMode ? 10 : 7);
             else if (boss == typeof(LoopedSlime))
