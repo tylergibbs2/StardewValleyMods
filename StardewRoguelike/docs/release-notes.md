@@ -2,6 +2,17 @@
 
 # Release notes
 
+## 1.4.1
+
+Released on 16 November 2026 for SMAPI 4.0.0 or later.
+
+This release puts hosting back. A run could not be hosted since 1.2.0 —
+the co-op menu listed your own farms and never the roguelike, so there
+was no way in for anyone but a player joining somebody else.
+
+- Fix: You can host a run again. The co-op menu's host tab lists the roguelike at the top, above your farms, with the shrine statue beside it. Your own farms and Host New Farm are still there.
+- Fix: Hosting a run no longer leaves you with the bundled save's zoom and interface scale.
+
 ## 1.4.0
 
 Released on 9 November 2026 for SMAPI 4.0.0 or later.
