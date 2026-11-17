@@ -26,6 +26,8 @@
   "UI.PerkDisplayMenu.Title": "Perks",
   "UI.PerkDisplayMenu.NoPerks": "You do not currently have any perks.",
   "UI.TitleEntry.Play": "Play Roguelike",
+  "UI.HostSlot.Name": "Host a Roguelike",
+  "UI.HostSlot.SubName": "Not a farm",
   "UI.StatsMenu.Title": "Statistics",
   "UI.StatsMenu.Section.Progress": "Progress",
   "UI.StatsMenu.Section.Combat": "Combat",

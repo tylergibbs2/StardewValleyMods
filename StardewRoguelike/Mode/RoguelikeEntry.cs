@@ -1,4 +1,4 @@
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using System.IO;
@@ -26,11 +26,25 @@ namespace StardewRoguelike.Mode
         /// <summary>Begins entering a run. Safe to call from inside a patch.</summary>
         public static void Begin()
         {
-            // Taken now, while the settings on screen are still the player's own.
-            CapturedDisplay = DisplaySettings.Capture();
+            CaptureDisplay();
 
             loadPending = true;
             RoguelikeMode.Request(true);
+        }
+
+        /// <summary>
+        /// Remembers the window as the player has it, before a run replaces it.
+        /// </summary>
+        /// <remarks>
+        /// Taken while the settings on screen are still theirs. The bundled save
+        /// carries its own zoom and interface scale, and RestorePlayerOptions puts
+        /// these back over them once it has loaded - so every way into a run has to
+        /// come through here first, or the save's settings are what the player is
+        /// left with.
+        /// </remarks>
+        public static void CaptureDisplay()
+        {
+            CapturedDisplay = DisplaySettings.Capture();
         }
 
         /// <summary>Ticks still to wait before re-asserting the player's window.</summary>

@@ -1,9 +1,7 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using StardewValley;
 using StardewValley.Menus;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 
 namespace StardewRoguelike.Patches
 {
@@ -14,15 +12,9 @@ namespace StardewRoguelike.Patches
         {
             __result = new List<Farmer>();
 
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $@"assets/Saves/{Constants.SaveFile}/SaveGameInfo");
-            FileStream stream = File.OpenRead(path);
-
-            Farmer f = (Farmer)SaveGame.farmerSerializer.Deserialize(stream)!;
-            SaveGame.loadDataToFarmer(f);
-            f.slotName = Constants.SaveFile;
-            __result.Add(f);
-
-            stream.Close();
+            Farmer? farmer = BundledSave.ReadFarmer();
+            if (farmer is not null)
+                __result.Add(farmer);
 
             return false;
         }
@@ -33,11 +25,9 @@ namespace StardewRoguelike.Patches
     {
         public static bool Prefix()
         {
-            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, $@"assets/Saves/{Constants.SaveFile}/{Constants.SaveFile}");
-
             Game1.gameMode = 6;
             Game1.loadingMessage = Game1.content.LoadString("Strings\\StringsFromCSFiles:SaveGame.cs.4690");
-            Game1.currentLoader = SaveGame.getLoadEnumerator(path);
+            Game1.currentLoader = SaveGame.getLoadEnumerator(BundledSave.DataPath);
 
             return false;
         }
